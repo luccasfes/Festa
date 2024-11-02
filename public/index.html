@@ -3,20 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <title>Video Queue App</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
-    <h1>Adicionar Vídeo</h1>
-    <input type="text" id="phone" placeholder="Nome">
-    <input type="text" id="videoUrl" placeholder="URL do Vídeo">
-    <button onclick="addVideo()">Adicionar</button>
+    <div class="container">
+        <div class="input-section">
+            <h1>Adicionar Vídeo</h1>
+            <input type="text" id="phone" placeholder="Nome" required>
+            <input type="text" id="videoUrl" placeholder="URL do Vídeo" required>
+            <button onclick="addVideo()">Adicionar</button>
+        </div>
 
-    <h2>Fila de Vídeos</h2>
-    <ul id="videoList"></ul>
+        <div class="main-content">
+            <div class="video-section">
+                <h2>Vídeo em Execução</h2>
+                <div id="player-container">
+                    <div id="videoPlayer"></div>
+                </div>
+                <div id="currentVideoInfo">
+                    <h3>Quem está tocando:</h3>
+                    <p id="currentUser">Nenhum vídeo em execução</p>
+                    <p id="currentVideoUrl">Nenhuma URL disponível</p>
+                </div>
+            </div>
 
-    <h2>Vídeo em Execução</h2>
-    <div id="player-container">
-        <div id="videoPlayer"></div>
+            <div class="queue-section">
+                <h2>Fila de Vídeos</h2>
+                <ul id="videoList"></ul>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -67,6 +83,8 @@
             const videoId = new URL(videoUrl).searchParams.get('v');
             if (player) {
                 player.loadVideoById(videoId);
+                document.getElementById('currentUser').textContent = videoQueue[currentVideoIndex].phone;
+                document.getElementById('currentVideoUrl').textContent = videoUrl;
             } else {
                 console.error('Player is not ready yet.');
             }
@@ -83,6 +101,8 @@
                         updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl);
                     } else {
                         player.stopVideo();
+                        document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
+                        document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
                     }
                 }
             }
@@ -106,5 +126,6 @@
             });
         }
     </script>
+    
 </body>
 </html>
