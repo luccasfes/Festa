@@ -24,7 +24,7 @@
                     <div id="videoPlayer"></div>
                 </div>
                 <div id="currentVideoInfo">
-                    <h3>Música de quem está tocando:</h3>
+                    <h3>Nome de quem escolheu a música:</h3>
                     <p id="currentUser">Nenhum vídeo em execução</p>
                     <br>
                     <p id="currentVideoUrl">Nenhuma URL disponível</p>
@@ -103,7 +103,7 @@
                 removeButton.textContent = '❌';
                 removeButton.className = 'remove-button';
                 removeButton.onclick = () => {
-                    videoToRemoveIndex = index; // Armazena o índice do vídeo a ser removido
+                    videoToRemoveIndex = index; // Armazena o índice do vídeo a ser removido, peguei isso da aual de ontem que ver o index a ser removido
                     openRemoveModal();
                 };
 
@@ -244,7 +244,7 @@
             const passwordField = document.getElementById('clearPassword');
             const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordField.setAttribute('type', type);
-            this.textContent = type === 'password' ? '👁️' : '🙈'; // Muda o ícone dependendo do estado
+            this.textContent = type === 'password' ? '👁️' : '🙈'; 
         });
 
         // Adiciona evento para alternar a visibilidade da senha de remoção
@@ -252,7 +252,7 @@
             const passwordField = document.getElementById('removePassword');
             const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordField.setAttribute('type', type);
-            this.textContent = type === 'password' ? '👁️' : '🙈'; // Muda o ícone dependendo do estado
+            this.textContent = type === 'password' ? '👁️' : '🙈'; 
         });
     </script>
 </body>
