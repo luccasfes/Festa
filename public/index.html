@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Queue App</title>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+    <h1>Adicionar Vídeo</h1>
+    <input type="text" id="phone" placeholder="Nome">
+    <input type="text" id="videoUrl" placeholder="URL do Vídeo">
+    <button onclick="addVideo()">Adicionar</button>
+
+    <h2>Fila de Vídeos</h2>
+    <ul id="videoList"></ul>
+
+    <h2>Vídeo em Execução</h2>
+    <div id="player-container">
+        <div id="videoPlayer"></div>
+    </div>
+
+    <script>
+        let videoQueue = [];
+        let player;
+        let currentVideoIndex = 0;
+
+        async function addVideo() {
+            const phone = document.getElementById('phone').value;
+            const videoUrl = document.getElementById('videoUrl').value;
+
+            await fetch('/add-video', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ phone, videoUrl })
+            });
+
+            alert('Vídeo adicionado!');
+            document.getElementById('phone').value = '';
+            document.getElementById('videoUrl').value = '';
+            loadVideoQueue();
+        }
+
+        async function loadVideoQueue() {
+            const response = await fetch('/queue');
+            videoQueue = await response.json();
+            const videoList = document.getElementById('videoList');
+            videoList.innerHTML = '';
+
+            videoQueue.forEach(video => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `Nome: ${video.phone}, URL: ${video.videoUrl}`;
+                videoList.appendChild(listItem);
+            });
+
+            // Inicia a reprodução do primeiro vídeo se o player estiver pronto
+            if (videoQueue.length > 0 && player) {
+                const videoId = new URL(videoQueue[currentVideoIndex].videoUrl).searchParams.get('v');
+                if (player.getVideoData().video_id !== videoId) {
+                    updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl);
+                }
+            }
+        }
+
+        function updateVideoPlayer(videoUrl) {
+            const videoId = new URL(videoUrl).searchParams.get('v');
+            if (player) {
+                player.loadVideoById(videoId);
+            } else {
+                console.error('Player is not ready yet.');
+            }
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                currentVideoIndex++;
+                if (currentVideoIndex < videoQueue.length) {
+                    updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl);
+                } else {
+                    currentVideoIndex = 0;
+                    if (videoQueue.length > 0) {
+                        updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl);
+                    } else {
+                        player.stopVideo();
+                    }
+                }
+            }
+        }
+
+        window.onload = loadVideoQueue;
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('videoPlayer', {
+                height: '315',
+                width: '560',
+                events: {
+                    'onReady': (event) => {
+                        loadVideoQueue();
+                        if (videoQueue.length > 0) {
+                            updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl);
+                        }
+                    },
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+    </script>
+</body>
+</html>

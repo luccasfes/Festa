@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reprodução Automática de Vídeos do YouTube</title>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+    <div id="player"></div>
+
+    <script>
+        const videoIds = [
+            'https://youtu.be/pAgnJDJN4VA?si=CjvlseF3dGgIPDYH',  // Substitua pelos IDs dos vídeos do YouTube
+            'ID_DO_VIDEO_2',
+            'ID_DO_VIDEO_3'
+            // Adicione mais IDs aqui
+        ];
+
+        let currentVideoIndex = 0;
+        let player;
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '360',
+                width: '640',
+                videoId: videoIds[currentVideoIndex],
+                events: {
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                currentVideoIndex++;
+                if (currentVideoIndex < videoIds.length) {
+                    player.loadVideoById(videoIds[currentVideoIndex]);
+                } else {
+                    currentVideoIndex = 0; // Reiniciar a lista se necessário
+                    player.loadVideoById(videoIds[currentVideoIndex]);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
