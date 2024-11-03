@@ -8,7 +8,8 @@
 body, html {
     font-family: 'Arial', sans-serif;
     height: 100%;
-    background-color: #f0f2f5;
+    background-color: #000000;
+    overflow-x: hidden; /* Evitar rolagem horizontal */
 }
 
 .container {
@@ -53,10 +54,9 @@ body, html {
 /* Layout principal */
 .main-content {
     display: flex;
-    /* Flexbox para layout ao lado */
     gap: 20px;
     flex: 1;
-    overflow: hidden;
+    overflow: hidden; /* Evitar rolagem vertical */
 }
 
 .video-section {
@@ -98,7 +98,7 @@ body, html {
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     max-height: 100%;
-    overflow-y: auto;
+    overflow-y: auto; /* Para a lista de vídeos */
     width: 100%;
 }
 
@@ -154,24 +154,17 @@ li:last-child {
     ul {
         padding: 0;
         margin: 0;
-        max-height: 300px;
-        /* Limita a altura da fila */
-        overflow-y: auto;
-        /* Adiciona rolagem se necessário */
+        max-height: 300px; /* Limita a altura da fila */
+        overflow-y: auto; /* Adiciona rolagem se necessário */
     }
 
     li {
-        padding: 8px;
-        /* Reduz o padding */
+        padding: 8px; /* Reduz o padding */
         border-bottom: 1px solid #ddd;
-        white-space: nowrap;
-        /* Impede quebra de linha */
-        overflow: hidden;
-        /* Oculta texto que ultrapassa o espaço */
-        text-overflow: ellipsis;
-        /* Adiciona '...' ao final do texto que não cabe */
-        font-size: 12px;
-        /* Reduz o tamanho da fonte */
+        white-space: nowrap; /* Impede quebra de linha */
+        overflow: hidden; /* Oculta texto que ultrapassa o espaço */
+        text-overflow: ellipsis; /* Adiciona '...' ao final do texto que não cabe */
+        font-size: 12px; /* Reduz o tamanho da fonte */
     }
 
     li:last-child {
@@ -179,84 +172,26 @@ li:last-child {
     }
 }
 
-
-
+/* Estilo do modal */
 .modal {
-    display: none;
-    /* Escondido por padrão */
-    position: fixed;
-    /* Fica em cima de outros conteúdos */
-    z-index: 1;
-    /* Fica acima de outros elementos */
+    display: none; /* Escondido por padrão */
+    position: fixed; /* Fica em cima de outros conteúdos */
+    z-index: 1; /* Fica acima de outros elementos */
     left: 0;
     top: 0;
-    width: 100%;
-    /* Largura total */
-    height: 100%;
-    /* Altura total */
-    overflow: auto;
-    /* Habilita rolagem se necessário */
-    background-color: rgb(0, 0, 0);
-    /* Cor de fundo */
-    background-color: rgba(0, 0, 0, 0.4);
-    /* Fundo transparente */
+    width: 100%; /* Largura total */
+    height: 100%; /* Altura total */
+    overflow: auto; /* Habilita rolagem se necessário */
+    background-color: rgb(0, 0, 0); /* Cor de fundo */
+    background-color: rgba(0, 0, 0, 0.4); /* Fundo transparente */
 }
 
 .modal-content {
     background-color: #fefefe;
-    margin: 15% auto;
-    /* Centraliza */
+    margin: 15% auto; /* Centraliza */
     padding: 20px;
     border: 1px solid #888;
-    width: 300px;
-    /* Largura do modal */
-    border-radius: 8px;
-}
-
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-/* Style do modal */
-.modal {
-    display: none;
-    /* Escondido por padrão */
-    position: fixed;
-    /* Fica em cima de outros conteúdos */
-    z-index: 1;
-    /* Fica acima de outros elementos */
-    left: 0;
-    top: 0;
-    width: 100%;
-    /* Largura total */
-    height: 100%;
-    /* Altura total */
-    overflow: auto;
-    /* Habilita rolagem se necessário */
-    background-color: rgb(0, 0, 0);
-    /* Cor de fundo */
-    background-color: rgba(0, 0, 0, 0.4);
-    /* Fundo transparente */
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: 15% auto;
-    /* Centraliza */
-    padding: 20px;
-    border: 1px solid #888;
-    width: 300px;
-    /* Largura do modal */
+    width: 300px; /* Largura do modal */
     border-radius: 8px;
 }
 
@@ -276,8 +211,7 @@ li:last-child {
 
 /* Estilo do botão */
 .clear-queue-button {
-    background-color: #dc3545;
-    /* Vermelho */
+    background-color: #dc3545; 
     color: white;
     border: none;
     padding: 5px 10px;
@@ -288,8 +222,7 @@ li:last-child {
 }
 
 .clear-queue-button:hover {
-    background-color: #c82333;
-    /* Vermelho escuro */
+    background-color: #c82333; 
 }
 
 .remove-button {
@@ -300,30 +233,26 @@ li:last-child {
 
 /* Estilo para o usuário atual */
 #currentUser {
-    border: 2px solid rgb(0, 0, 0);
-    /* Borda do nome */
-    padding: 5px;
-    /* Espaçamento interno */
-    border-radius: 5px;
-    /* Cantos arredondados */
-    display: inline-block;
-    /* Para que a borda envolva apenas o texto */
+    border: 2px solid rgb(0, 0, 0); 
+    padding: 5px; 
+    border-radius: 5px; 
+    display: inline-block; 
     background-color: green;
 }
 
 #currentVideoUrl {
-    border: 1px solid rgb(0, 0, 0);
-    /* Borda menor */
-    padding: 5px;
-    /* Espaçamento interno */
-    border-radius: 5px;
-    /* Cantos arredondados */
-    display: inline-block;
-    /* Permite que o tamanho seja ajustado ao conteúdo */
-    margin-top: 5px;
-    /* Espaço acima */
-    background-color: red;
-    /* Fundo vermelho */
-    color: white;
-    /* Cor do texto para melhor contraste */
+    border: 1px solid rgb(0, 0, 0); 
+    padding: 5px; 
+    border-radius: 5px; 
+    display: inline-block; 
+    margin-top: 5px; 
+    background-color: red; 
+    color: white; 
+}
+
+.queue-section {
+    max-height: 580px; 
+    overflow-y: auto; 
+    border: 1px solid #ccc; 
+    padding: 10px; 
 }
