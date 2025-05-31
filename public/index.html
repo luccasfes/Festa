@@ -34,6 +34,9 @@
                     <span id="addBtnText">Adicionar à Fila</span>
                     <span id="addBtnLoader" class="loading" style="display: none;"></span>
                 </button>
+                <button class="btn secondary" onclick="openYTSearchModal()">
+        <i class="fab fa-youtube"></i> Buscar no YouTube
+    </button>
             </section>
 
             <section class="video-player-section card">
@@ -101,13 +104,111 @@
         </div>
     </div>
 
+    <div id="ytSearchModal" class="modal">
+    <div class="modal-content yt-search-modal">
+        <span class="close-button" onclick="closeYTSearchModal()">×</span>
+        <h3><i class="fab fa-youtube"></i> Buscar Vídeo no YouTube</h3>
+        <div class="input-group">
+            <input type="text" id="ytSearchQuery" placeholder="Digite sua busca">
+            <button class="btn primary" onclick="searchYouTube()">
+                <i class="fas fa-search"></i> Buscar
+            </button>
+        </div>
+        <div id="ytSearchResults" class="yt-search-results"></div>
+    </div>
+</div>
+
     <div id="notification" class="notification">
         <span id="notificationMessage"></span>
     </div>
 
     <script>
+
         // ====================================================================
-       
+       // Funções para o modal de busca no YouTube
+function openYTSearchModal() {
+    document.getElementById('ytSearchModal').style.display = 'flex';
+    document.getElementById('ytSearchQuery').focus();
+}
+
+function closeYTSearchModal() {
+    document.getElementById('ytSearchModal').style.display = 'none';
+    document.getElementById('ytSearchQuery').value = '';
+    document.getElementById('ytSearchResults').innerHTML = '';
+}
+
+function selectYouTubeVideo(videoUrl, videoTitle) {
+    // Preenche os campos
+    document.getElementById('videoUrl').value = videoUrl;
+    // Usa o título do vídeo como nome (ou pode pedir para o usuário preencher)
+    document.getElementById('phone').value = videoTitle || "Usuário YouTube";
+    
+    // Fecha o modal
+    closeYTSearchModal();
+    
+    // Aguarda um breve momento para garantir que os campos estão atualizados
+    setTimeout(() => {
+        addVideo();
+    }, 100);
+}
+
+async function searchYouTube() {
+    const query = document.getElementById('ytSearchQuery').value.trim();
+    if (!query) {
+        showNotification('Digite algo para buscar no YouTube', 'error');
+        return;
+    }
+
+    const resultsContainer = document.getElementById('ytSearchResults');
+    resultsContainer.innerHTML = '<div class="loading-yt">Buscando vídeos...</div>';
+
+    try {
+        // Substitua pela sua chave de API do YouTube
+        const API_KEY = 'AIzaSyADkfhlsuGQspanjkzd_2ypc023a5Zl4i0';
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(query)}&key=${API_KEY}&type=video`);
+        
+        if (!response.ok) throw new Error('Erro na API do YouTube');
+        
+        const data = await response.json();
+        const videos = data.items.map(item => ({
+            title: item.snippet.title,
+            url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
+            thumbnail: item.snippet.thumbnails.default.url
+        }));
+        
+        displayYouTubeResults(videos);
+    } catch (error) {
+        console.error('Erro na busca do YouTube:', error);
+        resultsContainer.innerHTML = '<div class="error-yt">Erro ao buscar vídeos. Tente novamente.</div>';
+    }
+}
+
+function displayYouTubeResults(videos) {
+    const resultsContainer = document.getElementById('ytSearchResults');
+    resultsContainer.innerHTML = '';
+
+    if (videos.length === 0) {
+        resultsContainer.innerHTML = '<div class="empty-yt">Nenhum vídeo encontrado.</div>';
+        return;
+    }
+
+    videos.forEach(video => {
+        const videoElement = document.createElement('div');
+        videoElement.className = 'yt-video-result';
+        videoElement.innerHTML = `
+            <div class="yt-video-thumbnail">
+                <img src="${video.thumbnail}" alt="${video.title}">
+            </div>
+            <div class="yt-video-info">
+                <h4>${video.title}</h4>
+                <button class="btn primary small" onclick="selectYouTubeVideo('${video.url}')">
+                    <i class="fas fa-plus"></i> Adicionar
+                </button>
+            </div>
+        `;
+        resultsContainer.appendChild(videoElement);
+    });
+}
 
         // ====================================================================
         const firebaseConfig = {
@@ -513,19 +614,21 @@
 
         // Fecha os modais se o usuário clicar fora do conteúdo do modal
         window.addEventListener('click', function(event) {
-            if (event.target.classList.contains('modal')) {
-                closeModal();
-                closeRemoveModal();
-            }
-        });
+    if (event.target.classList.contains('modal')) {
+        closeModal();
+        closeRemoveModal();
+        closeYTSearchModal(); // Adicione esta linha
+    }
+});
 
         // Fecha os modais se o usuário pressionar a tecla 'Escape'
         document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeModal();
-                closeRemoveModal();
-            }
-        });
+    if (event.key === 'Escape') {
+        closeModal();
+        closeRemoveModal();
+        closeYTSearchModal(); // Adicione esta linha
+    }
+});
 
         // Efeito de fade-in na carga da página
         document.addEventListener('DOMContentLoaded', function() {

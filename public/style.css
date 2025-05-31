@@ -481,3 +481,56 @@
         .notification.error {
             background-color: var(--danger-color);
         }
+
+        /* Modal de busca no YouTube */
+.yt-search-modal {
+    max-width: 600px;
+    width: 90%;
+}
+
+.yt-search-results {
+    margin-top: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.yt-video-result {
+    display: flex;
+    gap: 15px;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    align-items: center;
+}
+
+.yt-video-result:last-child {
+    border-bottom: none;
+}
+
+.yt-video-thumbnail img {
+    width: 120px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.yt-video-info {
+    flex: 1;
+}
+
+.yt-video-info h4 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.loading-yt, .empty-yt, .error-yt {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+}
+
+.btn.small {
+    padding: 5px 10px;
+    font-size: 14px;
+}
