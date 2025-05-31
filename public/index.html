@@ -108,16 +108,25 @@
     <div class="modal-content yt-search-modal">
         <span class="close-button" onclick="closeYTSearchModal()">×</span>
         <h3><i class="fab fa-youtube"></i> Buscar Vídeo no YouTube</h3>
-        <div class="input-group">
+        
+        <div class="input-group session-info">
+            <label><i class="fas fa-user"></i> Adicionando como: <strong id="currentSessionUser">-</strong></label>
+            <button class="btn small secondary" onclick="changeUserName()">Alterar</button>
+        </div>
+        
+        <div id="userNameInputGroup" class="input-group">
             <label for="ytSearchName"><i class="fas fa-user"></i> Seu Nome:</label>
             <input type="text" id="ytSearchName" placeholder="Quem está adicionando?">
+            <button class="btn small primary" onclick="setSessionUser()">Confirmar</button>
         </div>
+        
         <div class="input-group">
             <input type="text" id="ytSearchQuery" placeholder="Digite sua busca">
             <button class="btn primary" onclick="searchYouTube()">
                 <i class="fas fa-search"></i> Buscar
             </button>
         </div>
+        
         <div id="ytSearchResults" class="yt-search-results"></div>
     </div>
 </div>
@@ -126,6 +135,63 @@
         <span id="notificationMessage"></span>
     </div>
 
+<!-- //sessão -->
+    <script>
+let currentSessionUser = null;
+
+function openYTSearchModal() {
+    document.getElementById('ytSearchModal').style.display = 'flex';
+    document.getElementById('ytSearchQuery').value = '';
+    document.getElementById('ytSearchResults').innerHTML = '';
+    
+    // Mostra a interface apropriada baseada no estado
+    if (currentSessionUser) {
+        document.getElementById('currentSessionUser').textContent = currentSessionUser;
+        document.getElementById('userNameInputGroup').style.display = 'none';
+        document.querySelector('.session-info').style.display = 'flex';
+        document.getElementById('ytSearchQuery').focus();
+    } else {
+        document.getElementById('userNameInputGroup').style.display = 'block';
+        document.querySelector('.session-info').style.display = 'none';
+        document.getElementById('ytSearchName').focus();
+    }
+}
+
+function setSessionUser() {
+    const userName = document.getElementById('ytSearchName').value.trim();
+    
+    if (!userName) {
+        showNotification('Por favor, digite seu nome.', 'error');
+        return;
+    }
+    
+    currentSessionUser = userName;
+    document.getElementById('currentSessionUser').textContent = userName;
+    document.getElementById('userNameInputGroup').style.display = 'none';
+    document.querySelector('.session-info').style.display = 'flex';
+    document.getElementById('ytSearchQuery').focus();
+    
+    // Salva na sessionStorage para persistir entre recarregamentos
+    sessionStorage.setItem('ytSessionUser', userName);
+}
+
+function changeUserName() {
+    currentSessionUser = null;
+    sessionStorage.removeItem('ytSessionUser');
+    document.getElementById('ytSearchName').value = '';
+    document.getElementById('userNameInputGroup').style.display = 'block';
+    document.querySelector('.session-info').style.display = 'none';
+    document.getElementById('ytSearchName').focus();
+}
+
+// Ao carregar a página, verifica se há um nome salvo
+window.addEventListener('DOMContentLoaded', function() {
+    const savedUser = sessionStorage.getItem('ytSessionUser');
+    if (savedUser) {
+        currentSessionUser = savedUser;
+    }
+});
+    </script>
     <script>
 
         // ====================================================================
@@ -142,25 +208,37 @@ function closeYTSearchModal() {
 }
 
 function selectYouTubeVideo(videoUrl, videoTitle) {
-    // Obtém o nome que o usuário digitou no modal de busca
-    const userName = document.getElementById('ytSearchName').value.trim();
-    
-    // Valida se o nome foi preenchido
-    if (!userName) {
-        showNotification('Por favor, digite seu nome no campo indicado.', 'error');
+    // Verifica se temos um usuário na sessão
+    if (!currentSessionUser) {
+        showNotification('Por favor, configure seu nome antes de adicionar vídeos.', 'error');
+        // Mostra o campo de nome e foca nele
+        document.getElementById('userNameInputGroup').style.display = 'block';
+        document.querySelector('.session-info').style.display = 'none';
+        document.getElementById('ytSearchName').focus();
         return;
     }
 
-    // Preenche os campos no formulário principal
-    document.getElementById('phone').value = userName;  // Usa o nome digitado pelo usuário
+    // Preenche os campos no formulário principal automaticamente
+    document.getElementById('phone').value = currentSessionUser;
     document.getElementById('videoUrl').value = videoUrl;
     
-    // Fecha o modal de busca
-    closeYTSearchModal();
+    // Não fecha o modal - permite adicionar mais vídeos
+    // Mantém o modal aberto para continuar adicionando
     
-    // Adiciona o vídeo à fila (com pequeno delay para garantir DOM)
+    // Adiciona o vídeo à fila
     setTimeout(() => {
         addVideo();
+        
+        // Feedback visual que o vídeo foi adicionado
+        showNotification(`"${videoTitle}" adicionado por ${currentSessionUser}`, 'success');
+        
+        // Rolagem suave para o resultado adicionado
+        setTimeout(() => {
+            const videoList = document.getElementById('videoList');
+            if (videoList.lastChild) {
+                videoList.lastChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, 300);
     }, 100);
 }
 
