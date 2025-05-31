@@ -412,77 +412,110 @@ function displayYouTubeResults(videos) {
          * Esta função usa um listener 'value' que é acionado sempre que os dados na referência mudam.
          */
         function loadVideoQueue() {
-            videoQueueRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                let fetchedQueue = [];
+    videoQueueRef.on('value', async (snapshot) => {
+        const data = snapshot.val();
+        let fetchedQueue = [];
 
-                if (data) {
-                    fetchedQueue = Object.keys(data).map(key => ({
-                        id: key,
-                        ...data[key]
-                    }));
-                    // Opcional: Para garantir a ordem, você pode querer ordenar por alguma propriedade como timestamp, se você a adicionasse.
-                    // Ex: videoQueueRef.push().set({ ..., timestamp: firebase.database.ServerValue.TIMESTAMP });
-                    // fetchedQueue.sort((a, b) => a.timestamp - b.timestamp);
-                }
-                
-                videoQueue = fetchedQueue; // Atualiza a fila local
-
-                const videoList = document.getElementById('videoList');
-                videoList.innerHTML = ''; 
-
-                if (videoQueue.length === 0) {
-                    videoList.innerHTML = '<li class="empty-queue">A fila de vídeos está vazia. Adicione um vídeo!</li>';
-                    document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
-                    document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
-                    if (player && typeof player.stopVideo === 'function') {
-                        player.stopVideo();
-                    }
-                    return;
-                }
-
-                // Preenche a lista na UI
-                videoQueue.forEach((video) => {
-                    const listItem = document.createElement('li');
-                    listItem.classList.add('video-item');
-                    // CORREÇÃO: Template literals para exibir corretamente nome e URL/título
-                    listItem.innerHTML = `
-                        <span><strong>${video.phone}:</strong> <a href="${video.videoUrl}" target="_blank">${getVideoTitle(video.videoUrl)}</a></span>
-                        <button class="remove-button" onclick="openRemoveModalWithId('${video.id}')" title="Remover vídeo">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    `;
-                    videoList.appendChild(listItem);
-                });
-
-                // Lógica para controlar o player do YouTube com base na fila:
-                let currentlyPlayingVideoIdInPlayer = null;
-                if (player && typeof player.getVideoData === 'function') {
-                    try {
-                        currentlyPlayingVideoIdInPlayer = player.getVideoData().video_id;
-                    } catch (e) {
-                        // Ocorre se o player não está totalmente pronto ou não há vídeo carregado
-                        // console.warn("Player.getVideoData() falhou ou player não está pronto.", e);
-                    }
-                }
-
-                const firstVideoInQueue = videoQueue[0];
-                const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
-
-                // Regra para carregar/iniciar o vídeo:
-                // 1. Se o player está pronto.
-                // 2. Se o ID do vídeo no player é diferente do primeiro na fila.
-                // 3. Se o player não está tocando.
-                if (player && typeof player.loadVideoById === 'function') {
-                    if (currentlyPlayingVideoIdInPlayer !== firstVideoInQueueId || player.getPlayerState() !== YT.PlayerState.PLAYING) {
-                        updateVideoPlayer(firstVideoInQueue.videoUrl, firstVideoInQueue.phone);
-                    }
-                } else {
-                    // Caso o player ainda não esteja inicializado ou não seja uma função
-                    console.warn('Player do YouTube não está pronto para carregar o vídeo.');
-                }
-            });
+        if (data) {
+            fetchedQueue = Object.keys(data).map(key => ({
+                id: key,
+                ...data[key]
+            }));
         }
+        
+        videoQueue = fetchedQueue;
+        const videoList = document.getElementById('videoList');
+        videoList.innerHTML = '';
+
+        if (videoQueue.length === 0) {
+            videoList.innerHTML = '<li class="empty-queue">A fila de vídeos está vazia. Adicione um vídeo!</li>';
+            document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
+            document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
+            if (player && typeof player.stopVideo === 'function') {
+                player.stopVideo();
+            }
+            return;
+        }
+
+        async function getFormattedVideoTitle(url) {
+    try {
+        // Tenta pegar do cache primeiro
+        const videoId = extractVideoId(url);
+        const cachedTitle = sessionStorage.getItem(`videoTitle_${videoId}`);
+        
+        if (cachedTitle) {
+            return cachedTitle;
+        }
+        
+        // Se não tiver em cache, busca da API do YouTube
+        const API_KEY = 'AIzaSyADkfhlsuGQspanjkzd_2ypc023a5Zl4i0'; // Substitua pela sua chave
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${API_KEY}`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.items && data.items[0]) {
+                const title = data.items[0].snippet.title;
+                // Armazena no cache para próximas vezes
+                sessionStorage.setItem(`videoTitle_${videoId}`, title);
+                return title;
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao buscar título:', error);
+    }
+    
+    // Fallback: Mostra "Música (ID do vídeo)" se não conseguir o título
+    const videoId = extractVideoId(url);
+    return videoId ? `Música (ID: ${videoId})` : 'Vídeo do YouTube';
+}
+        // Preenche a lista na UI com títulos melhorados
+        for (const video of videoQueue) {
+            const listItem = document.createElement('li');
+            listItem.classList.add('video-item');
+            
+            // Obtém o título formatado
+            const videoTitle = await getFormattedVideoTitle(video.videoUrl);
+            
+            listItem.innerHTML = `
+                <div class="video-info">
+                    <span class="video-title">${videoTitle}</span>
+                    <div class="video-meta">
+                        <span class="video-added-by">Adicionado por: ${video.phone}</span>
+                        <a href="${video.videoUrl}" target="_blank" class="video-link">
+                            <i class="fab fa-youtube"></i> Assistir
+                        </a>
+                    </div>
+                </div>
+                <button class="remove-button" onclick="openRemoveModalWithId('${video.id}')" title="Remover vídeo">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            videoList.appendChild(listItem);
+        }
+
+        // Mantém a lógica do player
+        let currentlyPlayingVideoIdInPlayer = null;
+        if (player && typeof player.getVideoData === 'function') {
+            try {
+                currentlyPlayingVideoIdInPlayer = player.getVideoData().video_id;
+            } catch (e) {
+                console.warn("Player.getVideoData() falhou:", e);
+            }
+        }
+
+        const firstVideoInQueue = videoQueue[0];
+        const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
+
+        if (player && typeof player.loadVideoById === 'function') {
+            if (currentlyPlayingVideoIdInPlayer !== firstVideoInQueueId || 
+                player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                updateVideoPlayer(firstVideoInQueue.videoUrl, firstVideoInQueue.phone);
+            }
+        } else {
+            console.warn('Player do YouTube não está pronto para carregar o vídeo.');
+        }
+    });
+}
 
         /**
          * Extrai o ID do vídeo de uma URL do YouTube.
