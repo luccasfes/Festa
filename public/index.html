@@ -135,6 +135,27 @@
         <span id="notificationMessage"></span>
     </div>
 
+<!-- Proxiam faixa -->
+    <div id="nextVideoModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeNextVideoModal()">×</span>
+        <h3><i class="fas fa-forward"></i> Próximo Vídeo</h3>
+        <p>Digite seu nome e a senha de administrador para pular para o próximo vídeo.</p>
+        <div class="input-group">
+            <label for="nextAdminName"><i class="fas fa-user-shield"></i> Nome do Admin:</label>
+            <input type="text" id="nextAdminName" placeholder="Seu nome" required>
+        </div>
+        <div class="input-group password-group">
+            <label for="nextPassword"><i class="fas fa-lock"></i> Senha:</label>
+            <input type="password" id="nextPassword" placeholder="Senha de administrador" required>
+            <span class="toggle-password" id="toggleNextPassword"><i class="fas fa-eye"></i></span>
+        </div>
+        <button class="btn primary" onclick="playNextVideo()" id="playNextVideoBtn">
+            <span id="playNextBtnText">Confirmar Próximo</span>
+            <span id="playNextBtnLoader" class="loading" style="display: none;"></span>
+        </button>
+    </div>
+</div>
 <!-- //sessão -->
     <script>
 let currentSessionUser = null;
@@ -566,22 +587,111 @@ function displayYouTubeResults(videos) {
          * O listener 'value' do Firebase se encarrega de carregar o próximo.
          * @param {Object} event - O objeto de evento do player do YouTube.
          */
-        function onPlayerStateChange(event) {
-            if (event.data === YT.PlayerState.ENDED) {
-                if (videoQueue.length > 0) {
-                    const finishedVideoId = videoQueue[0].id; // Remove o primeiro vídeo da fila
-                    videoQueueRef.child(finishedVideoId).remove()
-                        .then(() => {
-                            console.log('Vídeo concluído removido do Firebase.');
-                        })
-                        .catch(error => {
-                            console.error('Erro ao remover vídeo concluído do Firebase:', error);
-                            showNotification('Erro ao remover vídeo concluído.', 'error');
-                        });
-                }
-            }
-        }
+       function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.ENDED) {
+        // Quando o vídeo termina (naturalmente ou por arrastar a barra)
 
+        // 1. Pare o vídeo
+        if (player && typeof player.stopVideo === 'function') {
+            player.stopVideo();
+        }
+        
+        // 2. CHAME O MODAL DO ADMINISTRADOR AQUI!
+        openNextVideoModal(); 
+
+        // Opcional: Você pode manter uma notificação rápida se quiser,
+        // mas o modal já serve como aviso principal.
+        showNotification('O vídeo atual terminou. Por favor, insira as credenciais de administrador para avançar.', 'info');
+        
+        // *** IMPORTANTE ***
+        // REMOVA QUALQUER LÓGICA DE REMOÇÃO AUTOMÁTICA DO VÍDEO DO FIREBASE AQUI.
+        // O avanço (e a remoção do vídeo da fila) agora será controlado APENAS
+        // pela função 'playNextVideo()' (que é chamada quando o admin preenche o modal).
+    }
+}
+
+
+// Variável para armazenar o ID do vídeo a ser removido (o que acabou de tocar)
+// (Mantenha esta variável no escopo global ou onde 'videoToRemoveId' está)
+let videoToAdvanceId = null; 
+
+/**
+ * Abre o modal para avançar para o próximo vídeo, pedindo credenciais do admin.
+ */
+function openNextVideoModal() {
+    // Se a fila estiver vazia, não há próximo vídeo para avançar
+    if (videoQueue.length === 0) {
+        showNotification('A fila está vazia. Não há próximo vídeo para avançar.', 'info');
+        return;
+    }
+    
+    // O ID do vídeo que está atualmente em execução (o primeiro da fila)
+    // será o que será removido quando o admin confirmar.
+    videoToAdvanceId = videoQueue[0].id; 
+
+    document.getElementById('nextVideoModal').style.display = 'flex';
+    document.getElementById('nextAdminName').focus(); // Foca no campo de nome
+}
+
+/**
+ * Fecha o modal de "Próximo Vídeo" e limpa os campos.
+ */
+function closeNextVideoModal() {
+    document.getElementById('nextVideoModal').style.display = 'none';
+    document.getElementById('nextAdminName').value = '';
+    document.getElementById('nextPassword').value = '';
+    videoToAdvanceId = null; // Reseta o ID do vídeo a ser avançado
+}
+
+/**
+ * Função para avançar para o próximo vídeo na fila, após autenticação do admin.
+ */
+async function playNextVideo() {
+    const adminName = document.getElementById('nextAdminName').value.trim();
+    const password = document.getElementById('nextPassword').value;
+
+    // Credenciais de administrador (ainda hardcoded - LEIA A NOTA DE SEGURANÇA ABAIXO!)
+    const adminCredentials = {
+        'Joao': 'pebinha',
+        'HaazR': 'Dez'
+    };
+
+    if (!adminName || !password) {
+        showNotification('Por favor, preencha o nome e a senha de administrador.', 'error');
+        return;
+    }
+
+    if (adminCredentials[adminName] === password) {
+        if (videoToAdvanceId !== null) {
+            toggleLoading('playNextVideoBtn', true); // Ativa o loader do botão
+
+            try {
+                // Remove o vídeo atual (o primeiro da fila) do Firebase
+                await videoQueueRef.child(videoToAdvanceId).remove();
+                showNotification('Avançando para o próximo vídeo!', 'success');
+                closeNextVideoModal(); // Fecha o modal após o sucesso
+                // O listener do Firebase (loadVideoQueue) irá detectar a mudança e carregar o próximo vídeo automaticamente
+            } catch (error) {
+                console.error('Erro ao avançar vídeo no Firebase:', error);
+                showNotification('Erro ao avançar o vídeo. Verifique a conexão com o Firebase.', 'error');
+            } finally {
+                toggleLoading('playNextVideoBtn', false); // Desativa o loader
+            }
+        } else {
+            showNotification('Nenhum vídeo selecionado para avançar. A fila pode estar vazia.', 'error');
+        }
+    } else {
+        showNotification('Nome de admin ou senha incorretos. Tente novamente.', 'error');
+    }
+}
+
+// Event listener para alternar a visibilidade da senha no modal "Próximo Vídeo"
+document.getElementById('toggleNextPassword').addEventListener('click', function () {
+    const passwordField = document.getElementById('nextPassword');
+    const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordField.setAttribute('type', type);
+    this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+});
         /**
          * Função chamada quando a API do YouTube Iframe está pronta.
          * Inicializa o player e carrega a fila de vídeos.
