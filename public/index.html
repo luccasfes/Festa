@@ -1,133 +1,345 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Queue App</title>
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.youtube.com/iframe_api"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
- 
 <body>
     <div class="container">
-        <div class="input-section">
-            <h1>Adicionar Vídeo</h1>
-            <input type="text" id="phone" placeholder="Nome" required>
-            <input type="text" id="videoUrl" placeholder="URL do Vídeo" required>
-            <button onclick="addVideo()">Adicionar</button>
-        </div>
+        <header class="app-header">
+            <h1><i class="fas fa-music"></i> Sua Fila de Vídeos <i class="fas fa-headphones"></i></h1>
+        </header>
 
-        <div class="main-content">
-            <div class="video-section">
-                <h2>Vídeo em Execução</h2>
+        <main class="main-layout">
+            <section class="input-section card">
+                <h2><i class="fas fa-plus-circle"></i> Adicionar Vídeo</h2>
+                <div class="input-group">
+                    <label for="phone"><i class="fas fa-user"></i> Nome:</label>
+                    <input type="text" id="phone" placeholder="Quem adicionou?" required>
+                </div>
+                <div class="input-group">
+                    <label for="videoUrl"><i class="fab fa-youtube"></i> URL do Vídeo:</label>
+                    <input type="text" id="videoUrl" placeholder="Link do YouTube" required>
+                </div>
+                <button class="btn primary" onclick="addVideo()" id="addVideoBtn">
+                    <span id="addBtnText">Adicionar à Fila</span>
+                    <span id="addBtnLoader" class="loading" style="display: none;"></span>
+                </button>
+            </section>
+
+            <section class="video-player-section card">
+                <h2><i class="fas fa-play-circle"></i> Vídeo em Execução</h2>
                 <div id="player-container">
                     <div id="videoPlayer"></div>
                 </div>
                 <div id="currentVideoInfo">
-                    <h3>Nome de quem escolheu a música:</h3>
-                    <p id="currentUser">Nenhum vídeo em execução</p>
-                    <br>
-                    <p id="currentVideoUrl">Nenhuma URL disponível</p>
+                    <h3>Escolha de: <span id="currentUser">Nenhum vídeo em execução</span></h3>
+                    <p class="current-url" id="currentVideoUrl">Nenhuma URL disponível</p>
                 </div>
-            </div>
+            </section>
 
-            <div class="queue-section">
-                <h2>Fila de Música
-                    <button class="clear-queue-button" onclick="openModal()">Limpar Fila</button>
+            <section class="queue-section card">
+                <h2>
+                    <i class="fas fa-list-ol"></i> Fila de Música
+                    <button class="btn danger clear-queue-button" onclick="openModal()">
+                        <i class="fas fa-trash-alt"></i> Limpar Fila
+                    </button>
                 </h2>
-                <ul id="videoList"></ul>
-            </div>
-        </div>
+                <ul id="videoList" class="video-queue-list"></ul>
+            </section>
+        </main>
     </div>
 
-    <!-- Modal -->
     <div id="modal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h3>Digite seu nome e a senha para limpar a fila:</h3>
-            <input type="text" id="adminName" placeholder="Nome do Admin" required>
-            <input type="password" id="clearPassword" placeholder="Senha" required>
-            <span id="togglePassword" style="cursor: pointer;">👁️</span> <!-- Ícone de olho -->
-            <button onclick="clearQueue()">Confirmar</button>
+            <span class="close-button" onclick="closeModal()">×</span>
+            <h3><i class="fas fa-trash-alt"></i> Limpar Fila</h3>
+            <p>Digite seu nome e a senha para limpar a fila.</p>
+            <div class="input-group">
+                <label for="adminName"><i class="fas fa-user-shield"></i> Nome do Admin:</label>
+                <input type="text" id="adminName" placeholder="Seu nome" required>
+            </div>
+            <div class="input-group password-group">
+                <label for="clearPassword"><i class="fas fa-lock"></i> Senha:</label>
+                <input type="password" id="clearPassword" placeholder="Senha de administrador" required>
+                <span class="toggle-password" id="togglePassword"><i class="fas fa-eye"></i></span>
+            </div>
+            <button class="btn primary" onclick="clearQueue()" id="clearQueueBtn">
+                <span id="clearBtnText">Confirmar Limpeza</span>
+                <span id="clearBtnLoader" class="loading" style="display: none;"></span>
+            </button>
         </div>
     </div>
 
-    <!-- Modal para remoção -->
     <div id="removeModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeRemoveModal()">&times;</span>
-            <h3>Digite seu nome e a senha para remover o vídeo:</h3>
-            <input type="text" id="removeAdminName" placeholder="Nome do Admin" required>
-            <input type="password" id="removePassword" placeholder="Senha" required>
-            <span id="toggleRemovePassword" style="cursor: pointer;">👁️</span> <!-- Ícone de olho -->
-            <button onclick="removeVideo()">Remover</button>
+            <span class="close-button" onclick="closeRemoveModal()">×</span>
+            <h3><i class="fas fa-trash"></i> Remover Vídeo</h3>
+            <p>Digite seu nome e a senha para remover o vídeo selecionado.</p>
+            <div class="input-group">
+                <label for="removeAdminName"><i class="fas fa-user-shield"></i> Nome do Admin:</label>
+                <input type="text" id="removeAdminName" placeholder="Seu nome" required>
+            </div>
+            <div class="input-group password-group">
+                <label for="removePassword"><i class="fas fa-lock"></i> Senha:</label>
+                <input type="password" id="removePassword" placeholder="Senha de administrador" required>
+                <span class="toggle-password" id="toggleRemovePassword"><i class="fas fa-eye"></i></span>
+            </div>
+            <button class="btn primary" onclick="removeVideo()" id="removeVideoBtn">
+                <span id="removeBtnText">Confirmar Remoção</span>
+                <span id="removeBtnLoader" class="loading" style="display: none;"></span>
+            </button>
         </div>
+    </div>
+
+    <div id="notification" class="notification">
+        <span id="notificationMessage"></span>
     </div>
 
     <script>
         let videoQueue = [];
         let player;
         let currentVideoIndex = 0;
-        let videoToRemoveIndex = null; // Para rastrear qual vídeo deve ser removido
+        let videoToRemoveId = null; 
 
-        async function addVideo() {
-            const phone = document.getElementById('phone').value;
-            const videoUrl = document.getElementById('videoUrl').value;
+        // A API do YouTube Iframe será carregada automaticamente via o script tag no head
+        // e chamará onYouTubeIframeAPIReady quando estiver pronta.
 
-            await fetch('/add-video', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ phone, videoUrl })
-            });
-
-            alert('Vídeo adicionado!');
-            document.getElementById('phone').value = '';
-            document.getElementById('videoUrl').value = '';
-            loadVideoQueue();
+        // Mostra notificação
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationMessage = document.getElementById('notificationMessage');
+            
+            notificationMessage.textContent = message;
+            notification.className = 'notification'; 
+            notification.classList.add(type, 'show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
         }
 
-        async function loadVideoQueue() {
-            const response = await fetch('/queue');
-            videoQueue = await response.json();
-            const videoList = document.getElementById('videoList');
-            videoList.innerHTML = '';
+        // Função para mostrar/ocultar loading
+        function toggleLoading(buttonId, isLoading) {
+            const btn = document.getElementById(buttonId);
+            const btnText = btn ? btn.querySelector(`#${buttonId.replace('Btn', 'BtnText')}`) : null;
+            const btnLoader = btn ? btn.querySelector(`#${buttonId.replace('Btn', 'BtnLoader')}`) : null;
+            
+            if (!btn) {
+                console.error(`Botão com ID ${buttonId} não encontrado.`);
+                return;
+            }
+            if (!btnText) {
+                console.error(`Elemento com ID ${buttonId.replace('Btn', 'BtnText')} (span de texto) não encontrado.`);
+                return;
+            }
+            if (!btnLoader) {
+                console.error(`Elemento com ID ${buttonId.replace('Btn', 'BtnLoader')} (span de carregamento) não encontrado.`);
+                return;
+            }
 
-            videoQueue.forEach((video, index) => {
-                const listItem = document.createElement('li');
-                listItem.textContent = `Nome: ${video.phone}, URL: ${video.videoUrl}`;
-
-                // Botão de remover
-                const removeButton = document.createElement('span');
-                removeButton.textContent = '❌';
-                removeButton.className = 'remove-button';
-                removeButton.onclick = () => {
-                    videoToRemoveIndex = index; // Armazena o índice do vídeo a ser removido, peguei isso da aual de ontem que ver o index a ser removido
-                    openRemoveModal();
-                };
-
-                listItem.appendChild(removeButton);
-                videoList.appendChild(listItem);
-            });
-
-            // Inicia a reprodução do primeiro vídeo se o player estiver pronto
-            if (videoQueue.length > 0 && player) {
-                const videoId = new URL(videoQueue[currentVideoIndex].videoUrl).searchParams.get('v');
-                if (player.getVideoData().video_id !== videoId) {
-                    updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl);
-                }
+            if (isLoading) {
+                btn.disabled = true;
+                btnText.style.display = 'none';
+                btnLoader.style.display = 'inline-block';
+            } else {
+                btn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoader.style.display = 'none';
             }
         }
 
-        function updateVideoPlayer(videoUrl) {
-            const videoId = new URL(videoUrl).searchParams.get('v');
-            if (player) {
+        async function addVideo() {
+            const phone = document.getElementById('phone').value.trim();
+            const videoUrl = document.getElementById('videoUrl').value.trim();
+
+            if (!phone || !videoUrl) {
+                showNotification('Por favor, preencha o nome e a URL do vídeo.', 'error');
+                return;
+            }
+
+            const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=|embed\/|v\/|)([\w-]{11})(?:\S+)?/i;
+            if (!youtubeRegex.test(videoUrl)) {
+                showNotification('Por favor, insira uma URL de vídeo válida do YouTube.', 'error');
+                return;
+            }
+
+            toggleLoading('addVideoBtn', true);
+
+            try {
+                const response = await fetch('http://localhost:3000/add-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, videoUrl })
+                });
+
+                if (response.ok) {
+                    const newVideoData = await response.json(); 
+                    
+                    if (!newVideoData || !newVideoData.video) {
+                        showNotification('Erro: Resposta do servidor inesperada ao adicionar vídeo.', 'error');
+                        console.error('Erro: newVideoData ou newVideoData.video é undefined', newVideoData);
+                        return; 
+                    }
+
+                    showNotification('Vídeo adicionado com sucesso!', 'success');
+                    
+                    const wasQueueEmpty = videoQueue.length === 0;
+                    videoQueue.push(newVideoData.video); 
+                    
+                    const videoList = document.getElementById('videoList');
+                    const emptyMessage = videoList.querySelector('.empty-queue');
+                    if (emptyMessage) {
+                        videoList.removeChild(emptyMessage);
+                    }
+
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('video-item');
+                    listItem.innerHTML = `
+                        <span><strong>${newVideoData.video.phone}:</strong> <a href="${newVideoData.video.videoUrl}" target="_blank">${getVideoTitle(newVideoData.video.videoUrl)}</a></span>
+                        <button class="remove-button" onclick="openRemoveModalWithId(${newVideoData.video.id})" title="Remover vídeo">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    videoList.appendChild(listItem);
+
+                    if ((wasQueueEmpty || videoQueue.length === 1) && player && typeof player.loadVideoById === 'function') {
+                        currentVideoIndex = 0; 
+                        updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl, videoQueue[currentVideoIndex].phone);
+                    }
+
+
+                    document.getElementById('phone').value = '';
+                    document.getElementById('videoUrl').value = '';
+                } else {
+                    const errorData = await response.json();
+                    showNotification(`Erro ao adicionar o vídeo: ${errorData.message || 'Tente novamente.'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao adicionar vídeo:', error);
+                showNotification('Erro de conexão ao adicionar o vídeo. Certifique-se de que o servidor está rodando.', 'error');
+            } finally {
+                toggleLoading('addVideoBtn', false);
+            }
+        }
+
+        async function loadVideoQueue() {
+            try {
+                const response = await fetch('http://localhost:3000/queue');
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP! status: ${response.status}`);
+                }
+                const fetchedQueue = await response.json();
+                
+                const videoList = document.getElementById('videoList');
+                videoList.innerHTML = ''; 
+
+                if (fetchedQueue.length === 0) {
+                    videoQueue = []; 
+                    videoList.innerHTML = '<li class="empty-queue">A fila de vídeos está vazia. Adicione um vídeo!</li>';
+                    document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
+                    document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
+                    if (player && typeof player.stopVideo === 'function') {
+                        player.stopVideo();
+                    }
+                    return;
+                }
+
+                let currentPlayingVideoId = null;
+                if (player && typeof player.getVideoData === 'function') {
+                    // Tenta obter o ID do vídeo atualmente em reprodução
+                    try {
+                        currentPlayingVideoId = player.getVideoData().video_id;
+                    } catch (e) {
+                        // Se o player ainda não estiver completamente pronto, getVideoData pode falhar
+                        console.warn("Player.getVideoData() falhou, player pode não estar totalmente pronto.", e);
+                        currentPlayingVideoId = null; // Reiniciar a busca se não conseguir obter o ID
+                    }
+                }
+                
+                videoQueue = fetchedQueue;
+
+                videoQueue.forEach((video) => {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('video-item');
+                    listItem.innerHTML = `
+                        <span><strong>${video.phone}:</strong> <a href="${video.videoUrl}" target="_blank">${getVideoTitle(video.videoUrl)}</a></span>
+                        <button class="remove-button" onclick="openRemoveModalWithId(${video.id})" title="Remover vídeo">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    videoList.appendChild(listItem);
+                });
+
+                const foundCurrentVideo = videoQueue.find(video => extractVideoId(video.videoUrl) === currentPlayingVideoId);
+                
+                if (foundCurrentVideo && player && typeof player.loadVideoById === 'function' && player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                    // Se o vídeo atual foi encontrado E o player não está a reproduzi-lo (ou está pausado/parado),
+                    // então carregue-o e continue a reprodução do ponto onde parou.
+                    currentVideoIndex = videoQueue.indexOf(foundCurrentVideo);
+                    document.getElementById('currentUser').textContent = foundCurrentVideo.phone;
+                    document.getElementById('currentVideoUrl').textContent = foundCurrentVideo.videoUrl;
+                    // Tentar reproduzir do ponto onde parou, se houver um tempo de reprodução anterior
+                    // (Esta parte exigiria guardar o tempo de reprodução no backend, o que não temos)
+                    // Por agora, vamos apenas garantir que ele carrega o vídeo correto se não estiver a tocar
+                    const expectedVideoId = extractVideoId(foundCurrentVideo.videoUrl);
+                    if (player.getVideoData().video_id !== expectedVideoId) {
+                        player.loadVideoById(expectedVideoId);
+                    } else {
+                        // Se o vídeo já está carregado, apenas garantir que está a tocar se deveria
+                        if (player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                            player.playVideo();
+                        }
+                    }
+                } else if (videoQueue.length > 0 && player && typeof player.loadVideoById === 'function') {
+                    // Se não encontrou o vídeo atual (foi removido, ou era o primeiro carregamento),
+                    // e há vídeos na fila, reproduza o primeiro.
+                    currentVideoIndex = 0;
+                    updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl, videoQueue[currentVideoIndex].phone);
+                } else if (videoQueue.length === 0 && player && typeof player.stopVideo === 'function') {
+                    // Se a fila está vazia, pare a reprodução
+                    player.stopVideo();
+                    document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
+                    document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
+                }
+
+            } catch (error) {
+                console.error('Erro ao carregar a fila de vídeos:', error);
+                document.getElementById('videoList').innerHTML = '<li class="error-message">Erro ao carregar a fila de vídeos. Verifique se o servidor está rodando.</li>';
+                showNotification('Erro ao carregar a fila. Verifique a conexão com o servidor.', 'error');
+            }
+        }
+
+        function extractVideoId(url) {
+            const regExp = /(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=|embed\/|v\/|)([\w-]{11})(?:\S+)?/i;
+            const match = url.match(regExp);
+            return (match && match[1]) ? match[1] : null;
+        }
+
+        function getVideoTitle(url) {
+            const videoId = extractVideoId(url);
+            return videoId ? `Vídeo (ID: ${videoId})` : 'Vídeo do YouTube';
+        }
+
+        function updateVideoPlayer(videoUrl, userName) {
+            const videoId = extractVideoId(videoUrl);
+
+            if (videoId && player && typeof player.loadVideoById === 'function') {
                 player.loadVideoById(videoId);
-                document.getElementById('currentUser').textContent = videoQueue[currentVideoIndex].phone;
+                document.getElementById('currentUser').textContent = userName;
                 document.getElementById('currentVideoUrl').textContent = videoUrl;
             } else {
-                console.error('Player is not ready yet.');
+                console.error('URL do YouTube inválida ou player não pronto:', videoUrl);
+                document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
+                document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
+                if (player && typeof player.stopVideo === 'function') {
+                    player.stopVideo();
+                }
             }
         }
 
@@ -135,13 +347,15 @@
             if (event.data === YT.PlayerState.ENDED) {
                 currentVideoIndex++;
                 if (currentVideoIndex < videoQueue.length) {
-                    updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl);
+                    updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl, videoQueue[currentVideoIndex].phone);
                 } else {
-                    currentVideoIndex = 0;
+                    currentVideoIndex = 0; 
                     if (videoQueue.length > 0) {
-                        updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl);
+                        updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl, videoQueue[currentVideoIndex].phone);
                     } else {
-                        player.stopVideo();
+                        if (player && typeof player.stopVideo === 'function') {
+                            player.stopVideo();
+                        }
                         document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
                         document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
                     }
@@ -149,110 +363,201 @@
             }
         }
 
-        window.onload = loadVideoQueue;
-
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('videoPlayer', {
-                height: '315',
-                width: '560',
+                height: '100%',
+                width: '100%',
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 1,
+                    'modestbranding': 1,
+                    'rel': 0
+                },
                 events: {
                     'onReady': (event) => {
-                        loadVideoQueue();
-                        if (videoQueue.length > 0) {
-                            updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl);
-                        }
+                        loadVideoQueue(); // Chamar loadVideoQueue APENAS quando o player está pronto
                     },
                     'onStateChange': onPlayerStateChange
                 }
             });
         }
-        // Funções do Modal
+
         function openModal() {
-            document.getElementById('modal').style.display = 'block';
+            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('adminName').focus();
         }
 
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
-        }
-
-        function openRemoveModal() {
-            document.getElementById('removeModal').style.display = 'block';
-        }
-
-        function closeRemoveModal() {
-            document.getElementById('removeModal').style.display = 'none';
-        }
-
-        function clearQueue() {
-            const adminName = document.getElementById('adminName').value;
-            const password = document.getElementById('clearPassword').value;
-
-            // Senhas corretas
-            const adminCredentials = {
-                'Joao': 'pebinha',
-                'HaazR': 'Tod'
-            };
-
-            if (adminCredentials[adminName] === password) {
-                videoQueue = []; // Limpa a fila de vídeos
-                document.getElementById('videoList').innerHTML = ''; // Limpa a lista exibida
-                document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
-                document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
-                alert('Fila limpa com sucesso!');
-                closeModal(); // Fecha o modal após limpar
-            } else {
-                alert('Nome ou senha incorretos. Tente novamente.');
-            }
-
-            // Limpa os campos
             document.getElementById('adminName').value = '';
             document.getElementById('clearPassword').value = '';
         }
 
-        function removeVideo() {
-            const adminName = document.getElementById('removeAdminName').value;
-            const password = document.getElementById('removePassword').value;
+        function openRemoveModalWithId(id) {
+            videoToRemoveId = id;
+            document.getElementById('removeModal').style.display = 'flex';
+            document.getElementById('removeAdminName').focus();
+        }
 
-            // Senhas corretas
+        function closeRemoveModal() {
+            document.getElementById('removeModal').style.display = 'none';
+            document.getElementById('removeAdminName').value = '';
+            document.getElementById('removePassword').value = '';
+            videoToRemoveId = null;
+        }
+
+        async function clearQueue() {
+            const adminName = document.getElementById('adminName').value.trim();
+            const password = document.getElementById('clearPassword').value;
+
             const adminCredentials = {
                 'Joao': 'pebinha',
                 'HaazR': 'Tod'
             };
 
-            if (adminCredentials[adminName] === password) {
-                if (videoToRemoveIndex !== null && videoQueue.length > 0) {
-                    videoQueue.splice(videoToRemoveIndex, 1); // Remove o vídeo da fila
-                    alert('Vídeo removido com sucesso!');
-                    videoToRemoveIndex = null; // Reseta o índice após a remoção
-                    loadVideoQueue(); // Recarrega a lista
-                    closeRemoveModal(); // Fecha o modal após remover
-                } else {
-                    alert('Erro ao remover o vídeo. Tente novamente.');
-                }
-            } else {
-                alert('Nome ou senha incorretos. Tente novamente.');
+            if (!adminName || !password) {
+                showNotification('Por favor, preencha todos os campos.', 'error');
+                return;
             }
 
-            // Limpa os campos
-            document.getElementById('removeAdminName').value = '';
-            document.getElementById('removePassword').value = '';
+            if (adminCredentials[adminName] === password) {
+                toggleLoading('clearQueueBtn', true);
+
+                try {
+                    const response = await fetch('http://localhost:3000/clear-queue', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ adminName, password })
+                    });
+
+                    if (response.ok) {
+                        videoQueue = [];
+                        currentVideoIndex = 0;
+                        if (player && typeof player.stopVideo === 'function') {
+                            player.stopVideo();
+                        }
+                        showNotification('Fila limpa com sucesso!', 'success');
+                        loadVideoQueue(); 
+                        closeModal();
+                    } else {
+                        const errorData = await response.json();
+                        showNotification(`Erro ao limpar a fila: ${errorData.message || 'Credenciais incorretas ou problema no servidor.'}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Erro ao limpar fila:', error);
+                    showNotification('Erro de conexão ao limpar a fila. Certifique-se de que o servidor está rodando.', 'error');
+                } finally {
+                    toggleLoading('clearQueueBtn', false);
+                }
+            } else {
+                showNotification('Nome ou senha incorretos. Tente novamente.', 'error');
+            }
         }
 
+        async function removeVideo() {
+            const adminName = document.getElementById('removeAdminName').value.trim();
+            const password = document.getElementById('removePassword').value;
 
-        // Adiciona evento para alternar a visibilidade da senha
+            const adminCredentials = {
+                'Joao': 'pebinha',
+                'HaazR': 'Tod'
+            };
+
+            if (!adminName || !password) {
+                showNotification('Por favor, preencha todos os campos.', 'error');
+                return;
+            }
+
+            if (adminCredentials[adminName] === password) {
+                if (videoToRemoveId !== null) {
+                    toggleLoading('removeVideoBtn', true);
+
+                    try {
+                        const response = await fetch(`http://localhost:3000/remove-video/${videoToRemoveId}`, {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ adminName, password })
+                        });
+
+                        if (response.ok) {
+                            showNotification('Vídeo removido com sucesso!', 'success');
+                            
+                            const removedLocalIndex = videoQueue.findIndex(video => video.id === videoToRemoveId);
+                            if (removedLocalIndex !== -1) {
+                                videoQueue.splice(removedLocalIndex, 1);
+                                if (removedLocalIndex < currentVideoIndex) {
+                                    currentVideoIndex--;
+                                } else if (removedLocalIndex === currentVideoIndex) {
+                                    if (videoQueue.length > 0) { 
+                                        currentVideoIndex = Math.min(currentVideoIndex, videoQueue.length - 1);
+                                        updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl, videoQueue[currentVideoIndex].phone);
+                                    } else {
+                                        if (player && typeof player.stopVideo === 'function') {
+                                            player.stopVideo();
+                                        }
+                                        document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
+                                        document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
+                                    }
+                                }
+                            }
+
+                            loadVideoQueue(); 
+                            closeRemoveModal();
+                        } else {
+                            const errorData = await response.json();
+                            showNotification(`Erro ao remover o vídeo: ${errorData.message || 'Credenciais incorretas ou problema no servidor.'}`, 'error');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao remover vídeo:', error);
+                        showNotification('Erro de conexão ao remover o vídeo. Certifique-se de que o servidor está rodando.', 'error');
+                    } finally {
+                        toggleLoading('removeVideoBtn', false);
+                    }
+                } else {
+                    showNotification('Nenhum vídeo selecionado para remoção.', 'error');
+                }
+            } else {
+                showNotification('Nome ou senha incorretos. Tente novamente.', 'error');
+            }
+        }
+
         document.getElementById('togglePassword').addEventListener('click', function () {
             const passwordField = document.getElementById('clearPassword');
             const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordField.setAttribute('type', type);
-            this.textContent = type === 'password' ? '👁️' : '🙈'; 
+            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
         });
 
-        // Adiciona evento para alternar a visibilidade da senha de remoção
         document.getElementById('toggleRemovePassword').addEventListener('click', function () {
             const passwordField = document.getElementById('removePassword');
             const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordField.setAttribute('type', type);
-            this.textContent = type === 'password' ? '👁️' : '🙈'; 
+            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+
+        window.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal();
+                closeRemoveModal();
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+                closeRemoveModal();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // A chamada a loadVideoQueue() inicial é agora feita dentro de onYouTubeIframeAPIReady()
+            // para garantir que o player está pronto.
+            
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+                document.body.style.transition = 'opacity 0.5s ease';
+                document.body.style.opacity = '1';
+            }, 100);
         });
     </script>
 </body>
