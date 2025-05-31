@@ -109,6 +109,10 @@
         <span class="close-button" onclick="closeYTSearchModal()">×</span>
         <h3><i class="fab fa-youtube"></i> Buscar Vídeo no YouTube</h3>
         <div class="input-group">
+            <label for="ytSearchName"><i class="fas fa-user"></i> Seu Nome:</label>
+            <input type="text" id="ytSearchName" placeholder="Quem está adicionando?">
+        </div>
+        <div class="input-group">
             <input type="text" id="ytSearchQuery" placeholder="Digite sua busca">
             <button class="btn primary" onclick="searchYouTube()">
                 <i class="fas fa-search"></i> Buscar
@@ -138,15 +142,23 @@ function closeYTSearchModal() {
 }
 
 function selectYouTubeVideo(videoUrl, videoTitle) {
-    // Preenche os campos
-    document.getElementById('videoUrl').value = videoUrl;
-    // Usa o título do vídeo como nome (ou pode pedir para o usuário preencher)
-    document.getElementById('phone').value = videoTitle || "Usuário YouTube";
+    // Obtém o nome que o usuário digitou no modal de busca
+    const userName = document.getElementById('ytSearchName').value.trim();
     
-    // Fecha o modal
+    // Valida se o nome foi preenchido
+    if (!userName) {
+        showNotification('Por favor, digite seu nome no campo indicado.', 'error');
+        return;
+    }
+
+    // Preenche os campos no formulário principal
+    document.getElementById('phone').value = userName;  // Usa o nome digitado pelo usuário
+    document.getElementById('videoUrl').value = videoUrl;
+    
+    // Fecha o modal de busca
     closeYTSearchModal();
     
-    // Aguarda um breve momento para garantir que os campos estão atualizados
+    // Adiciona o vídeo à fila (com pequeno delay para garantir DOM)
     setTimeout(() => {
         addVideo();
     }, 100);

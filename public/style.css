@@ -534,3 +534,22 @@
     padding: 5px 10px;
     font-size: 14px;
 }
+
+.yt-search-modal .input-group {
+    margin-bottom: 15px;
+}
+
+.yt-search-modal .input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #555;
+}
+
+.yt-search-modal .input-group input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
