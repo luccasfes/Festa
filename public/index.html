@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Queue App</title>
+    <title>FlowLink</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://www.youtube.com/iframe_api"></script> 
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header class="app-header">
-            <h1><i class="fas fa-music"></i> Sua Fila de Vídeos <i class="fas fa-headphones"></i></h1>
+            <h1><i class="fas fa-music"></i> FlowLink<i class="fas fa-headphones"></i></h1>
         </header>
 
         <main class="main-layout">
@@ -102,15 +106,36 @@
     </div>
 
     <script>
-        let videoQueue = [];
-        let player;
-        let currentVideoIndex = 0;
-        let videoToRemoveId = null; 
+        // ====================================================================
+        // SUAS CREDENCIAIS DO FIREBASE (já coladas do seu projeto "FlowLink")
+        // Se você não as colou ainda, pegue-as no console do Firebase!
+        // ====================================================================
+        const firebaseConfig = {
+            apiKey: "AIzasyCDlR4XhuwMQ9ZJ9dd2yoctLHfz1vbbYM",
+            authDomain: "flowlink-7fd57.firebaseapp.com",
+            projectId: "flowlink-7fd57",
+            storageBucket: "flowlink-7fd57.appspot.com",
+            messagingSenderId: "1035085936175",
+            appId: "1:1035085936175:web:2732042d77792118b8f8da",
+            measurementId: "G-8ONE1GDVQK"
+        };
 
-        // A API do YouTube Iframe será carregada automaticamente via o script tag no head
-        // e chamará onYouTubeIframeAPIReady quando estiver pronta.
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
 
-        // Mostra notificação
+        // Obtém uma referência para o Realtime Database
+        const database = firebase.database();
+        const videoQueueRef = database.ref('videoQueue');
+
+        let videoQueue = []; // Array local para espelhar a fila do Firebase
+        let player; // Variável para o player do YouTube
+        let videoToRemoveId = null; // ID do vídeo a ser removido (usado no modal de remoção)
+
+        /**
+         * Exibe uma notificação temporária na tela.
+         * @param {string} message - A mensagem a ser exibida.
+         * @param {string} [type='info'] - O tipo da notificação ('info', 'success', 'error').
+         */
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
             const notificationMessage = document.getElementById('notificationMessage');
@@ -124,22 +149,18 @@
             }, 3000);
         }
 
-        // Função para mostrar/ocultar loading
+        /**
+         * Alterna o estado de carregamento de um botão (mostra/oculta um spinner).
+         * @param {string} buttonId - O ID do botão.
+         * @param {boolean} isLoading - True para mostrar o carregamento, false para ocultar.
+         */
         function toggleLoading(buttonId, isLoading) {
             const btn = document.getElementById(buttonId);
             const btnText = btn ? btn.querySelector(`#${buttonId.replace('Btn', 'BtnText')}`) : null;
             const btnLoader = btn ? btn.querySelector(`#${buttonId.replace('Btn', 'BtnLoader')}`) : null;
             
-            if (!btn) {
-                console.error(`Botão com ID ${buttonId} não encontrado.`);
-                return;
-            }
-            if (!btnText) {
-                console.error(`Elemento com ID ${buttonId.replace('Btn', 'BtnText')} (span de texto) não encontrado.`);
-                return;
-            }
-            if (!btnLoader) {
-                console.error(`Elemento com ID ${buttonId.replace('Btn', 'BtnLoader')} (span de carregamento) não encontrado.`);
+            if (!btn || !btnText || !btnLoader) {
+                console.error(`Um ou mais elementos para o botão ${buttonId} não foram encontrados.`);
                 return;
             }
 
@@ -154,6 +175,9 @@
             }
         }
 
+        /**
+         * Adiciona um novo vídeo à fila no Firebase Realtime Database.
+         */
         async function addVideo() {
             const phone = document.getElementById('phone').value.trim();
             const videoUrl = document.getElementById('videoUrl').value.trim();
@@ -172,75 +196,51 @@
             toggleLoading('addVideoBtn', true);
 
             try {
-                const response = await fetch('http://localhost:3000/add-video', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, videoUrl })
+                const newVideoRef = videoQueueRef.push();
+                await newVideoRef.set({
+                    id: newVideoRef.key, 
+                    phone: phone,
+                    videoUrl: videoUrl
                 });
 
-                if (response.ok) {
-                    const newVideoData = await response.json(); 
-                    
-                    if (!newVideoData || !newVideoData.video) {
-                        showNotification('Erro: Resposta do servidor inesperada ao adicionar vídeo.', 'error');
-                        console.error('Erro: newVideoData ou newVideoData.video é undefined', newVideoData);
-                        return; 
-                    }
+                showNotification('Vídeo adicionado com sucesso!', 'success');
+                
+                document.getElementById('phone').value = '';
+                document.getElementById('videoUrl').value = '';
 
-                    showNotification('Vídeo adicionado com sucesso!', 'success');
-                    
-                    const wasQueueEmpty = videoQueue.length === 0;
-                    videoQueue.push(newVideoData.video); 
-                    
-                    const videoList = document.getElementById('videoList');
-                    const emptyMessage = videoList.querySelector('.empty-queue');
-                    if (emptyMessage) {
-                        videoList.removeChild(emptyMessage);
-                    }
-
-                    const listItem = document.createElement('li');
-                    listItem.classList.add('video-item');
-                    listItem.innerHTML = `
-                        <span><strong>${newVideoData.video.phone}:</strong> <a href="${newVideoData.video.videoUrl}" target="_blank">${getVideoTitle(newVideoData.video.videoUrl)}</a></span>
-                        <button class="remove-button" onclick="openRemoveModalWithId(${newVideoData.video.id})" title="Remover vídeo">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    `;
-                    videoList.appendChild(listItem);
-
-                    if ((wasQueueEmpty || videoQueue.length === 1) && player && typeof player.loadVideoById === 'function') {
-                        currentVideoIndex = 0; 
-                        updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl, videoQueue[currentVideoIndex].phone);
-                    }
-
-
-                    document.getElementById('phone').value = '';
-                    document.getElementById('videoUrl').value = '';
-                } else {
-                    const errorData = await response.json();
-                    showNotification(`Erro ao adicionar o vídeo: ${errorData.message || 'Tente novamente.'}`, 'error');
-                }
             } catch (error) {
-                console.error('Erro ao adicionar vídeo:', error);
-                showNotification('Erro de conexão ao adicionar o vídeo. Certifique-se de que o servidor está rodando.', 'error');
+                console.error('Erro ao adicionar vídeo ao Firebase:', error);
+                showNotification('Erro ao adicionar o vídeo. Verifique a conexão com o Firebase.', 'error');
             } finally {
                 toggleLoading('addVideoBtn', false);
             }
         }
 
-        async function loadVideoQueue() {
-            try {
-                const response = await fetch('http://localhost:3000/queue');
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP! status: ${response.status}`);
+        /**
+         * Carrega a fila de vídeos do Firebase Realtime Database e atualiza a UI.
+         * Esta função usa um listener 'value' que é acionado sempre que os dados na referência mudam.
+         */
+        function loadVideoQueue() {
+            videoQueueRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                let fetchedQueue = [];
+
+                if (data) {
+                    fetchedQueue = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    }));
+                    // Opcional: Para garantir a ordem, você pode querer ordenar por alguma propriedade como timestamp, se você a adicionasse.
+                    // Ex: videoQueueRef.push().set({ ..., timestamp: firebase.database.ServerValue.TIMESTAMP });
+                    // fetchedQueue.sort((a, b) => a.timestamp - b.timestamp);
                 }
-                const fetchedQueue = await response.json();
                 
+                videoQueue = fetchedQueue; // Atualiza a fila local
+
                 const videoList = document.getElementById('videoList');
                 videoList.innerHTML = ''; 
 
-                if (fetchedQueue.length === 0) {
-                    videoQueue = []; 
+                if (videoQueue.length === 0) {
                     videoList.innerHTML = '<li class="empty-queue">A fila de vídeos está vazia. Adicione um vídeo!</li>';
                     document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
                     document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
@@ -250,82 +250,75 @@
                     return;
                 }
 
-                let currentPlayingVideoId = null;
-                if (player && typeof player.getVideoData === 'function') {
-                    // Tenta obter o ID do vídeo atualmente em reprodução
-                    try {
-                        currentPlayingVideoId = player.getVideoData().video_id;
-                    } catch (e) {
-                        // Se o player ainda não estiver completamente pronto, getVideoData pode falhar
-                        console.warn("Player.getVideoData() falhou, player pode não estar totalmente pronto.", e);
-                        currentPlayingVideoId = null; // Reiniciar a busca se não conseguir obter o ID
-                    }
-                }
-                
-                videoQueue = fetchedQueue;
-
+                // Preenche a lista na UI
                 videoQueue.forEach((video) => {
                     const listItem = document.createElement('li');
                     listItem.classList.add('video-item');
+                    // CORREÇÃO: Template literals para exibir corretamente nome e URL/título
                     listItem.innerHTML = `
                         <span><strong>${video.phone}:</strong> <a href="${video.videoUrl}" target="_blank">${getVideoTitle(video.videoUrl)}</a></span>
-                        <button class="remove-button" onclick="openRemoveModalWithId(${video.id})" title="Remover vídeo">
+                        <button class="remove-button" onclick="openRemoveModalWithId('${video.id}')" title="Remover vídeo">
                             <i class="fas fa-times"></i>
                         </button>
                     `;
                     videoList.appendChild(listItem);
                 });
 
-                const foundCurrentVideo = videoQueue.find(video => extractVideoId(video.videoUrl) === currentPlayingVideoId);
-                
-                if (foundCurrentVideo && player && typeof player.loadVideoById === 'function' && player.getPlayerState() !== YT.PlayerState.PLAYING) {
-                    // Se o vídeo atual foi encontrado E o player não está a reproduzi-lo (ou está pausado/parado),
-                    // então carregue-o e continue a reprodução do ponto onde parou.
-                    currentVideoIndex = videoQueue.indexOf(foundCurrentVideo);
-                    document.getElementById('currentUser').textContent = foundCurrentVideo.phone;
-                    document.getElementById('currentVideoUrl').textContent = foundCurrentVideo.videoUrl;
-                    // Tentar reproduzir do ponto onde parou, se houver um tempo de reprodução anterior
-                    // (Esta parte exigiria guardar o tempo de reprodução no backend, o que não temos)
-                    // Por agora, vamos apenas garantir que ele carrega o vídeo correto se não estiver a tocar
-                    const expectedVideoId = extractVideoId(foundCurrentVideo.videoUrl);
-                    if (player.getVideoData().video_id !== expectedVideoId) {
-                        player.loadVideoById(expectedVideoId);
-                    } else {
-                        // Se o vídeo já está carregado, apenas garantir que está a tocar se deveria
-                        if (player.getPlayerState() !== YT.PlayerState.PLAYING) {
-                            player.playVideo();
-                        }
+                // Lógica para controlar o player do YouTube com base na fila:
+                let currentlyPlayingVideoIdInPlayer = null;
+                if (player && typeof player.getVideoData === 'function') {
+                    try {
+                        currentlyPlayingVideoIdInPlayer = player.getVideoData().video_id;
+                    } catch (e) {
+                        // Ocorre se o player não está totalmente pronto ou não há vídeo carregado
+                        // console.warn("Player.getVideoData() falhou ou player não está pronto.", e);
                     }
-                } else if (videoQueue.length > 0 && player && typeof player.loadVideoById === 'function') {
-                    // Se não encontrou o vídeo atual (foi removido, ou era o primeiro carregamento),
-                    // e há vídeos na fila, reproduza o primeiro.
-                    currentVideoIndex = 0;
-                    updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl, videoQueue[currentVideoIndex].phone);
-                } else if (videoQueue.length === 0 && player && typeof player.stopVideo === 'function') {
-                    // Se a fila está vazia, pare a reprodução
-                    player.stopVideo();
-                    document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
-                    document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
                 }
 
-            } catch (error) {
-                console.error('Erro ao carregar a fila de vídeos:', error);
-                document.getElementById('videoList').innerHTML = '<li class="error-message">Erro ao carregar a fila de vídeos. Verifique se o servidor está rodando.</li>';
-                showNotification('Erro ao carregar a fila. Verifique a conexão com o servidor.', 'error');
-            }
+                const firstVideoInQueue = videoQueue[0];
+                const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
+
+                // Regra para carregar/iniciar o vídeo:
+                // 1. Se o player está pronto.
+                // 2. Se o ID do vídeo no player é diferente do primeiro na fila.
+                // 3. Se o player não está tocando.
+                if (player && typeof player.loadVideoById === 'function') {
+                    if (currentlyPlayingVideoIdInPlayer !== firstVideoInQueueId || player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                        updateVideoPlayer(firstVideoInQueue.videoUrl, firstVideoInQueue.phone);
+                    }
+                } else {
+                    // Caso o player ainda não esteja inicializado ou não seja uma função
+                    console.warn('Player do YouTube não está pronto para carregar o vídeo.');
+                }
+            });
         }
 
+        /**
+         * Extrai o ID do vídeo de uma URL do YouTube.
+         * @param {string} url - A URL do YouTube.
+         * @returns {string|null} O ID do vídeo ou null se não for uma URL válida.
+         */
         function extractVideoId(url) {
             const regExp = /(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=|embed\/|v\/|)([\w-]{11})(?:\S+)?/i;
             const match = url.match(regExp);
             return (match && match[1]) ? match[1] : null;
         }
 
+        /**
+         * Obtém um título genérico para o vídeo com base no ID.
+         * @param {string} url - A URL do vídeo.
+         * @returns {string} O título do vídeo.
+         */
         function getVideoTitle(url) {
             const videoId = extractVideoId(url);
-            return videoId ? `Vídeo (ID: ${videoId})` : 'Vídeo do YouTube';
+            return videoId ? `Vídeo (ID: ${videoId})` : 'Vídeo do YouTube'; // Ou você pode usar uma API para obter o título real
         }
 
+        /**
+         * Carrega e reproduz um vídeo no player do YouTube.
+         * @param {string} videoUrl - A URL do vídeo a ser carregado.
+         * @param {string} userName - O nome do usuário que adicionou o vídeo.
+         */
         function updateVideoPlayer(videoUrl, userName) {
             const videoId = extractVideoId(videoUrl);
 
@@ -343,26 +336,32 @@
             }
         }
 
+        /**
+         * Função chamada quando o estado do player do YouTube muda.
+         * Se o vídeo terminar, ele remove o vídeo atual da fila do Firebase.
+         * O listener 'value' do Firebase se encarrega de carregar o próximo.
+         * @param {Object} event - O objeto de evento do player do YouTube.
+         */
         function onPlayerStateChange(event) {
             if (event.data === YT.PlayerState.ENDED) {
-                currentVideoIndex++;
-                if (currentVideoIndex < videoQueue.length) {
-                    updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl, videoQueue[currentVideoIndex].phone);
-                } else {
-                    currentVideoIndex = 0; 
-                    if (videoQueue.length > 0) {
-                        updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl, videoQueue[currentVideoIndex].phone);
-                    } else {
-                        if (player && typeof player.stopVideo === 'function') {
-                            player.stopVideo();
-                        }
-                        document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
-                        document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
-                    }
+                if (videoQueue.length > 0) {
+                    const finishedVideoId = videoQueue[0].id; // Remove o primeiro vídeo da fila
+                    videoQueueRef.child(finishedVideoId).remove()
+                        .then(() => {
+                            console.log('Vídeo concluído removido do Firebase.');
+                        })
+                        .catch(error => {
+                            console.error('Erro ao remover vídeo concluído do Firebase:', error);
+                            showNotification('Erro ao remover vídeo concluído.', 'error');
+                        });
                 }
             }
         }
 
+        /**
+         * Função chamada quando a API do YouTube Iframe está pronta.
+         * Inicializa o player e carrega a fila de vídeos.
+         */
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('videoPlayer', {
                 height: '100%',
@@ -382,37 +381,55 @@
             });
         }
 
+        /**
+         * Abre o modal para limpar a fila.
+         */
         function openModal() {
             document.getElementById('modal').style.display = 'flex';
             document.getElementById('adminName').focus();
         }
 
+        /**
+         * Fecha o modal para limpar a fila e limpa os campos.
+         */
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
             document.getElementById('adminName').value = '';
             document.getElementById('clearPassword').value = '';
         }
 
+        /**
+         * Abre o modal para remover um vídeo específico.
+         * @param {string} id - O ID (chave do Firebase) do vídeo a ser removido.
+         */
         function openRemoveModalWithId(id) {
-            videoToRemoveId = id;
+            videoToRemoveId = id; // Armazena o ID do Firebase key, que é uma string
             document.getElementById('removeModal').style.display = 'flex';
             document.getElementById('removeAdminName').focus();
         }
 
+        /**
+         * Fecha o modal para remover um vídeo e limpa os campos.
+         */
         function closeRemoveModal() {
             document.getElementById('removeModal').style.display = 'none';
             document.getElementById('removeAdminName').value = '';
             document.getElementById('removePassword').value = '';
-            videoToRemoveId = null;
+            videoToRemoveId = null; // Reseta o ID do vídeo a ser removido
         }
 
+        /**
+         * Limpa toda a fila de vídeos no Firebase Realtime Database.
+         * Requer credenciais de administrador.
+         */
         async function clearQueue() {
             const adminName = document.getElementById('adminName').value.trim();
             const password = document.getElementById('clearPassword').value;
 
+            // Credenciais de administrador (AINDA HARDCODED - NÃO SEGURO PARA PRODUÇÃO!)
             const adminCredentials = {
                 'Joao': 'pebinha',
-                'HaazR': 'Tod'
+                'HaazR': 'Dez'
             };
 
             if (!adminName || !password) {
@@ -424,28 +441,12 @@
                 toggleLoading('clearQueueBtn', true);
 
                 try {
-                    const response = await fetch('http://localhost:3000/clear-queue', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ adminName, password })
-                    });
-
-                    if (response.ok) {
-                        videoQueue = [];
-                        currentVideoIndex = 0;
-                        if (player && typeof player.stopVideo === 'function') {
-                            player.stopVideo();
-                        }
-                        showNotification('Fila limpa com sucesso!', 'success');
-                        loadVideoQueue(); 
-                        closeModal();
-                    } else {
-                        const errorData = await response.json();
-                        showNotification(`Erro ao limpar a fila: ${errorData.message || 'Credenciais incorretas ou problema no servidor.'}`, 'error');
-                    }
+                    await videoQueueRef.remove();
+                    showNotification('Fila limpa com sucesso!', 'success');
+                    closeModal();
                 } catch (error) {
-                    console.error('Erro ao limpar fila:', error);
-                    showNotification('Erro de conexão ao limpar a fila. Certifique-se de que o servidor está rodando.', 'error');
+                    console.error('Erro ao limpar fila no Firebase:', error);
+                    showNotification('Erro ao limpar a fila. Verifique a conexão com o Firebase.', 'error');
                 } finally {
                     toggleLoading('clearQueueBtn', false);
                 }
@@ -454,10 +455,15 @@
             }
         }
 
+        /**
+         * Remove um vídeo específico da fila no Firebase Realtime Database.
+         * Requer credenciais de administrador.
+         */
         async function removeVideo() {
             const adminName = document.getElementById('removeAdminName').value.trim();
             const password = document.getElementById('removePassword').value;
 
+            // Credenciais de administrador (AINDA HARDCODED - NÃO SEGURO PARA PRODUÇÃO!)
             const adminCredentials = {
                 'Joao': 'pebinha',
                 'HaazR': 'Tod'
@@ -473,43 +479,12 @@
                     toggleLoading('removeVideoBtn', true);
 
                     try {
-                        const response = await fetch(`http://localhost:3000/remove-video/${videoToRemoveId}`, {
-                            method: 'DELETE',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ adminName, password })
-                        });
-
-                        if (response.ok) {
-                            showNotification('Vídeo removido com sucesso!', 'success');
-                            
-                            const removedLocalIndex = videoQueue.findIndex(video => video.id === videoToRemoveId);
-                            if (removedLocalIndex !== -1) {
-                                videoQueue.splice(removedLocalIndex, 1);
-                                if (removedLocalIndex < currentVideoIndex) {
-                                    currentVideoIndex--;
-                                } else if (removedLocalIndex === currentVideoIndex) {
-                                    if (videoQueue.length > 0) { 
-                                        currentVideoIndex = Math.min(currentVideoIndex, videoQueue.length - 1);
-                                        updateVideoPlayer(videoQueue[currentVideoIndex].videoUrl, videoQueue[currentVideoIndex].phone);
-                                    } else {
-                                        if (player && typeof player.stopVideo === 'function') {
-                                            player.stopVideo();
-                                        }
-                                        document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
-                                        document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
-                                    }
-                                }
-                            }
-
-                            loadVideoQueue(); 
-                            closeRemoveModal();
-                        } else {
-                            const errorData = await response.json();
-                            showNotification(`Erro ao remover o vídeo: ${errorData.message || 'Credenciais incorretas ou problema no servidor.'}`, 'error');
-                        }
+                        await videoQueueRef.child(videoToRemoveId).remove();
+                        showNotification('Vídeo removido com sucesso!', 'success');
+                        closeRemoveModal();
                     } catch (error) {
-                        console.error('Erro ao remover vídeo:', error);
-                        showNotification('Erro de conexão ao remover o vídeo. Certifique-se de que o servidor está rodando.', 'error');
+                        console.error('Erro ao remover vídeo do Firebase:', error);
+                        showNotification('Erro ao remover o vídeo. Verifique a conexão com o Firebase.', 'error');
                     } finally {
                         toggleLoading('removeVideoBtn', false);
                     }
@@ -521,6 +496,7 @@
             }
         }
 
+        // Event listeners para alternar a visibilidade da senha nos modais
         document.getElementById('togglePassword').addEventListener('click', function () {
             const passwordField = document.getElementById('clearPassword');
             const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -535,6 +511,7 @@
             this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
         });
 
+        // Fecha os modais se o usuário clicar fora do conteúdo do modal
         window.addEventListener('click', function(event) {
             if (event.target.classList.contains('modal')) {
                 closeModal();
@@ -542,6 +519,7 @@
             }
         });
 
+        // Fecha os modais se o usuário pressionar a tecla 'Escape'
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeModal();
@@ -549,10 +527,8 @@
             }
         });
 
+        // Efeito de fade-in na carga da página
         document.addEventListener('DOMContentLoaded', function() {
-            // A chamada a loadVideoQueue() inicial é agora feita dentro de onYouTubeIframeAPIReady()
-            // para garantir que o player está pronto.
-            
             document.body.style.opacity = '0';
             setTimeout(() => {
                 document.body.style.transition = 'opacity 0.5s ease';
