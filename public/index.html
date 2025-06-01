@@ -48,6 +48,9 @@
                     <h3>Escolha de: <span id="currentUser">Nenhum vídeo em execução</span></h3>
                     <p class="current-url" id="currentVideoUrl">Nenhuma URL disponível</p>
                 </div>
+                <button class="btn primary skip-video-button" onclick="openNextVideoModal()">
+        <i class="fas fa-forward"></i> Pular para o Próximo Vídeo
+    </button>
             </section>
 
             <section class="queue-section card">
@@ -156,6 +159,8 @@
         </button>
     </div>
 </div>
+
+
 <!-- //sessão -->
     <script>
 let currentSessionUser = null;
