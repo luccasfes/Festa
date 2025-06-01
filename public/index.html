@@ -10,6 +10,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="./assets/adminCredentials.js"></script>
 
     <link rel="stylesheet" href="style.css">
@@ -35,9 +36,11 @@
                     <span id="addBtnText">Adicionar à Fila</span>
                     <span id="addBtnLoader" class="loading" style="display: none;"></span>
                 </button>
-                <button class="btn secondary" onclick="openYTSearchModal()">
+                <button class="btn youtube" onclick="openYTSearchModal()">
         <i class="fab fa-youtube"></i> Buscar no YouTube
     </button>
+    
+
             </section>
 
             <section class="video-player-section card">
@@ -613,13 +616,52 @@ function displayYouTubeResults(videos) {
          * O listener 'value' do Firebase se encarrega de carregar o próximo.
          * @param {Object} event - O objeto de evento do player do YouTube.
          */
+        let lastKnownTime = 0;
+let timeCheckInterval;
+
+function startProgressMonitor() {
+    if (timeCheckInterval) {
+        clearInterval(timeCheckInterval);
+    }
+
+    timeCheckInterval = setInterval(() => {
+        if (player && typeof player.getCurrentTime === 'function' && player.getPlayerState() === YT.PlayerState.PLAYING) {
+            const currentTime = player.getCurrentTime();
+            const duration = player.getDuration();
+
+            const jumpThreshold = 5; // Se avançar mais que 5s
+            const remainingTimeThreshold = 7; // E estiver nos últimos 5s
+
+            const jumped = currentTime > lastKnownTime + jumpThreshold;
+            const nearEnd = currentTime >= duration - remainingTimeThreshold && currentTime < duration;
+
+            if (jumped && !nearEnd) {
+                console.log('Detectado adiantamento no vídeo.');
+            } else if (jumped && nearEnd) {
+                // ← ADIANTAMENTO PARA PERTO DO FINAL DETECTADO
+                console.log('Detectado adiantamento para o final do vídeo.');
+
+                player.pauseVideo();
+                player.seekTo(lastKnownTime + 1, true);
+                showNotification('Você não pode adiantar o vídeo até o final.', 'error');
+
+                return; // ← NÃO ATUALIZA lastKnownTime!
+            }
+
+            // Só atualiza se não houver adiantamento suspeito
+            lastKnownTime = currentTime;
+        }
+    }, 1000);
+}
+
+
        function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.ENDED) {
         const currentTime = player.getCurrentTime();
         const duration = player.getDuration();
         // Definimos uma tolerância. Se o vídeo terminou dentro, digamos,
         // dos últimos 1.5 segundos da duração total, consideramos que foi um fim natural.
-        const naturalEndTolerance = 1.5; // Ajuste este valor se necessário (0.5 a 2 segundos é um bom ponto de partida)
+        const naturalEndTolerance = 0.5; // Se você quer que o vídeo só pule se realmente chegar ao fim exato // Ajuste este valor se necessário (0.5 a 2 segundos é um bom ponto de partida)
 
         // Se o tempo atual estiver muito próximo da duração total, consideramos um fim natural.
         if (duration - currentTime <= naturalEndTolerance) {

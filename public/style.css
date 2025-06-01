@@ -581,3 +581,27 @@
     font-size: 13px;
     height: auto;
 }
+
+.btn.youtube {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+    background-color: #FF0000; /* cor do YouTube */
+    color: white;
+    width: 100%;
+}
+
+.btn.youtube:hover {
+    background-color: #cc0000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
