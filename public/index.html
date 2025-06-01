@@ -534,8 +534,28 @@ function displayYouTubeResults(videos) {
         const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
 
         if (player && typeof player.loadVideoById === 'function') {
-            if (currentlyPlayingVideoIdInPlayer !== firstVideoInQueueId || 
-                player.getPlayerState() !== YT.PlayerState.PLAYING) {
+            const firstVideoInQueue = videoQueue[0];
+            const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
+
+            // Obter o ID do vídeo atualmente carregado no player, se houver
+            let currentlyLoadedVideoId = null;
+            if (player.getVideoData && typeof player.getVideoData === 'function') {
+                try {
+                    currentlyLoadedVideoId = player.getVideoData().video_id;
+                } catch (e) {
+                    console.warn("Player.getVideoData() falhou ou player não está pronto para obter dados do vídeo:", e);
+                }
+            }
+
+            // Apenas carregue um novo vídeo se:
+            // 1. Não houver nenhum vídeo carregado no player (início).
+            // 2. O ID do primeiro vídeo na fila for diferente do vídeo atualmente carregado.
+            // 3. (Opcional, mas recomendado) O player não estiver no estado de "playing" E o vídeo que deveria tocar for o primeiro da fila
+            //    Isso serve para garantir que ele reinicie se o vídeo atual for o certo, mas ele parou por algum motivo (erro, etc.)
+            if (currentlyLoadedVideoId === null || 
+                currentlyLoadedVideoId !== firstVideoInQueueId ||
+                (player.getPlayerState() !== YT.PlayerState.PLAYING && currentlyLoadedVideoId === firstVideoInQueueId)
+                ) {
                 updateVideoPlayer(firstVideoInQueue.videoUrl, firstVideoInQueue.phone);
             }
         } else {
