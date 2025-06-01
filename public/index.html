@@ -589,24 +589,53 @@ function displayYouTubeResults(videos) {
          */
        function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.ENDED) {
-        // Quando o vídeo termina (naturalmente ou por arrastar a barra)
+        const currentTime = player.getCurrentTime();
+        const duration = player.getDuration();
+        // Definimos uma tolerância. Se o vídeo terminou dentro, digamos,
+        // dos últimos 1.5 segundos da duração total, consideramos que foi um fim natural.
+        const naturalEndTolerance = 1.5; // Ajuste este valor se necessário (0.5 a 2 segundos é um bom ponto de partida)
 
-        // 1. Pare o vídeo
-        if (player && typeof player.stopVideo === 'function') {
-            player.stopVideo();
+        // Se o tempo atual estiver muito próximo da duração total, consideramos um fim natural.
+        if (duration - currentTime <= naturalEndTolerance) {
+            console.log('Vídeo terminou naturalmente. Avançando para o próximo...');
+            // Lógica para avanço automático (fim natural)
+            if (videoQueue.length > 0) {
+                const firstVideoInQueue = videoQueue[0];
+                const currentPlayingVideoIdInPlayer = player.getVideoData().video_id;
+                const expectedVideoIdInQueue = extractVideoId(firstVideoInQueue.videoUrl);
+
+                // Garante que o vídeo que terminou é o primeiro da fila antes de remover
+                if (currentPlayingVideoIdInPlayer === expectedVideoIdInQueue) {
+                    videoQueueRef.child(firstVideoInQueue.id).remove()
+                        .then(() => {
+                            console.log('Vídeo atual removido da fila automaticamente (fim natural).');
+                            // O listener do Firebase (loadVideoQueue) cuidará de carregar o próximo
+                        })
+                        .catch(error => {
+                            console.error('Erro ao remover vídeo automaticamente do Firebase:', error);
+                            showNotification('Erro ao avançar o vídeo automaticamente. Tente novamente.', 'error');
+                        });
+                } else {
+                    console.warn('O vídeo que terminou não é o primeiro da fila esperada. Nenhuma remoção automática.');
+                }
+            } else {
+                console.log('Fila vazia, não há vídeos para remover automaticamente.');
+                // Opcional: Pare o player se a fila estiver vazia
+                if (player && typeof player.stopVideo === 'function') {
+                    player.stopVideo();
+                }
+            }
+        } else {
+            // Este bloco será executado se o vídeo atingiu o estado ENDED,
+            // mas o tempo atual estava significativamente longe do final (ou seja, foi adiantado).
+            console.log('Vídeo foi adiantado/pulado para o fim. NÃO avançando automaticamente. Tempo atual:', currentTime, 'Duração:', duration);
+            showNotification('O vídeo atual foi adiantado. Por favor, use o botão "Próximo Vídeo" e as credenciais de administrador para avançar a fila.', 'info');
+            
+            // É uma boa prática parar o player para que ele não tente reiniciar ou loop se autoplay estiver ativado
+            if (player && typeof player.stopVideo === 'function') {
+                player.stopVideo();
+            }
         }
-        
-        // 2. CHAME O MODAL DO ADMINISTRADOR AQUI!
-        openNextVideoModal(); 
-
-        // Opcional: Você pode manter uma notificação rápida se quiser,
-        // mas o modal já serve como aviso principal.
-        showNotification('O vídeo atual terminou. Por favor, insira as credenciais de administrador para avançar.', 'info');
-        
-        // *** IMPORTANTE ***
-        // REMOVA QUALQUER LÓGICA DE REMOÇÃO AUTOMÁTICA DO VÍDEO DO FIREBASE AQUI.
-        // O avanço (e a remoção do vídeo da fila) agora será controlado APENAS
-        // pela função 'playNextVideo()' (que é chamada quando o admin preenche o modal).
     }
 }
 
@@ -650,7 +679,7 @@ async function playNextVideo() {
     const adminName = document.getElementById('nextAdminName').value.trim();
     const password = document.getElementById('nextPassword').value;
 
-    // Credenciais de administrador (ainda hardcoded - LEIA A NOTA DE SEGURANÇA ABAIXO!)
+    // Credenciais de administrador (AINDA HARDCODED - LEIA A NOTA DE SEGURANÇA ABAIXO!)
     const adminCredentials = {
         'Joao': 'pebinha',
         'HaazR': 'Dez'
@@ -662,12 +691,15 @@ async function playNextVideo() {
     }
 
     if (adminCredentials[adminName] === password) {
-        if (videoToAdvanceId !== null) {
-            toggleLoading('playNextVideoBtn', true); // Ativa o loader do botão
+        if (videoQueue.length > 0) { // Verifica se há vídeos na fila para pular
+            toggleLoading('playNextVideoBtn', true);
 
             try {
                 // Remove o vídeo atual (o primeiro da fila) do Firebase
-                await videoQueueRef.child(videoToAdvanceId).remove();
+                // O ID do vídeo a ser removido já foi definido em openNextVideoModal()
+                const idToRemove = videoQueue[0].id; // Sempre remove o primeiro
+                await videoQueueRef.child(idToRemove).remove();
+                
                 showNotification('Avançando para o próximo vídeo!', 'success');
                 closeNextVideoModal(); // Fecha o modal após o sucesso
                 // O listener do Firebase (loadVideoQueue) irá detectar a mudança e carregar o próximo vídeo automaticamente
@@ -675,10 +707,11 @@ async function playNextVideo() {
                 console.error('Erro ao avançar vídeo no Firebase:', error);
                 showNotification('Erro ao avançar o vídeo. Verifique a conexão com o Firebase.', 'error');
             } finally {
-                toggleLoading('playNextVideoBtn', false); // Desativa o loader
+                toggleLoading('playNextVideoBtn', false);
             }
         } else {
-            showNotification('Nenhum vídeo selecionado para avançar. A fila pode estar vazia.', 'error');
+            showNotification('A fila está vazia. Não há próximo vídeo para avançar.', 'info');
+            closeNextVideoModal(); // Fecha o modal se a fila estiver vazia
         }
     } else {
         showNotification('Nome de admin ou senha incorretos. Tente novamente.', 'error');
