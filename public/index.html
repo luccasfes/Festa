@@ -10,6 +10,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="./assets/adminCredentials.js"></script>
 
     <link rel="stylesheet" href="style.css">
 </head>
@@ -685,10 +686,7 @@ async function playNextVideo() {
     const password = document.getElementById('nextPassword').value;
 
     // Credenciais de administrador (AINDA HARDCODED - LEIA A NOTA DE SEGURANÇA ABAIXO!)
-    const adminCredentials = {
-        'Joao': 'pebinha',
-        'HaazR': 'Dez'
-    };
+    
 
     if (!adminName || !password) {
         showNotification('Por favor, preencha o nome e a senha de administrador.', 'error');
@@ -799,10 +797,7 @@ document.getElementById('toggleNextPassword').addEventListener('click', function
             const password = document.getElementById('clearPassword').value;
 
             // Credenciais de administrador (AINDA HARDCODED - NÃO SEGURO PARA PRODUÇÃO!)
-            const adminCredentials = {
-                'Joao': 'pebinha',
-                'HaazR': 'Dez'
-            };
+            
 
             if (!adminName || !password) {
                 showNotification('Por favor, preencha todos os campos.', 'error');
@@ -836,10 +831,7 @@ document.getElementById('toggleNextPassword').addEventListener('click', function
             const password = document.getElementById('removePassword').value;
 
             // Credenciais de administrador (AINDA HARDCODED - NÃO SEGURO PARA PRODUÇÃO!)
-            const adminCredentials = {
-                'Joao': 'pebinha',
-                'HaazR': 'Dez'
-            };
+           
 
             if (!adminName || !password) {
                 showNotification('Por favor, preencha todos os campos.', 'error');
