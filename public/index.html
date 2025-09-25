@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlowLink</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://www.youtube.com/iframe_api"></script> 
+    <script src="https://www.youtube.com/iframe_api"></script>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="./assets/adminCredentials.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <header class="app-header">
@@ -37,9 +40,9 @@
                     <span id="addBtnLoader" class="loading" style="display: none;"></span>
                 </button>
                 <button class="btn youtube" onclick="openYTSearchModal()">
-        <i class="fab fa-youtube"></i> Buscar no YouTube
-    </button>
-    
+                    <i class="fab fa-youtube"></i> Buscar no YouTube
+                </button>
+
 
             </section>
 
@@ -53,8 +56,8 @@
                     <p class="current-url" id="currentVideoUrl">Nenhuma URL disponível</p>
                 </div>
                 <button class="btn primary skip-video-button" onclick="openNextVideoModal()">
-        <i class="fas fa-forward"></i> Pular para o Próximo Vídeo
-    </button>
+                    <i class="fas fa-forward"></i> Pular para o Próximo Vídeo
+                </button>
             </section>
 
             <section class="queue-section card">
@@ -75,8 +78,8 @@
             <h3><i class="fas fa-trash-alt"></i> Limpar Fila</h3>
             <p>Digite seu nome e a senha para limpar a fila.</p>
             <div class="input-group">
-                <label for="adminName"><i class="fas fa-user-shield"></i> Nome do Admin:</label>
-                <input type="text" id="adminName" placeholder="Seu nome" required>
+                <label for="adminName"><i class="fas fa-user-shield"></i> E-mail do Admin:</label>
+                <input type="email" id="adminName" placeholder="Seu e-mail" required>
             </div>
             <div class="input-group password-group">
                 <label for="clearPassword"><i class="fas fa-lock"></i> Senha:</label>
@@ -96,8 +99,8 @@
             <h3><i class="fas fa-trash"></i> Remover Vídeo</h3>
             <p>Digite seu nome e a senha para remover o vídeo selecionado.</p>
             <div class="input-group">
-                <label for="removeAdminName"><i class="fas fa-user-shield"></i> Nome do Admin:</label>
-                <input type="text" id="removeAdminName" placeholder="Seu nome" required>
+                <label for="removeAdminName"><i class="fas fa-user-shield"></i> E-mail do Admin:</label>
+                <input type="email" id="removeAdminName" placeholder="Seu e-mail" required>
             </div>
             <div class="input-group password-group">
                 <label for="removePassword"><i class="fas fa-lock"></i> Senha:</label>
@@ -112,210 +115,210 @@
     </div>
 
     <div id="ytSearchModal" class="modal">
-    <div class="modal-content yt-search-modal">
-        <span class="close-button" onclick="closeYTSearchModal()">×</span>
-        <h3><i class="fab fa-youtube"></i> Buscar Vídeo no YouTube</h3>
-        
-        <div class="input-group session-info">
-            <label><i class="fas fa-user"></i> Adicionando como: <strong id="currentSessionUser">-</strong></label>
-            <button class="btn small secondary" onclick="changeUserName()">Alterar</button>
+        <div class="modal-content yt-search-modal">
+            <span class="close-button" onclick="closeYTSearchModal()">×</span>
+            <h3><i class="fab fa-youtube"></i> Buscar Vídeo no YouTube</h3>
+
+            <div class="input-group session-info">
+                <label><i class="fas fa-user"></i> Adicionando como: <strong id="currentSessionUser">-</strong></label>
+                <button class="btn small secondary" onclick="changeUserName()">Alterar</button>
+            </div>
+
+            <div id="userNameInputGroup" class="input-group">
+                <label for="ytSearchName"><i class="fas fa-user"></i> Seu Nome:</label>
+                <input type="text" id="ytSearchName" placeholder="Quem está adicionando?">
+                <button class="btn small primary" onclick="setSessionUser()">Confirmar</button>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="ytSearchQuery" placeholder="Digite sua busca">
+                <button class="btn primary" onclick="searchYouTube()">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </div>
+
+            <div id="ytSearchResults" class="yt-search-results"></div>
         </div>
-        
-        <div id="userNameInputGroup" class="input-group">
-            <label for="ytSearchName"><i class="fas fa-user"></i> Seu Nome:</label>
-            <input type="text" id="ytSearchName" placeholder="Quem está adicionando?">
-            <button class="btn small primary" onclick="setSessionUser()">Confirmar</button>
-        </div>
-        
-        <div class="input-group">
-            <input type="text" id="ytSearchQuery" placeholder="Digite sua busca">
-            <button class="btn primary" onclick="searchYouTube()">
-                <i class="fas fa-search"></i> Buscar
-            </button>
-        </div>
-        
-        <div id="ytSearchResults" class="yt-search-results"></div>
     </div>
-</div>
 
     <div id="notification" class="notification">
         <span id="notificationMessage"></span>
     </div>
 
-<!-- Proxiam faixa -->
+    <!-- Proxiam faixa -->
     <div id="nextVideoModal" class="modal">
-    <div class="modal-content">
-        <span class="close-button" onclick="closeNextVideoModal()">×</span>
-        <h3><i class="fas fa-forward"></i> Próximo Vídeo</h3>
-        <p>Digite seu nome e a senha de administrador para pular para o próximo vídeo.</p>
-        <div class="input-group">
-            <label for="nextAdminName"><i class="fas fa-user-shield"></i> Nome do Admin:</label>
-            <input type="text" id="nextAdminName" placeholder="Seu nome" required>
+        <div class="modal-content">
+            <span class="close-button" onclick="closeNextVideoModal()">×</span>
+            <h3><i class="fas fa-forward"></i> Próximo Vídeo</h3>
+            <p>Digite seu nome e a senha de administrador para pular para o próximo vídeo.</p>
+            <div class="input-group">
+                <label for="nextAdminName"><i class="fas fa-user-shield"></i> E-mail do Admin:</label>
+                <input type="email" id="nextAdminName" placeholder="Seu e-mail" required>
+            </div>
+            <div class="input-group password-group">
+                <label for="nextPassword"><i class="fas fa-lock"></i> Senha:</label>
+                <input type="password" id="nextPassword" placeholder="Senha de administrador" required>
+                <span class="toggle-password" id="toggleNextPassword"><i class="fas fa-eye"></i></span>
+            </div>
+            <button class="btn primary" onclick="playNextVideo()" id="playNextVideoBtn">
+                <span id="playNextBtnText">Confirmar Próximo</span>
+                <span id="playNextBtnLoader" class="loading" style="display: none;"></span>
+            </button>
         </div>
-        <div class="input-group password-group">
-            <label for="nextPassword"><i class="fas fa-lock"></i> Senha:</label>
-            <input type="password" id="nextPassword" placeholder="Senha de administrador" required>
-            <span class="toggle-password" id="toggleNextPassword"><i class="fas fa-eye"></i></span>
-        </div>
-        <button class="btn primary" onclick="playNextVideo()" id="playNextVideoBtn">
-            <span id="playNextBtnText">Confirmar Próximo</span>
-            <span id="playNextBtnLoader" class="loading" style="display: none;"></span>
-        </button>
     </div>
-</div>
 
 
-<!-- //sessão -->
+    <!-- //sessão -->
     <script>
-let currentSessionUser = null;
+        let currentSessionUser = null;
 
-function openYTSearchModal() {
-    document.getElementById('ytSearchModal').style.display = 'flex';
-    document.getElementById('ytSearchQuery').value = '';
-    document.getElementById('ytSearchResults').innerHTML = '';
-    
-    // Mostra a interface apropriada baseada no estado
-    if (currentSessionUser) {
-        document.getElementById('currentSessionUser').textContent = currentSessionUser;
-        document.getElementById('userNameInputGroup').style.display = 'none';
-        document.querySelector('.session-info').style.display = 'flex';
-        document.getElementById('ytSearchQuery').focus();
-    } else {
-        document.getElementById('userNameInputGroup').style.display = 'block';
-        document.querySelector('.session-info').style.display = 'none';
-        document.getElementById('ytSearchName').focus();
-    }
-}
+        function openYTSearchModal() {
+            document.getElementById('ytSearchModal').style.display = 'flex';
+            document.getElementById('ytSearchQuery').value = '';
+            document.getElementById('ytSearchResults').innerHTML = '';
 
-function setSessionUser() {
-    const userName = document.getElementById('ytSearchName').value.trim();
-    
-    if (!userName) {
-        showNotification('Por favor, digite seu nome.', 'error');
-        return;
-    }
-    
-    currentSessionUser = userName;
-    document.getElementById('currentSessionUser').textContent = userName;
-    document.getElementById('userNameInputGroup').style.display = 'none';
-    document.querySelector('.session-info').style.display = 'flex';
-    document.getElementById('ytSearchQuery').focus();
-    
-    // Salva na sessionStorage para persistir entre recarregamentos
-    sessionStorage.setItem('ytSessionUser', userName);
-}
+            // Mostra a interface apropriada baseada no estado
+            if (currentSessionUser) {
+                document.getElementById('currentSessionUser').textContent = currentSessionUser;
+                document.getElementById('userNameInputGroup').style.display = 'none';
+                document.querySelector('.session-info').style.display = 'flex';
+                document.getElementById('ytSearchQuery').focus();
+            } else {
+                document.getElementById('userNameInputGroup').style.display = 'block';
+                document.querySelector('.session-info').style.display = 'none';
+                document.getElementById('ytSearchName').focus();
+            }
+        }
 
-function changeUserName() {
-    currentSessionUser = null;
-    sessionStorage.removeItem('ytSessionUser');
-    document.getElementById('ytSearchName').value = '';
-    document.getElementById('userNameInputGroup').style.display = 'block';
-    document.querySelector('.session-info').style.display = 'none';
-    document.getElementById('ytSearchName').focus();
-}
+        function setSessionUser() {
+            const userName = document.getElementById('ytSearchName').value.trim();
 
-// Ao carregar a página, verifica se há um nome salvo
-window.addEventListener('DOMContentLoaded', function() {
-    const savedUser = sessionStorage.getItem('ytSessionUser');
-    if (savedUser) {
-        currentSessionUser = savedUser;
-    }
-});
+            if (!userName) {
+                showNotification('Por favor, digite seu nome.', 'error');
+                return;
+            }
+
+            currentSessionUser = userName;
+            document.getElementById('currentSessionUser').textContent = userName;
+            document.getElementById('userNameInputGroup').style.display = 'none';
+            document.querySelector('.session-info').style.display = 'flex';
+            document.getElementById('ytSearchQuery').focus();
+
+            // Salva na sessionStorage para persistir entre recarregamentos
+            sessionStorage.setItem('ytSessionUser', userName);
+        }
+
+        function changeUserName() {
+            currentSessionUser = null;
+            sessionStorage.removeItem('ytSessionUser');
+            document.getElementById('ytSearchName').value = '';
+            document.getElementById('userNameInputGroup').style.display = 'block';
+            document.querySelector('.session-info').style.display = 'none';
+            document.getElementById('ytSearchName').focus();
+        }
+
+        // Ao carregar a página, verifica se há um nome salvo
+        window.addEventListener('DOMContentLoaded', function () {
+            const savedUser = sessionStorage.getItem('ytSessionUser');
+            if (savedUser) {
+                currentSessionUser = savedUser;
+            }
+        });
     </script>
     <script>
 
         // ====================================================================
-       // Funções para o modal de busca no YouTube
-function openYTSearchModal() {
-    document.getElementById('ytSearchModal').style.display = 'flex';
-    document.getElementById('ytSearchQuery').focus();
-}
+        // Funções para o modal de busca no YouTube
+        function openYTSearchModal() {
+            document.getElementById('ytSearchModal').style.display = 'flex';
+            document.getElementById('ytSearchQuery').focus();
+        }
 
-function closeYTSearchModal() {
-    document.getElementById('ytSearchModal').style.display = 'none';
-    document.getElementById('ytSearchQuery').value = '';
-    document.getElementById('ytSearchResults').innerHTML = '';
-}
+        function closeYTSearchModal() {
+            document.getElementById('ytSearchModal').style.display = 'none';
+            document.getElementById('ytSearchQuery').value = '';
+            document.getElementById('ytSearchResults').innerHTML = '';
+        }
 
-function selectYouTubeVideo(videoUrl, videoTitle) {
-    // Verifica se temos um usuário na sessão
-    if (!currentSessionUser) {
-        showNotification('Por favor, configure seu nome antes de adicionar vídeos.', 'error');
-        // Mostra o campo de nome e foca nele
-        document.getElementById('userNameInputGroup').style.display = 'block';
-        document.querySelector('.session-info').style.display = 'none';
-        document.getElementById('ytSearchName').focus();
-        return;
-    }
-
-    // Preenche os campos no formulário principal automaticamente
-    document.getElementById('phone').value = currentSessionUser;
-    document.getElementById('videoUrl').value = videoUrl;
-    
-    // Não fecha o modal - permite adicionar mais vídeos
-    // Mantém o modal aberto para continuar adicionando
-    
-    // Adiciona o vídeo à fila
-    setTimeout(() => {
-        addVideo();
-        
-        // Feedback visual que o vídeo foi adicionado
-        showNotification(`"${videoTitle}" adicionado por ${currentSessionUser}`, 'success');
-        
-        // Rolagem suave para o resultado adicionado
-        setTimeout(() => {
-            const videoList = document.getElementById('videoList');
-            if (videoList.lastChild) {
-                videoList.lastChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        function selectYouTubeVideo(videoUrl, videoTitle) {
+            // Verifica se temos um usuário na sessão
+            if (!currentSessionUser) {
+                showNotification('Por favor, configure seu nome antes de adicionar vídeos.', 'error');
+                // Mostra o campo de nome e foca nele
+                document.getElementById('userNameInputGroup').style.display = 'block';
+                document.querySelector('.session-info').style.display = 'none';
+                document.getElementById('ytSearchName').focus();
+                return;
             }
-        }, 300);
-    }, 100);
-}
 
-async function searchYouTube() {
-    const query = document.getElementById('ytSearchQuery').value.trim();
-    if (!query) {
-        showNotification('Digite algo para buscar no YouTube', 'error');
-        return;
-    }
+            // Preenche os campos no formulário principal automaticamente
+            document.getElementById('phone').value = currentSessionUser;
+            document.getElementById('videoUrl').value = videoUrl;
 
-    const resultsContainer = document.getElementById('ytSearchResults');
-    resultsContainer.innerHTML = '<div class="loading-yt">Buscando vídeos...</div>';
+            // Não fecha o modal - permite adicionar mais vídeos
+            // Mantém o modal aberto para continuar adicionando
 
-    try {
-        // Substitua pela sua chave de API do YouTube
-        const API_KEY = 'AIzaSyADkfhlsuGQspanjkzd_2ypc023a5Zl4i0';
-        const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(query)}&key=${API_KEY}&type=video`);
-        
-        if (!response.ok) throw new Error('Erro na API do YouTube');
-        
-        const data = await response.json();
-        const videos = data.items.map(item => ({
-            title: item.snippet.title,
-            url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-            thumbnail: item.snippet.thumbnails.default.url
-        }));
-        
-        displayYouTubeResults(videos);
-    } catch (error) {
-        console.error('Erro na busca do YouTube:', error);
-        resultsContainer.innerHTML = '<div class="error-yt">Erro ao buscar vídeos. Tente novamente.</div>';
-    }
-}
+            // Adiciona o vídeo à fila
+            setTimeout(() => {
+                addVideo();
 
-function displayYouTubeResults(videos) {
-    const resultsContainer = document.getElementById('ytSearchResults');
-    resultsContainer.innerHTML = '';
+                // Feedback visual que o vídeo foi adicionado
+                showNotification(`"${videoTitle}" adicionado por ${currentSessionUser}`, 'success');
 
-    if (videos.length === 0) {
-        resultsContainer.innerHTML = '<div class="empty-yt">Nenhum vídeo encontrado.</div>';
-        return;
-    }
+                // Rolagem suave para o resultado adicionado
+                setTimeout(() => {
+                    const videoList = document.getElementById('videoList');
+                    if (videoList.lastChild) {
+                        videoList.lastChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }, 300);
+            }, 100);
+        }
 
-    videos.forEach(video => {
-        const videoElement = document.createElement('div');
-        videoElement.className = 'yt-video-result';
-        videoElement.innerHTML = `
+        async function searchYouTube() {
+            const query = document.getElementById('ytSearchQuery').value.trim();
+            if (!query) {
+                showNotification('Digite algo para buscar no YouTube', 'error');
+                return;
+            }
+
+            const resultsContainer = document.getElementById('ytSearchResults');
+            resultsContainer.innerHTML = '<div class="loading-yt">Buscando vídeos...</div>';
+
+            try {
+                // Substitua pela sua chave de API do YouTube
+                const API_KEY = 'AIzaSyADkfhlsuGQspanjkzd_2ypc023a5Zl4i0';
+                const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(query)}&key=${API_KEY}&type=video`);
+
+                if (!response.ok) throw new Error('Erro na API do YouTube');
+
+                const data = await response.json();
+                const videos = data.items.map(item => ({
+                    title: item.snippet.title,
+                    url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
+                    thumbnail: item.snippet.thumbnails.default.url
+                }));
+
+                displayYouTubeResults(videos);
+            } catch (error) {
+                console.error('Erro na busca do YouTube:', error);
+                resultsContainer.innerHTML = '<div class="error-yt">Erro ao buscar vídeos. Tente novamente.</div>';
+            }
+        }
+
+        function displayYouTubeResults(videos) {
+            const resultsContainer = document.getElementById('ytSearchResults');
+            resultsContainer.innerHTML = '';
+
+            if (videos.length === 0) {
+                resultsContainer.innerHTML = '<div class="empty-yt">Nenhum vídeo encontrado.</div>';
+                return;
+            }
+
+            videos.forEach(video => {
+                const videoElement = document.createElement('div');
+                videoElement.className = 'yt-video-result';
+                videoElement.innerHTML = `
             <div class="yt-video-thumbnail">
                 <img src="${video.thumbnail}" alt="${video.title}">
             </div>
@@ -326,19 +329,20 @@ function displayYouTubeResults(videos) {
                 </button>
             </div>
         `;
-        resultsContainer.appendChild(videoElement);
-    });
-}
+                resultsContainer.appendChild(videoElement);
+            });
+        }
 
         // ====================================================================
         const firebaseConfig = {
-            apiKey: "AIzasyCDlR4XhuwMQ9ZJ9dd2yoctLHfz1vbbYM",
+            apiKey: "AIzaSyCDlr4XHXuwWQ9Zj9dd2yoctLhFz1vbbyM",
             authDomain: "flowlink-7fd57.firebaseapp.com",
+            databaseURL: "https://flowlink-7fd57-default-rtdb.firebaseio.com",
             projectId: "flowlink-7fd57",
-            storageBucket: "flowlink-7fd57.appspot.com",
+            storageBucket: "flowlink-7fd57.firebasestorage.app",
             messagingSenderId: "1035085936175",
             appId: "1:1035085936175:web:2732042d77792118b8f8da",
-            measurementId: "G-8ONE1GDVQK"
+            measurementId: "G-B0NE1GDVQK"
         };
 
         // Inicializa o Firebase
@@ -360,11 +364,11 @@ function displayYouTubeResults(videos) {
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
             const notificationMessage = document.getElementById('notificationMessage');
-            
+
             notificationMessage.textContent = message;
-            notification.className = 'notification'; 
+            notification.className = 'notification';
             notification.classList.add(type, 'show');
-            
+
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 3000);
@@ -379,7 +383,7 @@ function displayYouTubeResults(videos) {
             const btn = document.getElementById(buttonId);
             const btnText = btn ? btn.querySelector(`#${buttonId.replace('Btn', 'BtnText')}`) : null;
             const btnLoader = btn ? btn.querySelector(`#${buttonId.replace('Btn', 'BtnLoader')}`) : null;
-            
+
             if (!btn || !btnText || !btnLoader) {
                 console.error(`Um ou mais elementos para o botão ${buttonId} não foram encontrados.`);
                 return;
@@ -419,13 +423,13 @@ function displayYouTubeResults(videos) {
             try {
                 const newVideoRef = videoQueueRef.push();
                 await newVideoRef.set({
-                    id: newVideoRef.key, 
+                    id: newVideoRef.key,
                     phone: phone,
                     videoUrl: videoUrl
                 });
 
                 showNotification('Vídeo adicionado com sucesso!', 'success');
-                
+
                 document.getElementById('phone').value = '';
                 document.getElementById('videoUrl').value = '';
 
@@ -442,71 +446,71 @@ function displayYouTubeResults(videos) {
          * Esta função usa um listener 'value' que é acionado sempre que os dados na referência mudam.
          */
         function loadVideoQueue() {
-    videoQueueRef.on('value', async (snapshot) => {
-        const data = snapshot.val();
-        let fetchedQueue = [];
+            videoQueueRef.on('value', async (snapshot) => {
+                const data = snapshot.val();
+                let fetchedQueue = [];
 
-        if (data) {
-            fetchedQueue = Object.keys(data).map(key => ({
-                id: key,
-                ...data[key]
-            }));
-        }
-        
-        videoQueue = fetchedQueue;
-        const videoList = document.getElementById('videoList');
-        videoList.innerHTML = '';
+                if (data) {
+                    fetchedQueue = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    }));
+                }
 
-        if (videoQueue.length === 0) {
-            videoList.innerHTML = '<li class="empty-queue">A fila de vídeos está vazia. Adicione um vídeo!</li>';
-            document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
-            document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
-            if (player && typeof player.stopVideo === 'function') {
-                player.stopVideo();
-            }
-            return;
-        }
+                videoQueue = fetchedQueue;
+                const videoList = document.getElementById('videoList');
+                videoList.innerHTML = '';
 
-        async function getFormattedVideoTitle(url) {
-    try {
-        // Tenta pegar do cache primeiro
-        const videoId = extractVideoId(url);
-        const cachedTitle = sessionStorage.getItem(`videoTitle_${videoId}`);
-        
-        if (cachedTitle) {
-            return cachedTitle;
-        }
-        
-        // Se não tiver em cache, busca da API do YouTube
-        const API_KEY = 'AIzaSyADkfhlsuGQspanjkzd_2ypc023a5Zl4i0'; // Substitua pela sua chave
-        const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${API_KEY}`);
-        
-        if (response.ok) {
-            const data = await response.json();
-            if (data.items && data.items[0]) {
-                const title = data.items[0].snippet.title;
-                // Armazena no cache para próximas vezes
-                sessionStorage.setItem(`videoTitle_${videoId}`, title);
-                return title;
-            }
-        }
-    } catch (error) {
-        console.error('Erro ao buscar título:', error);
-    }
-    
-    // Fallback: Mostra "Música (ID do vídeo)" se não conseguir o título
-    const videoId = extractVideoId(url);
-    return videoId ? `Música (ID: ${videoId})` : 'Vídeo do YouTube';
-}
-        // Preenche a lista na UI com títulos melhorados
-        for (const video of videoQueue) {
-            const listItem = document.createElement('li');
-            listItem.classList.add('video-item');
-            
-            // Obtém o título formatado
-            const videoTitle = await getFormattedVideoTitle(video.videoUrl);
-            
-            listItem.innerHTML = `
+                if (videoQueue.length === 0) {
+                    videoList.innerHTML = '<li class="empty-queue">A fila de vídeos está vazia. Adicione um vídeo!</li>';
+                    document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
+                    document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
+                    if (player && typeof player.stopVideo === 'function') {
+                        player.stopVideo();
+                    }
+                    return;
+                }
+
+                async function getFormattedVideoTitle(url) {
+                    try {
+                        // Tenta pegar do cache primeiro
+                        const videoId = extractVideoId(url);
+                        const cachedTitle = sessionStorage.getItem(`videoTitle_${videoId}`);
+
+                        if (cachedTitle) {
+                            return cachedTitle;
+                        }
+
+                        // Se não tiver em cache, busca da API do YouTube
+                        const API_KEY = 'AIzaSyADkfhlsuGQspanjkzd_2ypc023a5Zl4i0'; // Substitua pela sua chave
+                        const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${API_KEY}`);
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.items && data.items[0]) {
+                                const title = data.items[0].snippet.title;
+                                // Armazena no cache para próximas vezes
+                                sessionStorage.setItem(`videoTitle_${videoId}`, title);
+                                return title;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Erro ao buscar título:', error);
+                    }
+
+                    // Fallback: Mostra "Música (ID do vídeo)" se não conseguir o título
+                    const videoId = extractVideoId(url);
+                    return videoId ? `Música (ID: ${videoId})` : 'Vídeo do YouTube';
+                }
+                // Preenche a lista na UI com títulos melhorados
+                for (const video of videoQueue) {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('video-item');
+
+                    // Obtém o título formatado
+                    const videoTitle = await getFormattedVideoTitle(video.videoUrl);
+
+                    listItem.innerHTML = `
                 <div class="video-info">
                     <span class="video-title">${videoTitle}</span>
                     <div class="video-meta">
@@ -520,52 +524,52 @@ function displayYouTubeResults(videos) {
                     <i class="fas fa-times"></i>
                 </button>
             `;
-            videoList.appendChild(listItem);
-        }
-
-        // Mantém a lógica do player
-        let currentlyPlayingVideoIdInPlayer = null;
-        if (player && typeof player.getVideoData === 'function') {
-            try {
-                currentlyPlayingVideoIdInPlayer = player.getVideoData().video_id;
-            } catch (e) {
-                console.warn("Player.getVideoData() falhou:", e);
-            }
-        }
-
-        const firstVideoInQueue = videoQueue[0];
-        const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
-
-        if (player && typeof player.loadVideoById === 'function') {
-            const firstVideoInQueue = videoQueue[0];
-            const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
-
-            // Obter o ID do vídeo atualmente carregado no player, se houver
-            let currentlyLoadedVideoId = null;
-            if (player.getVideoData && typeof player.getVideoData === 'function') {
-                try {
-                    currentlyLoadedVideoId = player.getVideoData().video_id;
-                } catch (e) {
-                    console.warn("Player.getVideoData() falhou ou player não está pronto para obter dados do vídeo:", e);
+                    videoList.appendChild(listItem);
                 }
-            }
 
-            // Apenas carregue um novo vídeo se:
-            // 1. Não houver nenhum vídeo carregado no player (início).
-            // 2. O ID do primeiro vídeo na fila for diferente do vídeo atualmente carregado.
-            // 3. (Opcional, mas recomendado) O player não estiver no estado de "playing" E o vídeo que deveria tocar for o primeiro da fila
-            //    Isso serve para garantir que ele reinicie se o vídeo atual for o certo, mas ele parou por algum motivo (erro, etc.)
-            if (currentlyLoadedVideoId === null || 
-                currentlyLoadedVideoId !== firstVideoInQueueId ||
-                (player.getPlayerState() !== YT.PlayerState.PLAYING && currentlyLoadedVideoId === firstVideoInQueueId)
-                ) {
-                updateVideoPlayer(firstVideoInQueue.videoUrl, firstVideoInQueue.phone);
-            }
-        } else {
-            console.warn('Player do YouTube não está pronto para carregar o vídeo.');
+                // Mantém a lógica do player
+                let currentlyPlayingVideoIdInPlayer = null;
+                if (player && typeof player.getVideoData === 'function') {
+                    try {
+                        currentlyPlayingVideoIdInPlayer = player.getVideoData().video_id;
+                    } catch (e) {
+                        console.warn("Player.getVideoData() falhou:", e);
+                    }
+                }
+
+                const firstVideoInQueue = videoQueue[0];
+                const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
+
+                if (player && typeof player.loadVideoById === 'function') {
+                    const firstVideoInQueue = videoQueue[0];
+                    const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
+
+                    // Obter o ID do vídeo atualmente carregado no player, se houver
+                    let currentlyLoadedVideoId = null;
+                    if (player.getVideoData && typeof player.getVideoData === 'function') {
+                        try {
+                            currentlyLoadedVideoId = player.getVideoData().video_id;
+                        } catch (e) {
+                            console.warn("Player.getVideoData() falhou ou player não está pronto para obter dados do vídeo:", e);
+                        }
+                    }
+
+                    // Apenas carregue um novo vídeo se:
+                    // 1. Não houver nenhum vídeo carregado no player (início).
+                    // 2. O ID do primeiro vídeo na fila for diferente do vídeo atualmente carregado.
+                    // 3. (Opcional, mas recomendado) O player não estiver no estado de "playing" E o vídeo que deveria tocar for o primeiro da fila
+                    //    Isso serve para garantir que ele reinicie se o vídeo atual for o certo, mas ele parou por algum motivo (erro, etc.)
+                    if (currentlyLoadedVideoId === null ||
+                        currentlyLoadedVideoId !== firstVideoInQueueId ||
+                        (player.getPlayerState() !== YT.PlayerState.PLAYING && currentlyLoadedVideoId === firstVideoInQueueId)
+                    ) {
+                        updateVideoPlayer(firstVideoInQueue.videoUrl, firstVideoInQueue.phone);
+                    }
+                } else {
+                    console.warn('Player do YouTube não está pronto para carregar o vídeo.');
+                }
+            });
         }
-    });
-}
 
         /**
          * Extrai o ID do vídeo de uma URL do YouTube.
@@ -617,179 +621,180 @@ function displayYouTubeResults(videos) {
          * @param {Object} event - O objeto de evento do player do YouTube.
          */
         let lastKnownTime = 0;
-let timeCheckInterval;
+        let timeCheckInterval;
 
-function startProgressMonitor() {
-    if (timeCheckInterval) {
-        clearInterval(timeCheckInterval);
-    }
-
-    timeCheckInterval = setInterval(() => {
-        if (player && typeof player.getCurrentTime === 'function' && player.getPlayerState() === YT.PlayerState.PLAYING) {
-            const currentTime = player.getCurrentTime();
-            const duration = player.getDuration();
-
-            const jumpThreshold = 5; // Se avançar mais que 5s
-            const remainingTimeThreshold = 7; // E estiver nos últimos 5s
-
-            const jumped = currentTime > lastKnownTime + jumpThreshold;
-            const nearEnd = currentTime >= duration - remainingTimeThreshold && currentTime < duration;
-
-            if (jumped && !nearEnd) {
-                console.log('Detectado adiantamento no vídeo.');
-            } else if (jumped && nearEnd) {
-                // ← ADIANTAMENTO PARA PERTO DO FINAL DETECTADO
-                console.log('Detectado adiantamento para o final do vídeo.');
-
-                player.pauseVideo();
-                player.seekTo(lastKnownTime + 1, true);
-                showNotification('Você não pode adiantar o vídeo até o final.', 'error');
-
-                return; // ← NÃO ATUALIZA lastKnownTime!
+        function startProgressMonitor() {
+            if (timeCheckInterval) {
+                clearInterval(timeCheckInterval);
             }
 
-            // Só atualiza se não houver adiantamento suspeito
-            lastKnownTime = currentTime;
+            timeCheckInterval = setInterval(() => {
+                if (player && typeof player.getCurrentTime === 'function' && player.getPlayerState() === YT.PlayerState.PLAYING) {
+                    const currentTime = player.getCurrentTime();
+                    const duration = player.getDuration();
+
+                    const jumpThreshold = 5; // Se avançar mais que 5s
+                    const remainingTimeThreshold = 7; // E estiver nos últimos 5s
+
+                    const jumped = currentTime > lastKnownTime + jumpThreshold;
+                    const nearEnd = currentTime >= duration - remainingTimeThreshold && currentTime < duration;
+
+                    if (jumped && !nearEnd) {
+                        console.log('Detectado adiantamento no vídeo.');
+                    } else if (jumped && nearEnd) {
+                        // ← ADIANTAMENTO PARA PERTO DO FINAL DETECTADO
+                        console.log('Detectado adiantamento para o final do vídeo.');
+
+                        player.pauseVideo();
+                        player.seekTo(lastKnownTime + 1, true);
+                        showNotification('Você não pode adiantar o vídeo até o final.', 'error');
+
+                        return; // ← NÃO ATUALIZA lastKnownTime!
+                    }
+
+                    // Só atualiza se não houver adiantamento suspeito
+                    lastKnownTime = currentTime;
+                }
+            }, 1000);
         }
-    }, 1000);
-}
 
 
-       function onPlayerStateChange(event) {
-    if (event.data === YT.PlayerState.ENDED) {
-        const currentTime = player.getCurrentTime();
-        const duration = player.getDuration();
-        // Definimos uma tolerância. Se o vídeo terminou dentro, digamos,
-        // dos últimos 1.5 segundos da duração total, consideramos que foi um fim natural.
-        const naturalEndTolerance = 0.5; // Se você quer que o vídeo só pule se realmente chegar ao fim exato // Ajuste este valor se necessário (0.5 a 2 segundos é um bom ponto de partida)
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                const currentTime = player.getCurrentTime();
+                const duration = player.getDuration();
+                // Definimos uma tolerância. Se o vídeo terminou dentro, digamos,
+                // dos últimos 1.5 segundos da duração total, consideramos que foi um fim natural.
+                const naturalEndTolerance = 0.5; // Se você quer que o vídeo só pule se realmente chegar ao fim exato // Ajuste este valor se necessário (0.5 a 2 segundos é um bom ponto de partida)
 
-        // Se o tempo atual estiver muito próximo da duração total, consideramos um fim natural.
-        if (duration - currentTime <= naturalEndTolerance) {
-            console.log('Vídeo terminou naturalmente. Avançando para o próximo...');
-            // Lógica para avanço automático (fim natural)
-            if (videoQueue.length > 0) {
-                const firstVideoInQueue = videoQueue[0];
-                const currentPlayingVideoIdInPlayer = player.getVideoData().video_id;
-                const expectedVideoIdInQueue = extractVideoId(firstVideoInQueue.videoUrl);
+                // Se o tempo atual estiver muito próximo da duração total, consideramos um fim natural.
+                if (duration - currentTime <= naturalEndTolerance) {
+                    console.log('Vídeo terminou naturalmente. Avançando para o próximo...');
+                    // Lógica para avanço automático (fim natural)
+                    if (videoQueue.length > 0) {
+                        const firstVideoInQueue = videoQueue[0];
+                        const currentPlayingVideoIdInPlayer = player.getVideoData().video_id;
+                        const expectedVideoIdInQueue = extractVideoId(firstVideoInQueue.videoUrl);
 
-                // Garante que o vídeo que terminou é o primeiro da fila antes de remover
-                if (currentPlayingVideoIdInPlayer === expectedVideoIdInQueue) {
-                    videoQueueRef.child(firstVideoInQueue.id).remove()
-                        .then(() => {
-                            console.log('Vídeo atual removido da fila automaticamente (fim natural).');
-                            // O listener do Firebase (loadVideoQueue) cuidará de carregar o próximo
-                        })
-                        .catch(error => {
-                            console.error('Erro ao remover vídeo automaticamente do Firebase:', error);
-                            showNotification('Erro ao avançar o vídeo automaticamente. Tente novamente.', 'error');
-                        });
+                        // Garante que o vídeo que terminou é o primeiro da fila antes de remover
+                        if (currentPlayingVideoIdInPlayer === expectedVideoIdInQueue) {
+                            videoQueueRef.child(firstVideoInQueue.id).remove()
+                                .then(() => {
+                                    console.log('Vídeo atual removido da fila automaticamente (fim natural).');
+                                    // O listener do Firebase (loadVideoQueue) cuidará de carregar o próximo
+                                })
+                                .catch(error => {
+                                    console.error('Erro ao remover vídeo automaticamente do Firebase:', error);
+                                    showNotification('Erro ao avançar o vídeo automaticamente. Tente novamente.', 'error');
+                                });
+                        } else {
+                            console.warn('O vídeo que terminou não é o primeiro da fila esperada. Nenhuma remoção automática.');
+                        }
+                    } else {
+                        console.log('Fila vazia, não há vídeos para remover automaticamente.');
+                        // Opcional: Pare o player se a fila estiver vazia
+                        if (player && typeof player.stopVideo === 'function') {
+                            player.stopVideo();
+                        }
+                    }
                 } else {
-                    console.warn('O vídeo que terminou não é o primeiro da fila esperada. Nenhuma remoção automática.');
+                    // Este bloco será executado se o vídeo atingiu o estado ENDED,
+                    // mas o tempo atual estava significativamente longe do final (ou seja, foi adiantado).
+                    console.log('Vídeo foi adiantado/pulado para o fim. NÃO avançando automaticamente. Tempo atual:', currentTime, 'Duração:', duration);
+                    showNotification('O vídeo atual foi adiantado. Por favor, use o botão "Próximo Vídeo" e as credenciais de administrador para avançar a fila.', 'info');
+
+                    // É uma boa prática parar o player para que ele não tente reiniciar ou loop se autoplay estiver ativado
+                    if (player && typeof player.stopVideo === 'function') {
+                        player.stopVideo();
+                    }
                 }
-            } else {
-                console.log('Fila vazia, não há vídeos para remover automaticamente.');
-                // Opcional: Pare o player se a fila estiver vazia
-                if (player && typeof player.stopVideo === 'function') {
-                    player.stopVideo();
-                }
-            }
-        } else {
-            // Este bloco será executado se o vídeo atingiu o estado ENDED,
-            // mas o tempo atual estava significativamente longe do final (ou seja, foi adiantado).
-            console.log('Vídeo foi adiantado/pulado para o fim. NÃO avançando automaticamente. Tempo atual:', currentTime, 'Duração:', duration);
-            showNotification('O vídeo atual foi adiantado. Por favor, use o botão "Próximo Vídeo" e as credenciais de administrador para avançar a fila.', 'info');
-            
-            // É uma boa prática parar o player para que ele não tente reiniciar ou loop se autoplay estiver ativado
-            if (player && typeof player.stopVideo === 'function') {
-                player.stopVideo();
             }
         }
-    }
-}
 
 
-// Variável para armazenar o ID do vídeo a ser removido (o que acabou de tocar)
-// (Mantenha esta variável no escopo global ou onde 'videoToRemoveId' está)
-let videoToAdvanceId = null; 
+        // Variável para armazenar o ID do vídeo a ser removido (o que acabou de tocar)
+        // (Mantenha esta variável no escopo global ou onde 'videoToRemoveId' está)
+        let videoToAdvanceId = null;
 
-/**
- * Abre o modal para avançar para o próximo vídeo, pedindo credenciais do admin.
- */
-function openNextVideoModal() {
-    // Se a fila estiver vazia, não há próximo vídeo para avançar
-    if (videoQueue.length === 0) {
-        showNotification('A fila está vazia. Não há próximo vídeo para avançar.', 'info');
-        return;
-    }
-    
-    // O ID do vídeo que está atualmente em execução (o primeiro da fila)
-    // será o que será removido quando o admin confirmar.
-    videoToAdvanceId = videoQueue[0].id; 
+        /**
+         * Abre o modal para avançar para o próximo vídeo, pedindo credenciais do admin.
+         */
+        function openNextVideoModal() {
+            // Se a fila estiver vazia, não há próximo vídeo para avançar
+            if (videoQueue.length === 0) {
+                showNotification('A fila está vazia. Não há próximo vídeo para avançar.', 'info');
+                return;
+            }
 
-    document.getElementById('nextVideoModal').style.display = 'flex';
-    document.getElementById('nextAdminName').focus(); // Foca no campo de nome
-}
+            // O ID do vídeo que está atualmente em execução (o primeiro da fila)
+            // será o que será removido quando o admin confirmar.
+            videoToAdvanceId = videoQueue[0].id;
 
-/**
- * Fecha o modal de "Próximo Vídeo" e limpa os campos.
- */
-function closeNextVideoModal() {
-    document.getElementById('nextVideoModal').style.display = 'none';
-    document.getElementById('nextAdminName').value = '';
-    document.getElementById('nextPassword').value = '';
-    videoToAdvanceId = null; // Reseta o ID do vídeo a ser avançado
-}
+            document.getElementById('nextVideoModal').style.display = 'flex';
+            document.getElementById('nextAdminName').focus(); // Foca no campo de nome
+        }
 
-/**
- * Função para avançar para o próximo vídeo na fila, após autenticação do admin.
- */
-async function playNextVideo() {
-    const adminName = document.getElementById('nextAdminName').value.trim();
-    const password = document.getElementById('nextPassword').value;
+        /**
+         * Fecha o modal de "Próximo Vídeo" e limpa os campos.
+         */
+        function closeNextVideoModal() {
+            document.getElementById('nextVideoModal').style.display = 'none';
+            document.getElementById('nextAdminName').value = '';
+            document.getElementById('nextPassword').value = '';
+            videoToAdvanceId = null; // Reseta o ID do vídeo a ser avançado
+        }
 
-    // Credenciais de administrador (AINDA HARDCODED - LEIA A NOTA DE SEGURANÇA ABAIXO!)
-    
+        /**
+         * Função para avançar para o próximo vídeo na fila, após autenticação do admin.
+         */
+        async function playNextVideo() {
+            const adminEmail = document.getElementById('nextAdminName').value.trim();
+            const password = document.getElementById('nextPassword').value;
 
-    if (!adminName || !password) {
-        showNotification('Por favor, preencha o nome e a senha de administrador.', 'error');
-        return;
-    }
+            if (!adminEmail || !password) {
+                showNotification('Por favor, preencha o nome e a senha de administrador.', 'error');
+                return;
+            }
 
-    if (adminCredentials[adminName] === password) {
-        if (videoQueue.length > 0) { // Verifica se há vídeos na fila para pular
+            if (videoQueue.length === 0) {
+                showNotification('A fila está vazia. Não há próximo vídeo para avançar.', 'info');
+                closeNextVideoModal();
+                return;
+            }
+
             toggleLoading('playNextVideoBtn', true);
 
             try {
-                // Remove o vídeo atual (o primeiro da fila) do Firebase
-                // O ID do vídeo a ser removido já foi definido em openNextVideoModal()
-                const idToRemove = videoQueue[0].id; // Sempre remove o primeiro
+                await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
+
+                // O ID do vídeo a ser removido é sempre o primeiro na fila
+                const idToRemove = videoQueue[0].id;
                 await videoQueueRef.child(idToRemove).remove();
-                
+
                 showNotification('Avançando para o próximo vídeo!', 'success');
-                closeNextVideoModal(); // Fecha o modal após o sucesso
-                // O listener do Firebase (loadVideoQueue) irá detectar a mudança e carregar o próximo vídeo automaticamente
+                closeNextVideoModal();
             } catch (error) {
-                console.error('Erro ao avançar vídeo no Firebase:', error);
-                showNotification('Erro ao avançar o vídeo. Verifique a conexão com o Firebase.', 'error');
-            } finally {
-                toggleLoading('playNextVideoBtn', false);
-            }
+        console.error('Erro de autenticação ou ao avançar vídeo:', error);
+        
+        if (error.code === 'auth/wrong-password') {
+            showNotification('Senha incorreta. Por favor, tente novamente.', 'error');
+        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+            showNotification('E-mail não encontrado ou inválido. Tente novamente.', 'error');
         } else {
-            showNotification('A fila está vazia. Não há próximo vídeo para avançar.', 'info');
-            closeNextVideoModal(); // Fecha o modal se a fila estiver vazia
+            showNotification('Erro ao avançar o vídeo. Verifique a conexão.', 'error');
         }
-    } else {
-        showNotification('Nome de admin ou senha incorretos. Tente novamente.', 'error');
+    } finally {
+        toggleLoading('playNextVideoBtn', false);
     }
 }
 
-// Event listener para alternar a visibilidade da senha no modal "Próximo Vídeo"
-document.getElementById('toggleNextPassword').addEventListener('click', function () {
-    const passwordField = document.getElementById('nextPassword');
-    const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
-    passwordField.setAttribute('type', type);
-    this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
-});
+        // Event listener para alternar a visibilidade da senha no modal "Próximo Vídeo"
+        document.getElementById('toggleNextPassword').addEventListener('click', function () {
+            const passwordField = document.getElementById('nextPassword');
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
         /**
          * Função chamada quando a API do YouTube Iframe está pronta.
          * Inicializa o player e carrega a fila de vídeos.
@@ -855,72 +860,73 @@ document.getElementById('toggleNextPassword').addEventListener('click', function
          * Requer credenciais de administrador.
          */
         async function clearQueue() {
-            const adminName = document.getElementById('adminName').value.trim();
-            const password = document.getElementById('clearPassword').value;
+    const adminEmail = document.getElementById('adminName').value.trim();
+    const password = document.getElementById('clearPassword').value;
 
-            // Credenciais de administrador (AINDA HARDCODED - NÃO SEGURO PARA PRODUÇÃO!)
-            
+    if (!adminEmail || !password) {
+        showNotification('Por favor, preencha todos os campos.', 'error');
+        return;
+    }
 
-            if (!adminName || !password) {
-                showNotification('Por favor, preencha todos os campos.', 'error');
-                return;
-            }
+    toggleLoading('clearQueueBtn', true);
 
-            if (adminCredentials[adminName] === password) {
-                toggleLoading('clearQueueBtn', true);
-
-                try {
-                    await videoQueueRef.remove();
-                    showNotification('Fila limpa com sucesso!', 'success');
-                    closeModal();
-                } catch (error) {
-                    console.error('Erro ao limpar fila no Firebase:', error);
-                    showNotification('Erro ao limpar a fila. Verifique a conexão com o Firebase.', 'error');
-                } finally {
-                    toggleLoading('clearQueueBtn', false);
-                }
-            } else {
-                showNotification('Nome ou senha incorretos. Tente novamente.', 'error');
-            }
+    try {
+        await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
+        await videoQueueRef.remove();
+        showNotification('Fila limpa com sucesso!', 'success');
+        closeModal();
+    } catch (error) {
+        console.error('Erro de autenticação ou ao limpar fila:', error);
+        if (error.code === 'auth/wrong-password') {
+            showNotification('Senha incorreta. Por favor, tente novamente.', 'error');
+        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+            showNotification('E-mail não encontrado ou inválido. Tente novamente.', 'error');
+        } else {
+            showNotification('Erro ao limpar a fila. Verifique a conexão.', 'error');
         }
+    } finally {
+        toggleLoading('clearQueueBtn', false);
+    }
+}
 
         /**
          * Remove um vídeo específico da fila no Firebase Realtime Database.
          * Requer credenciais de administrador.
          */
         async function removeVideo() {
-            const adminName = document.getElementById('removeAdminName').value.trim();
-            const password = document.getElementById('removePassword').value;
+    const adminEmail = document.getElementById('removeAdminName').value.trim();
+    const password = document.getElementById('removePassword').value;
 
-            // Credenciais de administrador (AINDA HARDCODED - NÃO SEGURO PARA PRODUÇÃO!)
-           
+    if (!adminEmail || !password) {
+        showNotification('Por favor, preencha todos os campos.', 'error');
+        return;
+    }
 
-            if (!adminName || !password) {
-                showNotification('Por favor, preencha todos os campos.', 'error');
-                return;
-            }
+    if (videoToRemoveId === null) {
+        showNotification('Nenhum vídeo selecionado para remoção.', 'error');
+        return;
+    }
 
-            if (adminCredentials[adminName] === password) {
-                if (videoToRemoveId !== null) {
-                    toggleLoading('removeVideoBtn', true);
+    toggleLoading('removeVideoBtn', true);
 
-                    try {
-                        await videoQueueRef.child(videoToRemoveId).remove();
-                        showNotification('Vídeo removido com sucesso!', 'success');
-                        closeRemoveModal();
-                    } catch (error) {
-                        console.error('Erro ao remover vídeo do Firebase:', error);
-                        showNotification('Erro ao remover o vídeo. Verifique a conexão com o Firebase.', 'error');
-                    } finally {
-                        toggleLoading('removeVideoBtn', false);
-                    }
-                } else {
-                    showNotification('Nenhum vídeo selecionado para remoção.', 'error');
-                }
-            } else {
-                showNotification('Nome ou senha incorretos. Tente novamente.', 'error');
-            }
+    try {
+        await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
+        await videoQueueRef.child(videoToRemoveId).remove();
+        showNotification('Vídeo removido com sucesso!', 'success');
+        closeRemoveModal();
+    } catch (error) {
+        console.error('Erro de autenticação ou ao remover vídeo:', error);
+        if (error.code === 'auth/wrong-password') {
+            showNotification('Senha incorreta. Por favor, tente novamente.', 'error');
+        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+            showNotification('E-mail não encontrado ou inválido. Tente novamente.', 'error');
+        } else {
+            showNotification('Erro ao remover o vídeo. Verifique a conexão.', 'error');
         }
+    } finally {
+        toggleLoading('removeVideoBtn', false);
+    }
+}
 
         // Event listeners para alternar a visibilidade da senha nos modais
         document.getElementById('togglePassword').addEventListener('click', function () {
@@ -938,25 +944,25 @@ document.getElementById('toggleNextPassword').addEventListener('click', function
         });
 
         // Fecha os modais se o usuário clicar fora do conteúdo do modal
-        window.addEventListener('click', function(event) {
-    if (event.target.classList.contains('modal')) {
-        closeModal();
-        closeRemoveModal();
-        closeYTSearchModal(); // Adicione esta linha
-    }
-});
+        window.addEventListener('click', function (event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal();
+                closeRemoveModal();
+                closeYTSearchModal(); // Adicione esta linha
+            }
+        });
 
         // Fecha os modais se o usuário pressionar a tecla 'Escape'
-        document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        closeModal();
-        closeRemoveModal();
-        closeYTSearchModal(); // Adicione esta linha
-    }
-});
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeModal();
+                closeRemoveModal();
+                closeYTSearchModal(); // Adicione esta linha
+            }
+        });
 
         // Efeito de fade-in na carga da página
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             document.body.style.opacity = '0';
             setTimeout(() => {
                 document.body.style.transition = 'opacity 0.5s ease';
@@ -965,4 +971,5 @@ document.getElementById('toggleNextPassword').addEventListener('click', function
         });
     </script>
 </body>
+
 </html>
