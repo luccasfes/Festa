@@ -19,10 +19,20 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
+
 <body>
     <div class="container">
         <header class="app-header">
+            <button class="btn small" id="adminUnlockBtn" onclick="openAdminUnlockModal()">
+                <i class="fas fa-lock"></i> Admin
+            </button>
+            
             <h1><i class="fas fa-music"></i> FlowLink<i class="fas fa-headphones"></i></h1>
+
+            <div class="presence-indicator">
+                <i class="fas fa-users"></i>
+                <span id="userCount">0</span> online
+            </div>
         </header>
 
         <main class="main-layout">
@@ -66,6 +76,9 @@
                     <i class="fas fa-list-ol"></i> Fila de Música
                     <button class="btn danger clear-queue-button" onclick="openModal()">
                         <i class="fas fa-trash-alt"></i> Limpar Fila
+                    </button>
+                    <button class="btn bulk-remove-button" onclick="removeSelectedVideos()" id="bulkRemoveBtn" style="display: none;">
+                        <i class="fas fa-eraser"></i> Remover Selecionados
                     </button>
                 </h2>
                 <ul id="videoList" class="video-queue-list"></ul>
@@ -168,6 +181,44 @@
         </div>
     </div>
 
+    <div id="adminUnlockModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeAdminUnlockModal()">×</span>
+            <h3><i class="fas fa-user-shield"></i> Login de Administrador</h3>
+            <p>Digite suas credenciais para entrar no Modo Admin.</p>
+            <div class="input-group">
+                <label for="adminUnlockName"><i class="fas fa-user-shield"></i> E-mail do Admin:</label>
+                <input type="email" id="adminUnlockName" placeholder="Seu e-mail" required>
+            </div>
+            <div class="input-group password-group">
+                <label for="adminUnlockPassword"><i class="fas fa-lock"></i> Senha:</label>
+                <input type="password" id="adminUnlockPassword" placeholder="Senha de administrador" required>
+                <span class="toggle-password" id="toggleAdminUnlockPassword"><i class="fas fa-eye"></i></span>
+            </div>
+            <button class="btn primary" onclick="loginAdminSession()" id="adminUnlockConfirmBtn">
+                <span id="adminUnlockBtnText">Login</span>
+                <span id="adminUnlockBtnLoader" class="loading" style="display: none;"></span>
+            </button>
+        </div>
+    </div>
+
+    <div id="bulkRemoveConfirmModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeBulkRemoveConfirmModal()">×</span>
+            <h3><i class="fas fa-exclamation-triangle"></i> Confirmar Remoção</h3>
+            <p id="bulkRemoveMessage">Tem certeza que deseja remover os vídeos selecionados?</p>
+            
+            <div class="modal-buttons">
+                <button class="btn secondary" onclick="closeBulkRemoveConfirmModal()">
+                    Cancelar
+                </button>
+                <button class="btn danger" onclick="executeBulkRemove()" id="bulkRemoveConfirmBtn">
+                    <span id="bulkRemoveConfirmBtnText">Remover</span>
+                    <span id="bulkRemoveConfirmBtnLoader" class="loading" style="display: none;"></span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- //sessão -->
     <script>
@@ -207,6 +258,11 @@
 
             // Salva na sessionStorage para persistir entre recarregamentos
             sessionStorage.setItem('ytSessionUser', userName);
+
+            // *** NOVA LINHA: Atualiza o nome na lista de presença ***
+            if (myPresenceRef) {
+                myPresenceRef.update({ name: userName });
+            }
         }
 
         function changeUserName() {
@@ -216,6 +272,11 @@
             document.getElementById('userNameInputGroup').style.display = 'block';
             document.querySelector('.session-info').style.display = 'none';
             document.getElementById('ytSearchName').focus();
+
+            // *** NOVA LINHA: Atualiza o nome para "Visitante" ***
+            if (myPresenceRef) {
+                myPresenceRef.update({ name: 'Visitante' });
+            }
         }
 
         // Ao carregar a página, verifica se há um nome salvo
@@ -352,11 +413,153 @@
         // Obtém uma referência para o Realtime Database
         const database = firebase.database();
         const videoQueueRef = database.ref('videoQueue');
+        // ====================================================================
+        // NOVO: Sistema de Presença em Tempo Real
+        // ====================================================================
+
+        const presenceRef = database.ref('presence');
+        const connectedRef = database.ref('.info/connected');
+        let myPresenceRef = null; // Guardará a nossa própria referência de conexão
+
+        // Monitora o status da conexão com o Firebase
+        connectedRef.on('value', (snap) => {
+            if (snap.val() === true) {
+                // Estamos conectados!
+                console.log('Firebase conectado. Registrando presença.');
+
+                // Pega o nome da sessão, se já existir
+                let userName = sessionStorage.getItem('ytSessionUser') || 'Visitante';
+
+                // Cria uma nova entrada única para este usuário na lista de presença
+                myPresenceRef = presenceRef.push();
+
+                // Define o onDisconnect PRIMEIRO
+                // Isso garante que seremos removidos se o navegador fechar
+                myPresenceRef.onDisconnect().remove();
+
+                // Agora, define nosso estado online com nosso nome
+                myPresenceRef.set({
+                    name: userName,
+                    joinedAt: firebase.database.ServerValue.TIMESTAMP
+                });
+
+            } else {
+                // Estamos desconectados (ou nos desconectando)
+                // O onDisconnect() do servidor cuidará da limpeza.
+                console.log('Firebase desconectado.');
+            }
+        });
+
+        // Agora, vamos ouvir a contagem total de usuários online
+        const userCountElement = document.getElementById('userCount');
+        presenceRef.on('value', (snap) => {
+            // snap.numChildren() conta quantos "filhos" (usuários) existem em /presence
+            const count = snap.numChildren();
+            if (userCountElement) {
+                userCountElement.textContent = count;
+            }
+        });
+        // ====================================================================
+        // Fim do Sistema de Presença
+        // ====================================================================
+
+        // ====================================================================
+        // NOVO: Funções de Sessão de Admin (Login/Logout)
+        // ====================================================================
+
+        function openAdminUnlockModal() {
+            // Se o admin já estiver logado, o botão vira "Logout"
+            if (isAdminLoggedIn) {
+                logoutAdminSession();
+                return; // Não abre o modal
+            }
+            // Se não, abre o modal de login
+            document.getElementById('adminUnlockModal').style.display = 'flex';
+            document.getElementById('adminUnlockName').focus();
+        }
+
+        function closeAdminUnlockModal() {
+            document.getElementById('adminUnlockModal').style.display = 'none';
+            document.getElementById('adminUnlockName').value = '';
+            document.getElementById('adminUnlockPassword').value = '';
+        }
+
+        // NOVO: Fecha o modal de confirmação de remoção em lote
+        function closeBulkRemoveConfirmModal() {
+            document.getElementById('bulkRemoveConfirmModal').style.display = 'none';
+            // Limpa o array de IDs para garantir
+            videoIdsForBulkRemove = [];
+        }
+
+        async function loginAdminSession() {
+            const adminEmail = document.getElementById('adminUnlockName').value.trim();
+            const password = document.getElementById('adminUnlockPassword').value;
+
+            if (!adminEmail || !password) {
+                showNotification('Por favor, preencha e-mail e senha.', 'error');
+                return;
+            }
+
+            toggleLoading('adminUnlockConfirmBtn', true);
+
+            try {
+                // Tenta fazer o login no Firebase Auth
+                await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
+                
+                // SUCESSO!
+                isAdminLoggedIn = true; // Define o estado global
+                const adminBtn = document.getElementById('adminUnlockBtn');
+                adminBtn.classList.add('admin-logged-in'); // Deixa o botão verde
+                adminBtn.innerHTML = '<i class="fas fa-unlock"></i> Admin'; // Muda o ícone
+                
+                showNotification('Modo Admin ATIVADO.', 'success');
+                closeAdminUnlockModal();
+                
+                // *** PARTE 2: Mostra os controles de admin ***
+                document.getElementById('videoList').classList.add('admin-mode');
+                document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
+                
+            } catch (error) {
+                console.error('Erro de autenticação do admin:', error);
+                if (error.code === 'auth/wrong-password') {
+                    showNotification('Senha incorreta.', 'error');
+                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+                    showNotification('E-mail não encontrado ou inválido.', 'error');
+                } else {
+                    showNotification('Erro de autenticação.', 'error');
+                }
+            } finally {
+                toggleLoading('adminUnlockConfirmBtn', false);
+            }
+        }
+        
+        function logoutAdminSession() {
+            isAdminLoggedIn = false; // Desliga o modo admin
+            const adminBtn = document.getElementById('adminUnlockBtn');
+            adminBtn.classList.remove('admin-logged-in'); // Deixa o botão vermelho
+            adminBtn.innerHTML = '<i class="fas fa-lock"></i> Admin'; // Muda o ícone
+            showNotification('Modo Admin DESATIVADO.', 'info');
+            
+            // *** PARTE 2: Esconde os controles de admin ***
+            document.getElementById('videoList').classList.remove('admin-mode');
+            document.getElementById('bulkRemoveBtn').style.display = 'none';
+            // Limpa os checkboxes
+            document.querySelectorAll('.video-select-checkbox').forEach(cb => cb.checked = false);
+        }
+
+        // Adiciona o listener do "olho" da senha para o novo modal
+        document.getElementById('toggleAdminUnlockPassword').addEventListener('click', function () {
+            const passwordField = document.getElementById('adminUnlockPassword');
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
 
         let videoQueue = []; // Array local para espelhar a fila do Firebase
         let player; // Variável para o player do YouTube
         let videoToRemoveId = null; // ID do vídeo a ser removido (usado no modal de remoção)
-
+        let isAdminLoggedIn = false; // NOVO: Estado de login do Admin
+        let videoIdsForBulkRemove = [];
         /**
          * Exibe uma notificação temporária na tela.
          * @param {string} message - A mensagem a ser exibida.
@@ -461,6 +664,14 @@
                 videoQueue = fetchedQueue;
                 const videoList = document.getElementById('videoList');
                 videoList.innerHTML = '';
+                // NOVO: Aplica a classe de admin se estiver logado
+            if (isAdminLoggedIn) {
+                videoList.classList.add('admin-mode');
+            } else {
+                videoList.classList.remove('admin-mode');
+            }
+
+           
 
                 if (videoQueue.length === 0) {
                     videoList.innerHTML = '<li class="empty-queue">A fila de vídeos está vazia. Adicione um vídeo!</li>';
@@ -509,24 +720,28 @@
                     listItem.classList.add('video-item');
 
                     // Obtém o título formatado
-                    const videoTitle = await getFormattedVideoTitle(video.videoUrl);
+                const videoTitle = await getFormattedVideoTitle(video.videoUrl);
 
-                    listItem.innerHTML = `
-                <div class="video-info">
-                    <span class="video-title">${videoTitle}</span>
-                    <div class="video-meta">
-                        <span class="video-added-by">Adicionado por: ${video.phone}</span>
-                        <a href="${video.videoUrl}" target="_blank" class="video-link">
-                            <i class="fab fa-youtube"></i> Assistir
-                        </a>
-                    </div>
+                listItem.innerHTML = `
+            <div class="bulk-delete-controls">
+                <input type="checkbox" class="video-select-checkbox" data-videoid="${video.id}" title="Selecionar para remover">
+            </div>
+
+            <div class="video-info">
+                <span class="video-title">${videoTitle}</span>
+                <div class="video-meta">
+                    <span class="video-added-by">Adicionado por: ${video.phone}</span>
+                    <a href="${video.videoUrl}" target="_blank" class="video-link">
+                        <i class="fab fa-youtube"></i> Assistir
+                    </a>
                 </div>
-                <button class="remove-button" onclick="openRemoveModalWithId('${video.id}')" title="Remover vídeo">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-                    videoList.appendChild(listItem);
-                }
+            </div>
+            <button class="remove-button" onclick="openRemoveModalWithId('${video.id}')" title="Remover vídeo">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+                videoList.appendChild(listItem);
+            }
 
                 // Mantém a lógica do player
                 let currentlyPlayingVideoIdInPlayer = null;
@@ -635,7 +850,7 @@
                     const duration = player.getDuration();
 
                     const jumpThreshold = 5; // Se avançar mais que 5s
-                    const remainingTimeThreshold = 7; // E estiver nos últimos 5s
+                    const remainingTimeThreshold = 50; // E estiver nos últimos 5s
 
                     const jumped = currentTime > lastKnownTime + jumpThreshold;
                     const nearEnd = currentTime >= duration - remainingTimeThreshold && currentTime < duration;
@@ -796,6 +1011,72 @@
             passwordField.setAttribute('type', type);
             this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
         });
+
+        // ====================================================================
+        // NOVO: Função de Remoção em Lote
+        // ====================================================================
+        // Esta função agora APENAS abre o modal de confirmação
+        function removeSelectedVideos() {
+            // Apenas admins logados podem usar
+            if (!isAdminLoggedIn) {
+                showNotification('Você precisa estar no Modo Admin para fazer isso.', 'error');
+                return;
+            }
+
+            // 1. Encontra todos os checkboxes marcados
+            const selectedCheckboxes = document.querySelectorAll('.video-select-checkbox:checked');
+            
+            if (selectedCheckboxes.length === 0) {
+                showNotification('Nenhum vídeo selecionado para remoção.', 'info');
+                return;
+            }
+
+            // 2. Pega os IDs de cada um e salva na variável global
+            // (Substitui a const videoIdsToRemove)
+            videoIdsForBulkRemove = Array.from(selectedCheckboxes).map(cb => cb.dataset.videoid);
+
+            // 3. Prepara e abre o modal de confirmação (Substitui o 'confirm()')
+            // (Isto assume que seu modal tem um <p> com id="bulkRemoveMessage")
+            document.getElementById('bulkRemoveMessage').textContent = `Tem certeza que deseja remover ${videoIdsForBulkRemove.length} vídeos da fila? Esta ação não pode ser desfeita.`;
+            
+            // (Isto assume que seu modal de confirmação tem id="bulkRemoveConfirmModal")
+            document.getElementById('bulkRemoveConfirmModal').style.display = 'flex';
+        }
+
+        // NOVO: Esta função é chamada pelo modal para EXECUTAR a remoção
+        async function executeBulkRemove() {
+            // 1. Pega os IDs da variável global
+            if (videoIdsForBulkRemove.length === 0) {
+                showNotification('Erro: Nenhum vídeo selecionado.', 'error');
+                closeBulkRemoveConfirmModal();
+                return;
+            }
+
+            toggleLoading('bulkRemoveConfirmBtn', true); // Ativa o loading
+
+            // 2. Cria um array de "promessas" de remoção
+            let removePromises = [];
+            videoIdsForBulkRemove.forEach(id => {
+                removePromises.push(videoQueueRef.child(id).remove());
+            });
+
+            // 3. Executa todas as remoções em paralelo
+            try {
+                await Promise.all(removePromises);
+                showNotification(`${videoIdsForBulkRemove.length} vídeos removidos com sucesso.`, 'success');
+            } catch (error) {
+                console.error("Erro ao remover vídeos em lote:", error);
+                showNotification('Ocorreu um erro ao remover os vídeos.', 'error');
+            } finally {
+                toggleLoading('bulkRemoveConfirmBtn', false); // Desativa o loading
+                closeBulkRemoveConfirmModal(); // Fecha o modal e limpa o array
+            }
+        }
+
+
+        /**
+         * Função chamada quando a API do YouTube Iframe está pronta.
+    // ... (o resto da sua função onYouTubeIframeAPIReady começa aqui)
         /**
          * Função chamada quando a API do YouTube Iframe está pronta.
          * Inicializa o player e carrega a fila de vídeos.
@@ -946,21 +1227,27 @@
 
         // Fecha os modais se o usuário clicar fora do conteúdo do modal
         window.addEventListener('click', function (event) {
-            if (event.target.classList.contains('modal')) {
-                closeModal();
-                closeRemoveModal();
-                closeYTSearchModal(); // Adicione esta linha
-            }
-        });
+        if (event.target.classList.contains('modal')) {
+            closeModal();
+            closeRemoveModal();
+            closeYTSearchModal();
+            closeNextVideoModal(); 
+            closeAdminUnlockModal(); 
+            closeBulkRemoveConfirmModal();
+        }
+    });
 
         // Fecha os modais se o usuário pressionar a tecla 'Escape'
         document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape') {
-                closeModal();
-                closeRemoveModal();
-                closeYTSearchModal(); // Adicione esta linha
-            }
-        });
+        if (event.key === 'Escape') {
+            closeModal();
+            closeRemoveModal();
+            closeYTSearchModal();
+            closeNextVideoModal(); 
+            closeAdminUnlockModal(); 
+            closeBulkRemoveConfirmModal();
+        }
+    });
 
         // Efeito de fade-in na carga da página
         document.addEventListener('DOMContentLoaded', function () {

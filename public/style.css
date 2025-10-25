@@ -13,6 +13,98 @@
             --transition: all 0.3s ease;
         }
 
+       .app-header {
+            position: relative;
+            display: flex;
+            justify-content: center; /* Centraliza o título */
+            align-items: center;
+        }
+
+        .presence-indicator {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            color: #eee;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .presence-indicator i {
+            color: #4CAF50; /* Verde "online" */
+        }
+        
+        /* NOVO: Estilo para o botão de admin */
+        #adminUnlockBtn {
+            position: absolute;
+            top: 15px;
+            left: 20px; /* Canto superior esquerdo */
+            background-color: #f44336; /* Vermelho (travado) */
+            border: none;
+            padding: 5px 10px;
+            min-width: 90px; /* Largura mínima */
+        }
+
+        /* Quando o admin logar, o botão fica verde */
+        #adminUnlockBtn.admin-logged-in {
+            background-color: #4CAF50; /* Verde (liberado) */
+        }
+
+        @media (max-width: 600px) {
+            .presence-indicator { display: none; }
+            #adminUnlockBtn { display: none; } /* Esconde em telas pequenas */
+        }
+
+        /* NOVO: Estilos para Remoção em Lote */
+        .video-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .bulk-delete-controls {
+            margin-right: 15px;
+            display: none; /* Escondido por padrão */
+        }
+        
+        .bulk-delete-controls input[type="checkbox"] {
+            transform: scale(1.5); /* Deixa o checkbox maior */
+        }
+
+        .bulk-remove-button {
+            background-color: #f39c12; /* Laranja */
+            margin-left: 10px;
+        }
+
+        /* Quando a lista está em modo admin, mostra os controles */
+        .video-queue-list.admin-mode .bulk-delete-controls {
+            display: block;
+        }
+
+        /* NOVO: Estilos para o modal de confirmação */
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end; /* Alinha botões à direita */
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        #bulkRemoveConfirmModal .modal-content {
+            max-width: 450px; /* Um modal de confirmação pode ser menor */
+        }
+        
+        /* Estilo para o botão 'Cancelar' */
+        .btn.secondary {
+            background-color: #7f8c8d; /* Cinza */
+        }
+        .btn.secondary:hover {
+            background-color: #95a5a6;
+        }
+
         * {
             margin: 0;
             padding: 0;
