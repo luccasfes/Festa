@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 
 <head>
-    <link rel="icon" type="image/x-icon" href="../public/assets/favicon.png">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlowLink</title>
@@ -66,7 +66,7 @@
                     <h3>Escolha de: <span id="currentUser">Nenhum vídeo em execução</span></h3>
                     <p class="current-url" id="currentVideoUrl">Nenhuma URL disponível</p>
                 </div>
-                <button class="btn primary skip-video-button" onclick="openNextVideoModal()">
+                <button class="btn primary skip-video-button" onclick="handleSkipVideo()">
                     <i class="fas fa-forward"></i> Pular para o Próximo Vídeo
                 </button>
             </section>
@@ -930,7 +930,29 @@
 
         // Variável para armazenar o ID do vídeo a ser removido (o que acabou de tocar)
         // (Mantenha esta variável no escopo global ou onde 'videoToRemoveId' está)
-        let videoToAdvanceId = null;
+        
+/**
+         * Função "portão" para pular o vídeo.
+         * Verifica se o admin está logado. Se sim, pula direto.
+         * Se não, abre o modal de autenticação.
+         */
+        function handleSkipVideo() {
+            // Verifica se a fila está vazia
+            if (videoQueue.length === 0) {
+                showNotification('A fila está vazia. Não há próximo vídeo para avançar.', 'info');
+                return;
+            }
+
+            if (isAdminLoggedIn) {
+                // Admin está logado: executa a lógica de pular diretamente
+                console.log('Admin logado. Pulando vídeo...');
+                executeSkipVideo(); // Não precisa de 'await'
+            } else {
+                // Admin não está logado: abre o modal para pedir credenciais
+                console.log('Admin não logado. Abrindo modal de autenticação...');
+                openNextVideoModal();
+            }
+        }
 
         /**
          * Abre o modal para avançar para o próximo vídeo, pedindo credenciais do admin.
@@ -944,7 +966,7 @@
 
             // O ID do vídeo que está atualmente em execução (o primeiro da fila)
             // será o que será removido quando o admin confirmar.
-            videoToAdvanceId = videoQueue[0].id;
+            
 
             document.getElementById('nextVideoModal').style.display = 'flex';
             document.getElementById('nextAdminName').focus(); // Foca no campo de nome
@@ -957,7 +979,7 @@
             document.getElementById('nextVideoModal').style.display = 'none';
             document.getElementById('nextAdminName').value = '';
             document.getElementById('nextPassword').value = '';
-            videoToAdvanceId = null; // Reseta o ID do vídeo a ser avançado
+            
         }
 
         /**
@@ -972,6 +994,8 @@
                 return;
             }
 
+            // A verificação da fila será feita pela executeSkipVideo, 
+            // mas é bom ter aqui para fechar o modal se a fila esvaziou.
             if (videoQueue.length === 0) {
                 showNotification('A fila está vazia. Não há próximo vídeo para avançar.', 'info');
                 closeNextVideoModal();
@@ -981,28 +1005,32 @@
             toggleLoading('playNextVideoBtn', true);
 
             try {
+                // 1. Tenta autenticar
                 await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
 
-                // O ID do vídeo a ser removido é sempre o primeiro na fila
-                const idToRemove = videoQueue[0].id;
-                await videoQueueRef.child(idToRemove).remove();
+                // 2. Se autenticou, executa a lógica de pular
+                const success = await executeSkipVideo(); 
 
-                showNotification('Avançando para o próximo vídeo!', 'success');
-                closeNextVideoModal();
+                // 3. Se a lógica de pular foi bem-sucedida, fecha o modal
+                if (success) {
+                    closeNextVideoModal();
+                }
+                
             } catch (error) {
-        console.error('Erro de autenticação ou ao avançar vídeo:', error);
-        
-        if (error.code === 'auth/wrong-password') {
-            showNotification('Senha incorreta. Por favor, tente novamente.', 'error');
-        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
-            showNotification('E-mail não encontrado ou inválido. Tente novamente.', 'error');
-        } else {
-            showNotification('Erro ao avançar o vídeo. Verifique a conexão.', 'error');
+                console.error('Erro de autenticação ou ao avançar vídeo:', error);
+                
+                if (error.code === 'auth/wrong-password') {
+                    showNotification('Senha incorreta. Por favor, tente novamente.', 'error');
+                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+                    showNotification('E-mail não encontrado ou inválido. Tente novamente.', 'error');
+                } else {
+                    // Erro genérico de autenticação
+                    showNotification('Erro de autenticação.', 'error');
+                }
+            } finally {
+                toggleLoading('playNextVideoBtn', false);
+            }
         }
-    } finally {
-        toggleLoading('playNextVideoBtn', false);
-    }
-}
 
         // Event listener para alternar a visibilidade da senha no modal "Próximo Vídeo"
         document.getElementById('toggleNextPassword').addEventListener('click', function () {
@@ -1011,6 +1039,31 @@
             passwordField.setAttribute('type', type);
             this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
         });
+
+        /**
+         * Lógica central para avançar o vídeo.
+         * Remove o primeiro vídeo da fila.
+         * @returns {Promise<boolean>} - Retorna 'true' se foi bem-sucedido, 'false' se falhou.
+         */
+        async function executeSkipVideo() {
+            if (videoQueue.length === 0) {
+                showNotification('A fila está vazia. Não há próximo vídeo para avançar.', 'info');
+                return false; // Retorna 'false' para indicar falha
+            }
+
+            try {
+                // O ID do vídeo a ser removido é sempre o primeiro na fila
+                const idToRemove = videoQueue[0].id;
+                await videoQueueRef.child(idToRemove).remove();
+
+                showNotification('Avançando para o próximo vídeo!', 'success');
+                return true; // Retorna 'true' para indicar sucesso
+            } catch (error) {
+                console.error('Erro ao avançar vídeo:', error);
+                showNotification('Erro ao avançar o vídeo. Verifique a conexão.', 'error');
+                return false; // Retorna 'false' para indicar falha
+            }
+        }
 
         // ====================================================================
         // NOVO: Função de Remoção em Lote
