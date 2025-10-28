@@ -26,7 +26,7 @@
             <button class="btn small" id="adminUnlockBtn" onclick="openAdminUnlockModal()">
                 <i class="fas fa-lock"></i> Admin
             </button>
-            
+
             <h1><i class="fas fa-music"></i> FlowLink<i class="fas fa-headphones"></i></h1>
 
             <div class="presence-indicator">
@@ -74,10 +74,11 @@
             <section class="queue-section card">
                 <h2>
                     <i class="fas fa-list-ol"></i> Fila de Música
-                    <button class="btn danger clear-queue-button" onclick="openModal()">
+                    <button class="btn danger clear-queue-button" onclick="handleClearQueue()">
                         <i class="fas fa-trash-alt"></i> Limpar Fila
                     </button>
-                    <button class="btn bulk-remove-button" onclick="removeSelectedVideos()" id="bulkRemoveBtn" style="display: none;">
+                    <button class="btn bulk-remove-button" onclick="removeSelectedVideos()" id="bulkRemoveBtn"
+                        style="display: none;">
                         <i class="fas fa-eraser"></i> Remover Selecionados
                     </button>
                 </h2>
@@ -207,7 +208,7 @@
             <span class="close-button" onclick="closeBulkRemoveConfirmModal()">×</span>
             <h3><i class="fas fa-exclamation-triangle"></i> Confirmar Remoção</h3>
             <p id="bulkRemoveMessage">Tem certeza que deseja remover os vídeos selecionados?</p>
-            
+
             <div class="modal-buttons">
                 <button class="btn secondary" onclick="closeBulkRemoveConfirmModal()">
                     Cancelar
@@ -505,20 +506,20 @@
             try {
                 // Tenta fazer o login no Firebase Auth
                 await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
-                
+
                 // SUCESSO!
                 isAdminLoggedIn = true; // Define o estado global
                 const adminBtn = document.getElementById('adminUnlockBtn');
                 adminBtn.classList.add('admin-logged-in'); // Deixa o botão verde
                 adminBtn.innerHTML = '<i class="fas fa-unlock"></i> Admin'; // Muda o ícone
-                
+
                 showNotification('Modo Admin ATIVADO.', 'success');
                 closeAdminUnlockModal();
-                
+
                 // *** PARTE 2: Mostra os controles de admin ***
                 document.getElementById('videoList').classList.add('admin-mode');
                 document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
-                
+
             } catch (error) {
                 console.error('Erro de autenticação do admin:', error);
                 if (error.code === 'auth/wrong-password') {
@@ -532,14 +533,14 @@
                 toggleLoading('adminUnlockConfirmBtn', false);
             }
         }
-        
+
         function logoutAdminSession() {
             isAdminLoggedIn = false; // Desliga o modo admin
             const adminBtn = document.getElementById('adminUnlockBtn');
             adminBtn.classList.remove('admin-logged-in'); // Deixa o botão vermelho
             adminBtn.innerHTML = '<i class="fas fa-lock"></i> Admin'; // Muda o ícone
             showNotification('Modo Admin DESATIVADO.', 'info');
-            
+
             // *** PARTE 2: Esconde os controles de admin ***
             document.getElementById('videoList').classList.remove('admin-mode');
             document.getElementById('bulkRemoveBtn').style.display = 'none';
@@ -665,13 +666,13 @@
                 const videoList = document.getElementById('videoList');
                 videoList.innerHTML = '';
                 // NOVO: Aplica a classe de admin se estiver logado
-            if (isAdminLoggedIn) {
-                videoList.classList.add('admin-mode');
-            } else {
-                videoList.classList.remove('admin-mode');
-            }
+                if (isAdminLoggedIn) {
+                    videoList.classList.add('admin-mode');
+                } else {
+                    videoList.classList.remove('admin-mode');
+                }
 
-           
+
 
                 if (videoQueue.length === 0) {
                     videoList.innerHTML = '<li class="empty-queue">A fila de vídeos está vazia. Adicione um vídeo!</li>';
@@ -720,9 +721,9 @@
                     listItem.classList.add('video-item');
 
                     // Obtém o título formatado
-                const videoTitle = await getFormattedVideoTitle(video.videoUrl);
+                    const videoTitle = await getFormattedVideoTitle(video.videoUrl);
 
-                listItem.innerHTML = `
+                    listItem.innerHTML = `
             <div class="bulk-delete-controls">
                 <input type="checkbox" class="video-select-checkbox" data-videoid="${video.id}" title="Selecionar para remover">
             </div>
@@ -740,8 +741,8 @@
                 <i class="fas fa-times"></i>
             </button>
         `;
-                videoList.appendChild(listItem);
-            }
+                    videoList.appendChild(listItem);
+                }
 
                 // Mantém a lógica do player
                 let currentlyPlayingVideoIdInPlayer = null;
@@ -930,12 +931,12 @@
 
         // Variável para armazenar o ID do vídeo a ser removido (o que acabou de tocar)
         // (Mantenha esta variável no escopo global ou onde 'videoToRemoveId' está)
-        
-/**
-         * Função "portão" para pular o vídeo.
-         * Verifica se o admin está logado. Se sim, pula direto.
-         * Se não, abre o modal de autenticação.
-         */
+
+        /**
+                 * Função "portão" para pular o vídeo.
+                 * Verifica se o admin está logado. Se sim, pula direto.
+                 * Se não, abre o modal de autenticação.
+                 */
         function handleSkipVideo() {
             // Verifica se a fila está vazia
             if (videoQueue.length === 0) {
@@ -966,7 +967,7 @@
 
             // O ID do vídeo que está atualmente em execução (o primeiro da fila)
             // será o que será removido quando o admin confirmar.
-            
+
 
             document.getElementById('nextVideoModal').style.display = 'flex';
             document.getElementById('nextAdminName').focus(); // Foca no campo de nome
@@ -979,7 +980,7 @@
             document.getElementById('nextVideoModal').style.display = 'none';
             document.getElementById('nextAdminName').value = '';
             document.getElementById('nextPassword').value = '';
-            
+
         }
 
         /**
@@ -1009,16 +1010,16 @@
                 await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
 
                 // 2. Se autenticou, executa a lógica de pular
-                const success = await executeSkipVideo(); 
+                const success = await executeSkipVideo();
 
                 // 3. Se a lógica de pular foi bem-sucedida, fecha o modal
                 if (success) {
                     closeNextVideoModal();
                 }
-                
+
             } catch (error) {
                 console.error('Erro de autenticação ou ao avançar vídeo:', error);
-                
+
                 if (error.code === 'auth/wrong-password') {
                     showNotification('Senha incorreta. Por favor, tente novamente.', 'error');
                 } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
@@ -1078,7 +1079,7 @@
 
             // 1. Encontra todos os checkboxes marcados
             const selectedCheckboxes = document.querySelectorAll('.video-select-checkbox:checked');
-            
+
             if (selectedCheckboxes.length === 0) {
                 showNotification('Nenhum vídeo selecionado para remoção.', 'info');
                 return;
@@ -1091,7 +1092,7 @@
             // 3. Prepara e abre o modal de confirmação (Substitui o 'confirm()')
             // (Isto assume que seu modal tem um <p> com id="bulkRemoveMessage")
             document.getElementById('bulkRemoveMessage').textContent = `Tem certeza que deseja remover ${videoIdsForBulkRemove.length} vídeos da fila? Esta ação não pode ser desfeita.`;
-            
+
             // (Isto assume que seu modal de confirmação tem id="bulkRemoveConfirmModal")
             document.getElementById('bulkRemoveConfirmModal').style.display = 'flex';
         }
@@ -1153,6 +1154,18 @@
             });
         }
 
+        function handleClearQueue() {
+            if (isAdminLoggedIn) {
+                // Admin está logado: executa a lógica de limpar diretamente
+                console.log('Admin logado. Limpando fila...');
+                executeClearQueue(); // Não precisa de 'await'
+            } else {
+                // Admin não está logado: abre o modal para pedir credenciais
+                console.log('Admin não logado. Abrindo modal de autenticação...');
+                openModal();
+            }
+        }
+        
         /**
          * Abre o modal para limpar a fila.
          */
@@ -1190,78 +1203,102 @@
             videoToRemoveId = null; // Reseta o ID do vídeo a ser removido
         }
 
+       /**
+         * Lógica central para limpar a fila (sem autenticação).
+         * Remove todos os vídeos da fila.
+         * @returns {Promise<boolean>} - Retorna 'true' se foi bem-sucedido, 'false' se falhou.
+         */
+        async function executeClearQueue() {
+            try {
+                await videoQueueRef.remove();
+                showNotification('Fila limpa com sucesso!', 'success');
+                return true;
+            } catch (error) {
+                console.error('Erro ao limpar fila:', error);
+                showNotification('Erro ao limpar a fila. Verifique a conexão.', 'error');
+                return false;
+            }
+        }
+
         /**
          * Limpa toda a fila de vídeos no Firebase Realtime Database.
-         * Requer credenciais de administrador.
+         * Requer credenciais de administrador (chamado pelo modal).
          */
         async function clearQueue() {
-    const adminEmail = document.getElementById('adminName').value.trim();
-    const password = document.getElementById('clearPassword').value;
+            const adminEmail = document.getElementById('adminName').value.trim();
+            const password = document.getElementById('clearPassword').value;
 
-    if (!adminEmail || !password) {
-        showNotification('Por favor, preencha todos os campos.', 'error');
-        return;
-    }
+            if (!adminEmail || !password) {
+                showNotification('Por favor, preencha todos os campos.', 'error');
+                return;
+            }
 
-    toggleLoading('clearQueueBtn', true);
+            toggleLoading('clearQueueBtn', true);
 
-    try {
-        await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
-        await videoQueueRef.remove();
-        showNotification('Fila limpa com sucesso!', 'success');
-        closeModal();
-    } catch (error) {
-        console.error('Erro de autenticação ou ao limpar fila:', error);
-        if (error.code === 'auth/wrong-password') {
-            showNotification('Senha incorreta. Por favor, tente novamente.', 'error');
-        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
-            showNotification('E-mail não encontrado ou inválido. Tente novamente.', 'error');
-        } else {
-            showNotification('Erro ao limpar a fila. Verifique a conexão.', 'error');
+            try {
+                // 1. Tenta autenticar
+                await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
+                
+                // 2. Se autenticou, executa a lógica de limpar
+                const success = await executeClearQueue();
+
+                // 3. Se foi bem-sucedido, fecha o modal
+                if (success) {
+                    closeModal();
+                }
+
+            } catch (error) {
+                console.error('Erro de autenticação ou ao limpar fila:', error);
+                if (error.code === 'auth/wrong-password') {
+                    showNotification('Senha incorreta. Por favor, tente novamente.', 'error');
+                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+                    showNotification('E-mail não encontrado ou inválido. Tente novamente.', 'error');
+                } else {
+                    showNotification('Erro ao limpar a fila. Verifique a conexão.', 'error');
+                }
+            } finally {
+                toggleLoading('clearQueueBtn', false);
+            }
         }
-    } finally {
-        toggleLoading('clearQueueBtn', false);
-    }
-}
 
         /**
          * Remove um vídeo específico da fila no Firebase Realtime Database.
          * Requer credenciais de administrador.
          */
         async function removeVideo() {
-    const adminEmail = document.getElementById('removeAdminName').value.trim();
-    const password = document.getElementById('removePassword').value;
+            const adminEmail = document.getElementById('removeAdminName').value.trim();
+            const password = document.getElementById('removePassword').value;
 
-    if (!adminEmail || !password) {
-        showNotification('Por favor, preencha todos os campos.', 'error');
-        return;
-    }
+            if (!adminEmail || !password) {
+                showNotification('Por favor, preencha todos os campos.', 'error');
+                return;
+            }
 
-    if (videoToRemoveId === null) {
-        showNotification('Nenhum vídeo selecionado para remoção.', 'error');
-        return;
-    }
+            if (videoToRemoveId === null) {
+                showNotification('Nenhum vídeo selecionado para remoção.', 'error');
+                return;
+            }
 
-    toggleLoading('removeVideoBtn', true);
+            toggleLoading('removeVideoBtn', true);
 
-    try {
-        await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
-        await videoQueueRef.child(videoToRemoveId).remove();
-        showNotification('Vídeo removido com sucesso!', 'success');
-        closeRemoveModal();
-    } catch (error) {
-        console.error('Erro de autenticação ou ao remover vídeo:', error);
-        if (error.code === 'auth/wrong-password') {
-            showNotification('Senha incorreta. Por favor, tente novamente.', 'error');
-        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
-            showNotification('E-mail não encontrado ou inválido. Tente novamente.', 'error');
-        } else {
-            showNotification('Erro ao remover o vídeo. Verifique a conexão.', 'error');
+            try {
+                await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
+                await videoQueueRef.child(videoToRemoveId).remove();
+                showNotification('Vídeo removido com sucesso!', 'success');
+                closeRemoveModal();
+            } catch (error) {
+                console.error('Erro de autenticação ou ao remover vídeo:', error);
+                if (error.code === 'auth/wrong-password') {
+                    showNotification('Senha incorreta. Por favor, tente novamente.', 'error');
+                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+                    showNotification('E-mail não encontrado ou inválido. Tente novamente.', 'error');
+                } else {
+                    showNotification('Erro ao remover o vídeo. Verifique a conexão.', 'error');
+                }
+            } finally {
+                toggleLoading('removeVideoBtn', false);
+            }
         }
-    } finally {
-        toggleLoading('removeVideoBtn', false);
-    }
-}
 
         // Event listeners para alternar a visibilidade da senha nos modais
         document.getElementById('togglePassword').addEventListener('click', function () {
@@ -1280,27 +1317,27 @@
 
         // Fecha os modais se o usuário clicar fora do conteúdo do modal
         window.addEventListener('click', function (event) {
-        if (event.target.classList.contains('modal')) {
-            closeModal();
-            closeRemoveModal();
-            closeYTSearchModal();
-            closeNextVideoModal(); 
-            closeAdminUnlockModal(); 
-            closeBulkRemoveConfirmModal();
-        }
-    });
+            if (event.target.classList.contains('modal')) {
+                closeModal();
+                closeRemoveModal();
+                closeYTSearchModal();
+                closeNextVideoModal();
+                closeAdminUnlockModal();
+                closeBulkRemoveConfirmModal();
+            }
+        });
 
         // Fecha os modais se o usuário pressionar a tecla 'Escape'
         document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-            closeModal();
-            closeRemoveModal();
-            closeYTSearchModal();
-            closeNextVideoModal(); 
-            closeAdminUnlockModal(); 
-            closeBulkRemoveConfirmModal();
-        }
-    });
+            if (event.key === 'Escape') {
+                closeModal();
+                closeRemoveModal();
+                closeYTSearchModal();
+                closeNextVideoModal();
+                closeAdminUnlockModal();
+                closeBulkRemoveConfirmModal();
+            }
+        });
 
         // Efeito de fade-in na carga da página
         document.addEventListener('DOMContentLoaded', function () {
@@ -1310,6 +1347,67 @@
                 document.body.style.opacity = '1';
             }, 100);
         });
+    </script>
+
+    <script>
+        // Script para criar partículas
+        document.addEventListener('DOMContentLoaded', function() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Posição aleatória
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                
+                // Tamanho aleatório
+                const size = Math.random() * 3 + 1;
+                
+                // Atraso de animação aleatório
+                const delay = Math.random() * 15;
+                
+                particle.style.left = `${posX}%`;
+                particle.style.top = `${posY}%`;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.animationDelay = `${delay}s`;
+                
+                particlesContainer.appendChild(particle);
+            }
+            
+            // Simular progresso da fila (apenas para demonstração)
+            const progressBar = document.getElementById('queueProgress');
+            let progress = 0;
+            
+            setInterval(() => {
+                progress = (progress + 1) % 101;
+                progressBar.style.width = `${progress}%`;
+            }, 100);
+            
+            // Simular notificação (apenas para demonstração)
+            setTimeout(() => {
+                showNotification('Sistema carregado com sucesso!', 'success');
+            }, 1000);
+        });
+        
+        // Função para mostrar notificação
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationMessage = document.getElementById('notificationMessage');
+            
+            notificationMessage.textContent = message;
+            notification.className = 'notification';
+            notification.classList.add(type);
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
     </script>
 </body>
 
