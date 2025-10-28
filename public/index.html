@@ -19,7 +19,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body><div id="particles"></div>
+<body class="non-admin">
+    <div id="particles"></div>
     <div class="container">
         <header class="app-header">
             <button class="btn small" id="adminUnlockBtn" onclick="openAdminUnlockModal()">
@@ -56,11 +57,28 @@
 
             </section>
 
+
             <section class="video-player-section card">
                 <h2><i class="fas fa-play-circle"></i> Vídeo em Execução</h2>
                 <div id="player-container">
                     <div id="videoPlayer"></div>
+
+                    <!-- máscara que bloqueia interações com a barra nativa (continua presente) -->
+                    <div id="player-mask"></div>
+
+                    <!-- Controles personalizados (play/pause + volume). Visíveis apenas para non-admin -->
+                    <div class="player-overlay-controls" aria-hidden="false">
+                        <button id="overlayPlayBtn" title="Play/Pause"><i id="overlayPlayIcon"
+                                class="fas fa-play"></i></button>
+                        <label for="overlayVolume" style="color:var(--text-secondary);font-size:0.9rem;">Vol</label>
+                        <input id="overlayVolume" type="range" min="0" max="100" step="1" value="50"
+                            aria-label="Volume">
+                        <button id="overlayFullscreenBtn" title="Tela cheia"><i class="fas fa-expand"></i></button>
+                    </div>
+
                 </div>
+
+
                 <div id="currentVideoInfo">
                     <h3>Escolha de: <span id="currentUser">Nenhum vídeo em execução</span></h3>
                     <p class="current-url" id="currentVideoUrl">Nenhuma URL disponível</p>
@@ -130,16 +148,17 @@
 
     <div id="ytSearchModal" class="modal yt-search-modal">
         <div class="modal-content">
-            
+
             <div class="modal-header">
                 <h3><i class="fab fa-youtube"></i> Buscar Vídeo no YouTube</h3>
                 <button class="close-button" onclick="closeYTSearchModal()">&times;</button>
             </div>
-            
+
             <div class="modal-body">
-                
+
                 <div class="session-info input-group">
-                    <label><i class="fas fa-user"></i> Adicionando como: <strong id="currentSessionUser">-</strong></label>
+                    <label><i class="fas fa-user"></i> Adicionando como: <strong
+                            id="currentSessionUser">-</strong></label>
                     <button class="btn small secondary" onclick="changeUserName()">Alterar</button>
                 </div>
 
@@ -148,18 +167,19 @@
                     <input type="text" id="ytSearchName" placeholder="Quem está adicionando?">
                     <button class="btn small primary" onclick="setSessionUser()">Confirmar</button>
                 </div>
-                
+
                 <div class="search-controls">
                     <input type="text" id="ytSearchQuery" placeholder="Digite sua busca">
                     <button class="btn primary" onclick="searchYouTube()">
                         <i class="fas fa-search"></i> Buscar
                     </button>
                 </div>
-                
+
                 <div class="yt-search-results" id="ytSearchResults">
-                    </div>
-                
-            </div> </div>
+                </div>
+
+            </div>
+        </div>
     </div>
 
     <div id="notification" class="notification">
@@ -478,6 +498,9 @@
             // Se o admin já estiver logado, o botão vira "Logout"
             if (isAdminLoggedIn) {
                 logoutAdminSession();
+                document.body.classList.add('non-admin');
+                disableAdminPlayerControls();
+
                 return; // Não abre o modal
             }
             // Se não, abre o modal de login
@@ -501,6 +524,9 @@
         async function loginAdminSession() {
             const adminEmail = document.getElementById('adminUnlockName').value.trim();
             const password = document.getElementById('adminUnlockPassword').value;
+            document.body.classList.remove('non-admin');
+
+            enableAdminPlayerControls();
 
             if (!adminEmail || !password) {
                 showNotification('Por favor, preencha e-mail e senha.', 'error');
@@ -518,7 +544,7 @@
                 const adminBtn = document.getElementById('adminUnlockBtn');
                 adminBtn.classList.add('admin-logged-in'); // Deixa o botão verde
                 adminBtn.innerHTML = '<i class="fas fa-unlock"></i> Admin'; // Muda o ícone
-
+                document.body.classList.remove('non-admin');
                 showNotification('Modo Admin ATIVADO.', 'success');
                 closeAdminUnlockModal();
 
@@ -540,8 +566,105 @@
             }
         }
 
+        function disableAdminPlayerControls() {
+            if (!player || typeof YT === 'undefined') return;
+
+            const currentVideoId = player.getVideoData().video_id;
+            const currentTime = player.getCurrentTime();
+
+            player.destroy();
+
+            // recria o player bloqueado (sem controles nativos)
+            player = new YT.Player('videoPlayer', {
+                height: '100%',
+                width: '100%',
+                videoId: currentVideoId,
+                playerVars: {
+                    autoplay: 1,
+                    controls: 0, // <-- remove os botões nativos
+                    modestbranding: 1,
+                    rel: 0,
+                    disablekb: 1
+                },
+                events: {
+                    onReady: (event) => {
+                        event.target.seekTo(currentTime);
+                        event.target.playVideo();
+
+                        // mostra a máscara novamente
+                        document.getElementById('player-mask').style.display = 'block';
+                    },
+                    onStateChange: onPlayerStateChange
+                }
+            });
+        }
+
+
+        function enableAdminPlayerControls() {
+            if (!player || typeof YT === 'undefined') return;
+
+            const currentVideoId = player.getVideoData().video_id;
+            const currentTime = player.getCurrentTime();
+
+            player.destroy(); // remove o player atual
+
+            // recria com controles nativos
+            player = new YT.Player('videoPlayer', {
+                height: '100%',
+                width: '100%',
+                videoId: currentVideoId,
+                playerVars: {
+                    autoplay: 1,
+                    controls: 1, // <-- habilita os botões do YouTube
+                    modestbranding: 1,
+                    rel: 0
+                },
+                events: {
+                    onReady: (event) => {
+                        event.target.seekTo(currentTime);
+                        event.target.playVideo();
+                    },
+                    onStateChange: onPlayerStateChange
+                }
+            });
+
+            function enableAdminPlayerControls() {
+                if (!player || typeof YT === 'undefined') return;
+
+                const currentVideoId = player.getVideoData().video_id;
+                const currentTime = player.getCurrentTime();
+
+                player.destroy();
+
+                player = new YT.Player('videoPlayer', {
+                    height: '100%',
+                    width: '100%',
+                    videoId: currentVideoId,
+                    playerVars: {
+                        autoplay: 1,
+                        controls: 1,
+                        modestbranding: 1,
+                        rel: 0
+                    },
+                    events: {
+                        onReady: (event) => {
+                            event.target.seekTo(currentTime);
+                            event.target.playVideo();
+
+                            // 👇 Esconde a máscara para liberar cliques
+                            document.getElementById('player-mask').style.display = 'none';
+                        },
+                        onStateChange: onPlayerStateChange
+                    }
+                });
+            }
+
+        }
+
+
         function logoutAdminSession() {
             isAdminLoggedIn = false; // Desliga o modo admin
+            document.body.classList.add('non-admin');
             const adminBtn = document.getElementById('adminUnlockBtn');
             adminBtn.classList.remove('admin-logged-in'); // Deixa o botão vermelho
             adminBtn.innerHTML = '<i class="fas fa-lock"></i> Admin'; // Muda o ícone
@@ -1147,17 +1270,103 @@
                 width: '100%',
                 playerVars: {
                     'autoplay': 1,
-                    'controls': 1,
+                    'controls': 0,        // <- esconder controles nativos
                     'modestbranding': 1,
-                    'rel': 0
+                    'rel': 0,
+                    'disablekb': 1        // desativa teclas de atalho para evitar seek via teclado
                 },
                 events: {
                     'onReady': (event) => {
-                        loadVideoQueue(); // Chamar loadVideoQueue APENAS quando o player está pronto
+                        // define volume inicial e carrega fila
+                        player.setVolume(50);
+                        loadVideoQueue();
                     },
                     'onStateChange': onPlayerStateChange
                 }
             });
+        }
+
+        // ======== Controles do overlay ========
+        const overlayPlayBtn = document.getElementById('overlayPlayBtn');
+        const overlayPlayIcon = document.getElementById('overlayPlayIcon');
+        const overlayVolume = document.getElementById('overlayVolume');
+        
+
+        const overlayFullscreenBtn = document.getElementById('overlayFullscreenBtn');
+
+        
+overlayFullscreenBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleFullscreen();
+});
+
+function toggleFullscreen() {
+    const container = document.getElementById('player-container');
+    if (!document.fullscreenElement) {
+        if (container.requestFullscreen) {
+            container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+            container.webkitRequestFullscreen();
+        } else if (container.msRequestFullscreen) {
+            container.msRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+    }
+    
+}
+
+        function updateOverlayPlayIcon() {
+            if (!player || typeof player.getPlayerState !== 'function') return;
+            const state = player.getPlayerState();
+            if (state === YT.PlayerState.PLAYING) {
+                overlayPlayIcon.className = 'fas fa-pause';
+            } else {
+                overlayPlayIcon.className = 'fas fa-play';
+            }
+        }
+
+        function togglePlayPauseFromOverlay() {
+            if (!player) return;
+            const state = player.getPlayerState();
+            if (state === YT.PlayerState.PLAYING) {
+                player.pauseVideo();
+            } else {
+                player.playVideo();
+            }
+            setTimeout(updateOverlayPlayIcon, 100); // atualiza ícone logo depois
+        }
+
+        function setVolumeFromOverlay(value) {
+            if (!player || typeof player.setVolume !== 'function') return;
+            player.setVolume(Number(value));
+            showNotification(`Volume: ${value}%`, 'info');
+        }
+
+        // listeners
+        overlayPlayBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            togglePlayPauseFromOverlay();
+        });
+
+        overlayVolume.addEventListener('input', (e) => {
+            e.stopPropagation();
+            setVolumeFromOverlay(e.target.value);
+        });
+
+        // Também atualiza ícone quando o estado do player muda pela API (ex.: autoplay)
+        function onPlayerStateChange(event) {
+            // chama seu código existente para ended, etc.
+            // === mantenha o bloco que você já tinha para YT.PlayerState.ENDED ===
+            // ... (seu código anterior de onPlayerStateChange permanece)
+            // depois, atualize ícone do overlay
+            setTimeout(updateOverlayPlayIcon, 50);
         }
 
         function handleClearQueue() {
@@ -1171,7 +1380,7 @@
                 openModal();
             }
         }
-        
+
         /**
          * Abre o modal para limpar a fila.
          */
@@ -1209,11 +1418,11 @@
             videoToRemoveId = null; // Reseta o ID do vídeo a ser removido
         }
 
-       /**
-         * Lógica central para limpar a fila (sem autenticação).
-         * Remove todos os vídeos da fila.
-         * @returns {Promise<boolean>} - Retorna 'true' se foi bem-sucedido, 'false' se falhou.
-         */
+        /**
+          * Lógica central para limpar a fila (sem autenticação).
+          * Remove todos os vídeos da fila.
+          * @returns {Promise<boolean>} - Retorna 'true' se foi bem-sucedido, 'false' se falhou.
+          */
         async function executeClearQueue() {
             try {
                 await videoQueueRef.remove();
@@ -1244,7 +1453,7 @@
             try {
                 // 1. Tenta autenticar
                 await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
-                
+
                 // 2. Se autenticou, executa a lógica de limpar
                 const success = await executeClearQueue();
 
