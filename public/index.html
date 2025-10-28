@@ -83,9 +83,12 @@
                     <h3>Escolha de: <span id="currentUser">Nenhum vídeo em execução</span></h3>
                     <p class="current-url" id="currentVideoUrl">Nenhuma URL disponível</p>
                 </div>
-                <button class="btn primary skip-video-button" onclick="handleSkipVideo()">
-                    <i class="fas fa-forward"></i> Pular para o Próximo Vídeo
-                </button>
+                <button class="btn primary skip-video-button" onclick="castVoteToSkip()" id="skipVoteBtn">
+    <i class="fas fa-forward"></i> 
+    <span id="skipVoteBtnText">Votar para Pular</span>
+    (<span id="voteCount">0</span>/<span id="votesNeeded">0</span>)
+    <span id="skipVoteBtnLoader" class="loading" style="display: none;"></span>
+</button>
             </section>
 
             <section class="queue-section card">
@@ -1562,6 +1565,195 @@ function toggleFullscreen() {
                 document.body.style.opacity = '1';
             }, 100);
         });
+
+        // Variáveis para o sistema de votação
+let currentSongRef = null;
+let votesRef = null;
+let userVoteId = null;
+let onlineUsersCount = 0;
+
+// Calcula votos necessários baseado em usuários online
+function calculateVotesNeeded() {
+    // Se há poucos usuários, precisa da maioria
+    if (onlineUsersCount <= 2) return 2;
+    if (onlineUsersCount <= 5) return Math.ceil(onlineUsersCount * 0.6); // 60%
+    return Math.ceil(onlineUsersCount * 0.5); // 50% para salas maiores
+}
+
+// Inicializa o sistema de votação
+function initializeVotingSystem() {
+    currentSongRef = database.ref('currentSong');
+    votesRef = database.ref('currentSong/votes');
+    
+    // Gera um ID único para este usuário
+    userVoteId = sessionStorage.getItem('userVoteId') || generateUserId();
+    sessionStorage.setItem('userVoteId', userVoteId);
+    
+    // Monitora número de usuários online
+    presenceRef.on('value', (snap) => {
+        onlineUsersCount = snap.numChildren();
+        updateVotesNeededDisplay();
+    });
+    
+    // Monitora mudanças na votação
+    votesRef.on('value', (snapshot) => {
+        updateVoteDisplay(snapshot.val());
+    });
+    
+    // Reseta votos quando a música muda
+    videoQueueRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            const firstVideo = Object.values(data)[0];
+            if (firstVideo) {
+                const videoId = extractVideoId(firstVideo.videoUrl);
+                resetVotesForNewSong(videoId);
+            }
+        } else {
+            // Fila vazia - reseta votos
+            resetVotes();
+        }
+    });
+}
+
+// Atualiza a exibição dos votos necessários
+function updateVotesNeededDisplay() {
+    const votesNeeded = calculateVotesNeeded();
+    const votesNeededElement = document.getElementById('votesNeeded');
+    if (votesNeededElement) {
+        votesNeededElement.textContent = votesNeeded;
+    }
+}
+
+// Atualiza a exibição dos votos no botão
+function updateVoteDisplay(votes) {
+    const voteCountElement = document.getElementById('voteCount');
+    const votesNeededElement = document.getElementById('votesNeeded');
+    const skipVoteBtn = document.getElementById('skipVoteBtn');
+    const skipVoteBtnText = document.getElementById('skipVoteBtnText');
+    
+    if (!votes) {
+        voteCountElement.textContent = '0';
+        updateVotesNeededDisplay();
+        skipVoteBtnText.textContent = 'Votar para Pular';
+        skipVoteBtn.disabled = false;
+        skipVoteBtn.classList.remove('voted');
+        return;
+    }
+    
+    const voteCount = Object.keys(votes).length;
+    const votesNeeded = calculateVotesNeeded();
+    
+    voteCountElement.textContent = voteCount;
+    votesNeededElement.textContent = votesNeeded;
+    
+    // Verifica se o usuário atual já votou
+    const hasVoted = votes[userVoteId] !== undefined;
+    
+    if (hasVoted) {
+        skipVoteBtnText.textContent = 'Você Votou';
+        skipVoteBtn.disabled = true;
+        skipVoteBtn.classList.add('voted');
+    } else {
+        skipVoteBtnText.textContent = 'Votar para Pular';
+        skipVoteBtn.disabled = false;
+        skipVoteBtn.classList.remove('voted');
+    }
+    
+    // Se atingiu o limite de votos, pula a música
+    if (voteCount >= votesNeeded) {
+        skipSongByVote();
+    }
+}
+
+// Função principal de votação
+function castVoteToSkip() {
+    if (!userVoteId) {
+        showNotification('Erro: Sistema de votação não inicializado', 'error');
+        return;
+    }
+    
+    // Verifica se há vídeos na fila
+    if (videoQueue.length === 0) {
+        showNotification('Não há músicas na fila para pular', 'info');
+        return;
+    }
+    
+    // Verifica se há usuários suficientes online
+    if (onlineUsersCount < 2) {
+        showNotification('Não há usuários suficientes online para votação', 'info');
+        return;
+    }
+    
+    toggleLoading('skipVoteBtn', true);
+    
+    // Registra o voto
+    votesRef.child(userVoteId).set({
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        userName: currentSessionUser || 'Anônimo',
+        userId: userVoteId
+    })
+    .then(() => {
+        showNotification('Seu voto foi registrado!', 'success');
+    })
+    .catch((error) => {
+        console.error('Erro ao votar:', error);
+        showNotification('Erro ao registrar voto', 'error');
+    })
+    .finally(() => {
+        toggleLoading('skipVoteBtn', false);
+    });
+}
+
+// Pula a música quando a votação é bem-sucedida
+function skipSongByVote() {
+    if (videoQueue.length === 0) return;
+    
+    const votesNeeded = calculateVotesNeeded();
+    showNotification(`Votação bem-sucedida! (${votesNeeded}/${votesNeeded} votos) Pulando música...`, 'success');
+    
+    // Remove o primeiro vídeo da fila (música atual)
+    const firstVideoId = videoQueue[0].id;
+    videoQueueRef.child(firstVideoId).remove()
+        .then(() => {
+            showNotification('Música pulada por votação popular!', 'success');
+            // Reseta os votos após um delay
+            setTimeout(resetVotes, 1000);
+        })
+        .catch((error) => {
+            console.error('Erro ao pular música por votação:', error);
+            showNotification('Erro ao pular música', 'error');
+        });
+}
+
+// Reseta os votos para uma nova música
+function resetVotesForNewSong(videoId) {
+    if (!currentSongRef) return;
+    
+    currentSongRef.set({
+        currentVideoId: videoId,
+        votes: {},
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        onlineUsersCount: onlineUsersCount
+    });
+}
+
+// Reseta os votos
+function resetVotes() {
+    if (votesRef) {
+        votesRef.set({});
+    }
+}
+
+// Gera ID único para usuário
+function generateUserId() {
+    return 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+}
+
+// Inicializa o sistema de votação quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initializeVotingSystem, 1000);
+});
     </script>
 </body>
 
