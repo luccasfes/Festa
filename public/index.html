@@ -695,24 +695,32 @@
         let videoToRemoveId = null; // ID do vídeo a ser removido (usado no modal de remoção)
         let isAdminLoggedIn = false; // NOVO: Estado de login do Admin
         let videoIdsForBulkRemove = [];
-        let notificationTimeout = null;
+        let notificationTimer = null;
         /**
  * Exibe uma notificação temporária na tela.
  * (Versão corrigida para evitar bugs de 'race condition')
  * @param {string} message - A mensagem a ser exibida.
  * @param {string} [type='info'] - O tipo da notificação ('info', 'success', 'error').
  */
-function showNotification(message, type = "info") {
-  const notification = document.createElement("div");
-  notification.className = `notification ${type}`;
-  notification.textContent = message;
-  document.body.appendChild(notification);
+function showNotification(message, type = 'info') {
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notificationMessage');
 
-  // ⏳ Faz sumir depois de 3 segundos
-  setTimeout(() => {
-    notification.classList.add("hide");
-    setTimeout(() => notification.remove(), 500);
-  }, 3000);
+    // 1. Limpa qualquer timer de notificação anterior
+    // Isso impede que a notificação desapareça se uma nova for chamada
+    if (notificationTimer) {
+        clearTimeout(notificationTimer);
+    }
+
+    notificationMessage.textContent = message;
+    notification.className = 'notification'; // Reseta as classes
+    notification.classList.add(type, 'show'); // Adiciona as novas
+
+    // 2. Define um NOVO timer para 5 segundos (aumentado de 3000)
+    notificationTimer = setTimeout(() => {
+        notification.classList.remove('show');
+        notificationTimer = null; // Limpa o ID do timer
+    }, 5000); // <-- Aumentado de 3000ms para 5000ms
 }
 
 
