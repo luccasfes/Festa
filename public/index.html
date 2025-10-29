@@ -496,29 +496,67 @@
 
         // Obtém uma referência para o Realtime Database
         const database = firebase.database();
-        const videoQueueRef = database.ref('videoQueue');
+
         // ====================================================================
-        // NOVO: Sistema de Presença em Tempo Real
+        // INÍCIO DA MODIFICAÇÃO PARA SALAS
         // ====================================================================
 
-        const presenceRef = database.ref('presence');
-        const connectedRef = database.ref('.info/connected');
+        // 1. Pega o ID da sala da URL IMEDIATAMENTE.
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentRoomId = urlParams.get('room');
+
+        // 2. Se não houver ID, pare tudo e mostre um erro.
+        if (!currentRoomId) {
+            // Trava o body e mostra o erro
+            document.body.style.overflow = 'hidden';
+            document.body.innerHTML = `
+                <div class="container" style="margin-top: 50px; text-align: center;">
+                    <div class="card" style="padding: 40px;">
+                        <h1><i class="fas fa-exclamation-triangle"></i> Erro: Sala não encontrada</h1>
+                        <p style="color: var(--text-primary); font-size: 1.1rem; margin: 20px 0;">
+                            Este link é inválido. Você precisa de um link de sala para usar o FlowLink.
+                        </p>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 30px;">
+                            (Ex: index.html?room=minha-sala-123)
+                        </p>
+                        <a href="create.html" class="btn primary" style="width: auto; padding: 14px 28px;">
+                            <i class="fas fa-plus-circle"></i> Criar uma Nova Sala
+                        </a>
+                    </div>
+                </div>`;
+
+            // Para a execução do script para evitar mais erros
+            throw new Error("ID da Sala (room) não fornecido na URL.");
+        }
+
+        // 3. Se temos um ID, defina TODAS as suas referências para usar esse ID.
+        // Crie uma referência principal para a sala
+        const roomRef = database.ref('rooms/' + currentRoomId);
+
+        // 4. Substitua suas definições de const originais por estas:
+        const videoQueueRef = roomRef.child('videoQueue');
+
+        // ====================================================================
+        // NOVO: Sistema de Presença em Tempo Real (MODIFICADO)
+        // ====================================================================
+
+        const presenceRef = roomRef.child('presence'); // <--- MODIFICADO
+        const connectedRef = database.ref('.info/connected'); // (Este fica igual)
         let myPresenceRef = null; // Guardará a nossa própria referência de conexão
 
         // Monitora o status da conexão com o Firebase
         connectedRef.on('value', (snap) => {
             if (snap.val() === true) {
                 // Estamos conectados!
-                console.log('Firebase conectado. Registrando presença.');
+                console.log('Firebase conectado. Registrando presença na sala: ' + currentRoomId);
 
                 // Pega o nome da sessão, se já existir
                 let userName = sessionStorage.getItem('ytSessionUser') || 'Visitante';
 
-                // Cria uma nova entrada única para este usuário na lista de presença
+                // Cria uma nova entrada única para este usuário na lista de presença DESTA SALA
                 myPresenceRef = presenceRef.push();
 
                 // Define o onDisconnect PRIMEIRO
-                // Isso garante que seremos removidos se o navegador fechar
                 myPresenceRef.onDisconnect().remove();
 
                 // Agora, define nosso estado online com nosso nome
@@ -528,13 +566,12 @@
                 });
 
             } else {
-                // Estamos desconectados (ou nos desconectando)
-                // O onDisconnect() do servidor cuidará da limpeza.
+                // Estamos desconectados
                 console.log('Firebase desconectado.');
             }
         });
 
-        // Agora, vamos ouvir a contagem total de usuários online
+        // Agora, vamos ouvir a contagem total de usuários online (DESTA SALA)
         const userCountElement = document.getElementById('userCount');
         presenceRef.on('value', (snap) => {
             const count = snap.numChildren();
@@ -2106,8 +2143,8 @@
         // ====================================================================
         // Variáveis do Chat (Integrado)
         // ====================================================================
-        const chatMessagesRef = database.ref('chat/messages');
-        const chatTypingRef = database.ref('chat/typing');
+        const chatMessagesRef = roomRef.child('chat/messages');
+        const chatTypingRef = roomRef.child('chat/typing');
         let isTyping = false;
         let typingTimeout;
         let currentReplyMessage = null;
@@ -2125,8 +2162,8 @@
         initializeChatFunctions();
         // Inicializa o sistema de votação
         function initializeVotingSystem() {
-            currentSongRef = database.ref('currentSong');
-            votesRef = database.ref('currentSong/votes');
+            currentSongRef = roomRef.child('currentSong');
+            votesRef = roomRef.child('currentSong/votes');
 
             // Gera um ID único para este usuário
             userVoteId = sessionStorage.getItem('userVoteId') || generateUserId();

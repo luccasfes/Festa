@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <link rel="icon" type="image/x-icon" href="assets/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Sala - FlowLink</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilo extra para centralizar o card */
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="particles"></div>
+    <div class="container" style="max-width: 600px;">
+        <header class="app-header">
+            <h1><i class="fas fa-music"></i> FlowLink<i class="fas fa-headphones"></i></h1>
+        </header>
+
+        <main>
+            <section class="card" style="text-align: center;">
+                <h2><i class="fas fa-plus-circle"></i> Criar uma Nova Sala</h2>
+                
+                <p style="color: var(--text-primary); font-size: 1.1rem; margin: 20px 0;">
+                    Clique no botão abaixo para gerar um link exclusivo e convidar seus amigos.
+                </p>
+
+                <div class="input-group">
+                    <label for="roomName">Nome da Sala (Opcional):</label>
+                    <input type="text" id="roomName" placeholder="Ex: Sala da Galera">
+                </div>
+
+                <button class="btn primary" onclick="createNewRoom()" id="createRoomBtn">
+                    <span id="createRoomBtnText">
+                        <i class="fas fa-link"></i> Gerar Link da Sala
+                    </span>
+                    <span id="createRoomBtnLoader" class="loading" style="display: none;"></span>
+                </button>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // ====================================================================
+        // Configuração do Firebase (COPIE A MESMA DO SEU INDEX.HTML)
+        // ====================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDlr4XHXuwWQ9Zj9dd2yoctLhFz1vbbyM",
+            authDomain: "flowlink-7fd57.firebaseapp.com",
+            databaseURL: "https://flowlink-7fd57-default-rtdb.firebaseio.com",
+            projectId: "flowlink-7fd57",
+            storageBucket: "flowlink-7fd57.firebasestorage.app",
+            messagingSenderId: "1035085936175",
+            appId: "1:1035085936175:web:2732042d77792118b8f8da",
+            measurementId: "G-B0NE1GDVQK"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const roomsRef = database.ref('rooms');
+
+        // Função para ativar/desativar o loading do botão
+        function toggleLoading(buttonId, isLoading) {
+            const btn = document.getElementById(buttonId);
+            const btnText = btn.querySelector(`#${buttonId}Text`);
+            const btnLoader = btn.querySelector(`#${buttonId}Loader`);
+
+            if (isLoading) {
+                btn.disabled = true;
+                btnText.style.display = 'none';
+                btnLoader.style.display = 'inline-block';
+            } else {
+                btn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoader.style.display = 'none';
+            }
+        }
+
+        // Função principal para criar a sala
+        async function createNewRoom() {
+            toggleLoading('createRoomBtn', true);
+            const roomNameInput = document.getElementById('roomName').value.trim();
+            const roomName = roomNameInput || "Sala Anônima";
+
+            try {
+                // 1. Cria uma nova entrada no Firebase em "/rooms"
+                const newRoomRef = roomsRef.push();
+
+                // 2. Salva informações iniciais (opcional, mas bom para organização)
+                await newRoomRef.set({
+                    roomName: roomName,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                // 3. Pega o ID único gerado pelo push()
+                const newRoomId = newRoomRef.key;
+
+                // 4. Redireciona o usuário para a sala
+                console.log(`Sala criada: ${newRoomId}. Redirecionando...`);
+                window.location.href = `index.html?room=${newRoomId}`;
+
+            } catch (error) {
+                console.error("Erro ao criar a sala:", error);
+                alert("Não foi possível criar a sala. Verifique sua conexão e as regras do Firebase.");
+                toggleLoading('createRoomBtn', false);
+            }
+        }
+    </script>
+</body>
+</html>
