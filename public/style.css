@@ -1369,3 +1369,62 @@ body.non-admin .player-overlay-controls {
 body:not(.non-admin) .player-overlay-controls {
   display: none;
 }
+
+/* Estilo para o nome do admin no botão */
+#adminUnlockBtn.admin-logged-in {
+    background: linear-gradient(135deg, #4CAF50, #388e3c);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    min-width: 150px; /* Largura maior para acomodar o nome */
+}
+
+#adminNameDisplay {
+    font-weight: 600;
+    color: white;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Ajuste para telas menores */
+@media (max-width: 768px) {
+    #adminUnlockBtn {
+        display: none; /* Mantém oculto em mobile como antes */
+    }
+}
+
+#adminInfo {
+    position: absolute;
+    top: 20px;
+    left: 165px; /* Ajustei de 150px para 165px para dar espaço ao botão */
+    background: var(--glass-bg);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    display: none; /* Começa escondido. O JS vai mostrar */
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+}
+
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #2196f3;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  opacity: 1;
+  transition: opacity 0.5s, transform 0.5s;
+  z-index: 9999;
+}
+.notification.hide {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+

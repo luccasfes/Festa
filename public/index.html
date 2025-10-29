@@ -24,8 +24,10 @@
     <div class="container">
         <header class="app-header">
             <button class="btn small" id="adminUnlockBtn" onclick="openAdminUnlockModal()">
-                <i class="fas fa-lock"></i> Admin
-            </button>
+    <i class="fas fa-lock"></i> 
+    <span id="adminStatusText">Admin</span>
+    <span id="adminNameDisplay" style="margin-left: 5px; display: none;"></span>
+</button>
 
             <h1><i class="fas fa-music"></i> FlowLink<i class="fas fa-headphones"></i></h1>
 
@@ -693,23 +695,26 @@
         let videoToRemoveId = null; // ID do vídeo a ser removido (usado no modal de remoção)
         let isAdminLoggedIn = false; // NOVO: Estado de login do Admin
         let videoIdsForBulkRemove = [];
+        let notificationTimeout = null;
         /**
-         * Exibe uma notificação temporária na tela.
-         * @param {string} message - A mensagem a ser exibida.
-         * @param {string} [type='info'] - O tipo da notificação ('info', 'success', 'error').
-         */
-        function showNotification(message, type = 'info') {
-            const notification = document.getElementById('notification');
-            const notificationMessage = document.getElementById('notificationMessage');
+ * Exibe uma notificação temporária na tela.
+ * (Versão corrigida para evitar bugs de 'race condition')
+ * @param {string} message - A mensagem a ser exibida.
+ * @param {string} [type='info'] - O tipo da notificação ('info', 'success', 'error').
+ */
+function showNotification(message, type = "info") {
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  document.body.appendChild(notification);
 
-            notificationMessage.textContent = message;
-            notification.className = 'notification';
-            notification.classList.add(type, 'show');
+  // ⏳ Faz sumir depois de 3 segundos
+  setTimeout(() => {
+    notification.classList.add("hide");
+    setTimeout(() => notification.remove(), 500);
+  }, 3000);
+}
 
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
 
         /**
          * Alterna o estado de carregamento de um botão (mostra/oculta um spinner).
@@ -1060,7 +1065,108 @@
             }
         }
 
+        // Função para atualizar a exibição do nome do admin
+function updateAdminDisplay() {
+    const adminBtn = document.getElementById('adminUnlockBtn');
+    const adminStatusText = document.getElementById('adminStatusText');
+    const adminNameDisplay = document.getElementById('adminNameDisplay');
+    const adminInfo = document.getElementById('adminInfo');
+    const adminFullName = document.getElementById('adminFullName');
+    
+    if (isAdminLoggedIn && currentAdminUser) {
+        adminBtn.classList.add('admin-logged-in');
+        adminStatusText.textContent = 'Admin:';
+        adminNameDisplay.textContent = currentAdminUser;
+        adminNameDisplay.style.display = 'inline';
+        
+        // Mostra info adicional se existir
+        if (adminInfo && adminFullName) {
+            adminFullName.textContent = currentAdminUser;
+            adminInfo.style.display = 'flex';
+        }
+    } else {
+        adminBtn.classList.remove('admin-logged-in');
+        adminStatusText.textContent = 'Admin';
+        adminNameDisplay.style.display = 'none';
+        adminNameDisplay.textContent = '';
+        
+        // Esconde info adicional se existir
+        if (adminInfo) {
+            adminInfo.style.display = 'none';
+        }
+    }
+}
 
+// Variável para armazenar o nome do admin logado
+let currentAdminUser = null;
+
+// Modifique a função loginAdminSession para armazenar o nome do admin
+async function loginAdminSession() {
+    const adminEmail = document.getElementById('adminUnlockName').value.trim();
+    const password = document.getElementById('adminUnlockPassword').value;
+
+    if (!adminEmail || !password) {
+        showNotification('Por favor, preencha e-mail e senha.', 'error');
+        return;
+    }
+
+    toggleLoading('adminUnlockConfirmBtn', true);
+
+    try {
+        // Tenta fazer o login no Firebase Auth
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
+        
+        // SUCESSO!
+        isAdminLoggedIn = true;
+        currentAdminUser = adminEmail.split('@')[0]; // Pega a parte antes do @ como nome
+        document.body.classList.remove('non-admin');
+        
+        // Atualiza a exibição
+        updateAdminDisplay();
+        
+        
+        closeAdminUnlockModal();
+
+        // Mostra os controles de admin
+        document.getElementById('videoList').classList.add('admin-mode');
+        document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
+        
+        enableAdminPlayerControls();
+
+    } catch (error) {
+        console.error('Erro de autenticação do admin:', error);
+        if (error.code === 'auth/wrong-password') {
+            showNotification('Senha incorreta.', 'error');
+        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+            showNotification('E-mail não encontrado ou inválido.', 'error');
+        } else {
+            showNotification('Erro de autenticação.', 'error');
+        }
+    } finally {
+        toggleLoading('adminUnlockConfirmBtn', false);
+    }
+}
+
+// Modifique a função logoutAdminSession para limpar o nome
+function logoutAdminSession() {
+    isAdminLoggedIn = false;
+    currentAdminUser = null;
+    document.body.classList.add('non-admin');
+    
+    // Atualiza a exibição
+    updateAdminDisplay();
+    
+    showNotification('Modo Admin DESATIVADO.', 'info');
+
+    // Esconde os controles de admin
+    document.getElementById('videoList').classList.remove('admin-mode');
+    document.getElementById('bulkRemoveBtn').style.display = 'none';
+    
+    // Limpa os checkboxes
+    document.querySelectorAll('.video-select-checkbox').forEach(cb => cb.checked = false);
+    
+    disableAdminPlayerControls();
+}
         // Variável para armazenar o ID do vídeo a ser removido (o que acabou de tocar)
         // (Mantenha esta variável no escopo global ou onde 'videoToRemoveId' está)
 
