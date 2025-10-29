@@ -20,6 +20,21 @@
     --glass-border: rgba(255, 255, 255, 0.1);
     --text-primary: #ffffff;
     --text-secondary: #b0b0b0;
+
+    --chat-bg-color: rgba(0, 0, 0, 0.3); 
+    
+    /* Bolha "deles" (outros usuários) */
+    --bubble-theirs-bg: #e0e0e0; 
+    --text-theirs-color: #1a1a1a;
+    
+    /* Bolha "minha" (você) */
+    --bubble-mine-bg: #0b93f6; /* Estilo Telegram/iMessage */
+    /* --bubble-mine-bg: #dcf8c6; */ /* (Alternativa: Estilo WhatsApp) */
+    --text-mine-color: #ffffff;
+    
+    /* Bolha de Admin */
+    --bubble-admin-bg: #fff59d; /* Amarelo claro */
+    --text-admin-color: #333;
 }
 
 * {
@@ -1427,4 +1442,411 @@ body:not(.non-admin) .player-overlay-controls {
   opacity: 0;
   transform: translateY(-20px);
 }
+.chat-section {
+    margin-top: 30px;
+    grid-column: 1 / -1;
+}
 
+.chat-users-online {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.online-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.online-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success-color);
+    animation: pulse 2s infinite;
+}
+
+.chat-messages-list {
+    height: 400px; /* Aumentei a altura um pouco */
+    overflow-y: auto;
+    background: var(--chat-bg-color); /* Usa a variável de cor */
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column; /* Necessário para as bolhas */
+    gap: 12px; /* Espaço entre as bolhas */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color) #2a2a2a;
+}
+
+/* ... (as regras de ::-webkit-scrollbar podem continuar as mesmas) ... */
+
+/* ESTILO DA BOLHA DE MENSAGEM */
+.chat-message {
+    padding: 10px 14px;
+    border-radius: 18px; /* Mais arredondado */
+    max-width: 75%; /* Bolhas não ocupam a tela toda */
+    word-break: break-word; /* Quebra de linha */
+    animation: messageSlideIn 0.3s ease-out;
+    line-height: 1.4;
+
+    /* === Estilo "Eles" (Padrão) === */
+    background: var(--bubble-theirs-bg);
+    color: var(--text-theirs-color);
+    align-self: flex-start; /* Alinha à esquerda */
+    border-bottom-left-radius: 4px; /* "Rabicho" da bolha */
+}
+
+/* Remove a barra lateral antiga */
+.chat-message::before {
+    display: none;
+}
+
+/* === Estilo "Minha" Bolha === */
+.chat-message.mine {
+    background: var(--bubble-mine-bg);
+    color: var(--text-mine-color);
+    align-self: flex-end; /* ALINHA À DIREITA */
+    border-bottom-left-radius: 18px; /* Reseta o rabicho esquerdo */
+    border-bottom-right-radius: 4px; /* Adiciona "rabicho" à direita */
+}
+
+/* === Estilo "Admin" === */
+.chat-message.admin {
+    background: var(--bubble-admin-bg);
+    color: var(--text-admin-color);
+    border: 1px solid #fbc02d;
+}
+
+/* === Mensagem de Sistema === */
+.chat-message.system {
+    background: rgba(243, 156, 18, 0.15);
+    border-color: rgba(243, 156, 18, 0.3);
+    text-align: center;
+    font-style: italic;
+    align-self: center; /* Fica no meio */
+    max-width: 90%;
+    border-radius: 8px;
+}
+
+/* ESTRUTURA DENTRO DA BOLHA */
+.chat-message-header {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.chat-user {
+    font-weight: 700;
+    
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Esconde o nome do usuário nas próprias mensagens */
+.chat-message.mine .chat-user {
+    display: none;
+}
+
+.chat-message.admin .chat-user {
+    color: #d32f2f; /* Nome do admin em vermelho */
+}
+
+.chat-text {
+    color: inherit; /* Herda a cor da bolha */
+    font-size: 0.95rem;
+}
+
+.chat-time {
+    color: inherit; /* Herda a cor da bolha */
+    opacity: 0.7;
+    font-size: 0.7rem;
+    text-align: right;
+    margin-top: 5px;
+    display: block; /* Garante que fique abaixo */
+}
+
+/* RESTANTE DA INTERFACE DO CHAT */
+.chat-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.chat-input-group input {
+    flex: 1;
+    border: 1px solid var(--glass-border);
+    transition: var(--transition);
+    background: rgba(0, 0, 0, 0.4);
+    color: var(--light-color);
+    font-family: 'Poppins', sans-serif;
+
+    
+    height: 48px;        
+    border-radius: 24px;  
+    font-size: 1rem;
+    padding: 0 20px;     
+}
+
+.chat-input-group button.btn.primary {
+    width: 48px;        
+    height: 48px;        
+    border-radius: 50%; 
+    padding: 0;         
+    min-width: 0;       
+    flex-shrink: 0;      
+    font-size: 1.1rem;   
+}
+
+.chat-input-group input:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    background: rgba(0, 0, 0, 0.6);
+}
+
+
+
+.empty-chat {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.empty-chat i {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Indicador de usuários online no chat */
+        .chat-users-online {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .online-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        /* Efeito de digitação */
+        .typing-indicator {
+            display: none;
+            padding: 8px 15px;
+            color: var(--text-secondary);
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .typing-dots {
+            display: inline-block;
+        }
+
+        .typing-dots span {
+            animation: typing 1.4s infinite;
+            opacity: 0.6;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.6;
+            }
+            30% {
+                opacity: 1;
+            }
+        }
+
+        /* Responsividade para o chat */
+        @media (max-width: 768px) {
+            .chat-messages-list {
+                height: 250px;
+            }
+            
+            .chat-input-group {
+                flex-direction: column;
+            }
+            
+            .chat-input-group button {
+                width: 100%;
+            }
+        }
+
+        /* =================================== */
+/* === CSS PARA FUNÇÃO "RESPONDER" === */
+/* =================================== */
+
+/* 1. Botão de Resposta (que aparece na bolha) */
+.chat-message {
+    position: relative; /* Necessário para o botão */
+}
+
+.chat-reply-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.1);
+    color: rgba(0,0,0,0.5);
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    opacity: 0; /* Começa invisível */
+    transition: opacity 0.2s ease;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.chat-message.mine .chat-reply-btn {
+    /* Ajusta cor para a bolha escura */
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7);
+}
+
+.chat-message:hover .chat-reply-btn {
+    opacity: 1; /* Aparece ao passar o mouse */
+}
+
+/* 2. Contexto de Resposta (acima da caixa de input) */
+.chat-reply-context {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bubble-theirs-bg); /* Reutiliza a cor da bolha */
+    color: var(--text-theirs-color);
+    border-radius: 8px 8px 0 0;
+    margin-bottom: -10px; /* Gruda no input */
+    border: 1px solid var(--glass-border);
+    border-bottom: none;
+    animation: messageSlideIn 0.2s ease-out;
+}
+
+.chat-reply-info {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.chat-reply-user {
+    display: block;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--accent-color);
+}
+
+.chat-reply-text {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.chat-reply-cancel {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-theirs-color);
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0 5px;
+}
+.chat-reply-cancel:hover { opacity: 1; }
+
+/* 3. Bloco de Resposta (Dentro da bolha de chat) */
+.chat-reply-block {
+    background: rgba(0,0,0,0.08);
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    border-left: 3px solid var(--accent-color);
+    cursor: pointer; /* Para o scroll */
+}
+
+.chat-message.mine .chat-reply-block {
+    /* Ajusta cor para a bolha escura */
+    background: rgba(255,255,255,0.1);
+    border-left-color: var(--light-color);
+}
+
+.chat-reply-block-user {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--accent-color);
+}
+
+.chat-message.mine .chat-reply-block-user {
+    color: var(--light-color);
+}
+
+.chat-reply-block-text {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 4. Destaque para mensagem "scrollada" */
+@keyframes highlight-message {
+  0% { background-color: rgba(25, 118, 210, 0.4); }
+  100% { background-color: transparent; }
+}
+
+.message-highlighted {
+  /* No 'mine', precisamos forçar a cor, senão a da bolha sobrescreve */
+  background-color: var(--bubble-mine-bg); 
+  animation: highlight-message 1.5s ease-out;
+}
+.chat-message.message-highlighted {
+  background-color: var(--bubble-theirs-bg);
+  animation: highlight-message 1.5s ease-out;
+}

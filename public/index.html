@@ -24,10 +24,10 @@
     <div class="container">
         <header class="app-header">
             <button class="btn small" id="adminUnlockBtn" onclick="openAdminUnlockModal()">
-    <i class="fas fa-lock"></i> 
-    <span id="adminStatusText">Admin</span>
-    <span id="adminNameDisplay" style="margin-left: 5px; display: none;"></span>
-</button>
+                <i class="fas fa-lock"></i>
+                <span id="adminStatusText">Admin</span>
+                <span id="adminNameDisplay" style="margin-left: 5px; display: none;"></span>
+            </button>
 
             <h1><i class="fas fa-music"></i> FlowLink<i class="fas fa-headphones"></i></h1>
 
@@ -85,14 +85,14 @@
                     <h3>Escolha de: <span id="currentUser">Nenhum vídeo em execução</span></h3>
                     <p class="current-url" id="currentVideoUrl">Nenhuma URL disponível</p>
                 </div>
-               <button class="btn primary skip-video-button" onclick="handleSkipOrVote()" id="skipVoteBtn">
-    <i class="fas fa-forward"></i> 
-    <span id="skipVoteBtnText">Votar para Pular</span>
-    <span id="voteCounterWrapper">
-        (<span id="voteCount">0</span>/<span id="votesNeeded">0</span>)
-    </span>
-    <span id="skipVoteBtnLoader" class="loading" style="display: none;"></span>
-</button>
+                <button class="btn primary skip-video-button" onclick="handleSkipOrVote()" id="skipVoteBtn">
+                    <i class="fas fa-forward"></i>
+                    <span id="skipVoteBtnText">Votar para Pular</span>
+                    <span id="voteCounterWrapper">
+                        (<span id="voteCount">0</span>/<span id="votesNeeded">0</span>)
+                    </span>
+                    <span id="skipVoteBtnLoader" class="loading" style="display: none;"></span>
+                </button>
             </section>
 
             <section class="queue-section card">
@@ -107,6 +107,54 @@
                     </button>
                 </h2>
                 <ul id="videoList" class="video-queue-list"></ul>
+            </section>
+            <section class="chat-section card">
+                <h2><i class="fas fa-comments"></i> Chat da Música</h2>
+                <button class="btn danger small" onclick="handleClearChat()" id="clearChatBtn" style="display: none;">
+                    <i class="fas fa-eraser"></i> Limpar Chat
+                </button>
+                <div class="chat-users-online">
+                    <div class="online-indicator">
+                        <div class="online-dot"></div>
+                        <span id="onlineCount">1</span> usuário(s) online
+                    </div>
+                    <div class="user-info">
+                        <span id="userNameDisplay">Visitante</span>
+                        <button class="btn small secondary" onclick="openYTSearchModal()" style="margin-left: 10px;">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="chatMessages" class="chat-messages-list">
+                    <div class="empty-chat">
+                        <i class="fas fa-comment-slash"></i>
+                        <p>Nenhuma mensagem ainda. Seja o primeiro a comentar!</p>
+                    </div>
+                </div>
+
+                <div class="typing-indicator" id="typingIndicator">
+                    <span id="typingUser"></span> está digitando<span
+                        class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
+                </div>
+
+                <div class="chat-actions-bar" id="chatActionsBar" style="display: none;">
+                    <div class="chat-reply-context" id="chatReplyContext" style="display: none;">
+                        <div class="chat-reply-info">
+                            <span class="chat-reply-user">Respondendo a...</span>
+                            <span class="chat-reply-text"></span>
+                        </div>
+                        <button class="chat-reply-cancel" onclick="cancelReply()">&times;</button>
+                    </div>
+                </div>
+                <div class="chat-input-group">
+                    <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..."
+                        onkeypress="handleChatInput(event)">
+                    <button class="btn primary" onclick="sendChatMessage()" title="Enviar">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="emoji-picker-container" id="emojiPickerContainer">
             </section>
         </main>
     </div>
@@ -230,8 +278,8 @@
                 <span class="toggle-password" id="toggleAdminUnlockPassword"><i class="fas fa-eye"></i></span>
             </div>
             <button class="btn primary" onclick="loginAdminSession()" id="adminUnlockConfirmBtn">
-                <span id="adminUnlockBtnText">Login</span>
-                <span id="adminUnlockBtnLoader" class="loading" style="display: none;"></span>
+                <span id="adminUnlockConfirmBtnText">Login</span>
+                <span id="adminUnlockConfirmBtnLoader" class="loading" style="display: none;"></span>
             </button>
         </div>
     </div>
@@ -287,6 +335,7 @@
             currentSessionUser = userName;
             document.getElementById('currentSessionUser').textContent = userName;
             document.getElementById('userNameInputGroup').style.display = 'none';
+            document.getElementById('userNameDisplay').textContent = userName;
             document.querySelector('.session-info').style.display = 'flex';
             document.getElementById('ytSearchQuery').focus();
 
@@ -306,7 +355,7 @@
             document.getElementById('userNameInputGroup').style.display = 'block';
             document.querySelector('.session-info').style.display = 'none';
             document.getElementById('ytSearchName').focus();
-
+            document.getElementById('userNameDisplay').textContent = 'Visitante';
             // *** NOVA LINHA: Atualiza o nome para "Visitante" ***
             if (myPresenceRef) {
                 myPresenceRef.update({ name: 'Visitante' });
@@ -318,6 +367,7 @@
             const savedUser = sessionStorage.getItem('ytSessionUser');
             if (savedUser) {
                 currentSessionUser = savedUser;
+                document.getElementById('userNameDisplay').textContent = savedUser;
             }
         });
     </script>
@@ -487,10 +537,17 @@
         // Agora, vamos ouvir a contagem total de usuários online
         const userCountElement = document.getElementById('userCount');
         presenceRef.on('value', (snap) => {
-            // snap.numChildren() conta quantos "filhos" (usuários) existem em /presence
             const count = snap.numChildren();
+
+            // Atualiza o header
             if (userCountElement) {
                 userCountElement.textContent = count;
+            }
+
+            // ATUALIZA O CHAT
+            const chatOnlineCount = document.getElementById('onlineCount');
+            if (chatOnlineCount) {
+                chatOnlineCount.textContent = count;
             }
         });
         // ====================================================================
@@ -558,7 +615,9 @@
                 // *** PARTE 2: Mostra os controles de admin ***
                 document.getElementById('videoList').classList.add('admin-mode');
                 document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
+                document.getElementById('clearChatBtn').style.display = 'inline-block';
 
+                enableAdminPlayerControls();
             } catch (error) {
                 console.error('Erro de autenticação do admin:', error);
                 if (error.code === 'auth/wrong-password') {
@@ -576,7 +635,26 @@
         function disableAdminPlayerControls() {
             if (!player || typeof YT === 'undefined') return;
 
-            const currentVideoId = player.getVideoData().video_id;
+            // --- INÍCIO DA CORREÇÃO ---
+            let videoData;
+            try {
+                videoData = player.getVideoData();
+            } catch (e) {
+                console.warn('Player não está pronto, não é possível desativar controles de admin.');
+                return; // Sai se o player não estiver pronto
+            }
+
+            const currentVideoId = videoData ? videoData.video_id : null;
+
+            // Se não houver vídeo (fila vazia), apenas saia.
+            if (!currentVideoId) {
+                console.log('Nenhum vídeo tocando. Controles de admin desativados (sem recriar player).');
+                // Mostra a máscara mesmo se não houver vídeo
+                document.getElementById('player-mask').style.display = 'block';
+                return;
+            }
+            // --- FIM DA CORREÇÃO ---
+
             const currentTime = player.getCurrentTime();
 
             player.destroy();
@@ -638,18 +716,37 @@
             function enableAdminPlayerControls() {
                 if (!player || typeof YT === 'undefined') return;
 
-                const currentVideoId = player.getVideoData().video_id;
+                let videoData;
+                try {
+                    videoData = player.getVideoData();
+                } catch (e) {
+                    console.warn('Player não está pronto, não é possível ativar controles de admin.');
+                    return; // Sai se o player não estiver pronto
+                }
+
+                const currentVideoId = videoData ? videoData.video_id : null;
+
+                // Se não houver vídeo (fila vazia), apenas saia.
+                if (!currentVideoId) {
+                    console.log('Nenhum vídeo tocando. Controles de admin ativados (sem recriar player).');
+                    // Esconde a máscara mesmo se não houver vídeo
+                    document.getElementById('player-mask').style.display = 'none';
+                    return;
+                }
+                // --- FIM DA CORREÇÃO ---
+
                 const currentTime = player.getCurrentTime();
 
-                player.destroy();
+                player.destroy(); // remove o player atual
 
+                // recria com controles nativos
                 player = new YT.Player('videoPlayer', {
                     height: '100%',
                     width: '100%',
                     videoId: currentVideoId,
                     playerVars: {
                         autoplay: 1,
-                        controls: 1,
+                        controls: 1, // <-- habilita os botões do YouTube
                         modestbranding: 1,
                         rel: 0
                     },
@@ -680,6 +777,7 @@
             // *** PARTE 2: Esconde os controles de admin ***
             document.getElementById('videoList').classList.remove('admin-mode');
             document.getElementById('bulkRemoveBtn').style.display = 'none';
+            document.getElementById('clearChatBtn').style.display = 'none';
             // Limpa os checkboxes
             document.querySelectorAll('.video-select-checkbox').forEach(cb => cb.checked = false);
         }
@@ -704,26 +802,26 @@
  * @param {string} message - A mensagem a ser exibida.
  * @param {string} [type='info'] - O tipo da notificação ('info', 'success', 'error').
  */
-function showNotification(message, type = 'info') {
-    const notification = document.getElementById('notification');
-    const notificationMessage = document.getElementById('notificationMessage');
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationMessage = document.getElementById('notificationMessage');
 
-    // 1. Limpa qualquer timer de notificação anterior
-    // Isso impede que a notificação desapareça se uma nova for chamada
-    if (notificationTimer) {
-        clearTimeout(notificationTimer);
-    }
+            // 1. Limpa qualquer timer de notificação anterior
+            // Isso impede que a notificação desapareça se uma nova for chamada
+            if (notificationTimer) {
+                clearTimeout(notificationTimer);
+            }
 
-    notificationMessage.textContent = message;
-    notification.className = 'notification'; // Reseta as classes
-    notification.classList.add(type, 'show'); // Adiciona as novas
+            notificationMessage.textContent = message;
+            notification.className = 'notification'; // Reseta as classes
+            notification.classList.add(type, 'show'); // Adiciona as novas
 
-    // 2. Define um NOVO timer para 5 segundos (aumentado de 3000)
-    notificationTimer = setTimeout(() => {
-        notification.classList.remove('show');
-        notificationTimer = null; // Limpa o ID do timer
-    }, 5000); // <-- Aumentado de 3000ms para 5000ms
-}
+            // 2. Define um NOVO timer para 5 segundos (aumentado de 3000)
+            notificationTimer = setTimeout(() => {
+                notification.classList.remove('show');
+                notificationTimer = null; // Limpa o ID do timer
+            }, 5000); // <-- Aumentado de 3000ms para 5000ms
+        }
 
 
         /**
@@ -1076,118 +1174,118 @@ function showNotification(message, type = 'info') {
         }
 
         // Função para atualizar a exibição do nome do admin
-function updateAdminDisplay() {
-    const adminBtn = document.getElementById('adminUnlockBtn');
-    const adminStatusText = document.getElementById('adminStatusText');
-    const adminNameDisplay = document.getElementById('adminNameDisplay');
-    const adminInfo = document.getElementById('adminInfo');
-    const adminFullName = document.getElementById('adminFullName');
-    
-    if (isAdminLoggedIn && currentAdminUser) {
-        adminBtn.classList.add('admin-logged-in');
-        adminStatusText.textContent = 'Admin:';
-        adminNameDisplay.textContent = currentAdminUser;
-        adminNameDisplay.style.display = 'inline';
-        
-        // Mostra info adicional se existir
-        if (adminInfo && adminFullName) {
-            adminFullName.textContent = currentAdminUser;
-            adminInfo.style.display = 'flex';
+        function updateAdminDisplay() {
+            const adminBtn = document.getElementById('adminUnlockBtn');
+            const adminStatusText = document.getElementById('adminStatusText');
+            const adminNameDisplay = document.getElementById('adminNameDisplay');
+            const adminInfo = document.getElementById('adminInfo');
+            const adminFullName = document.getElementById('adminFullName');
+
+            if (isAdminLoggedIn && currentAdminUser) {
+                adminBtn.classList.add('admin-logged-in');
+                adminStatusText.textContent = 'Admin:';
+                adminNameDisplay.textContent = currentAdminUser;
+                adminNameDisplay.style.display = 'inline';
+
+                // Mostra info adicional se existir
+                if (adminInfo && adminFullName) {
+                    adminFullName.textContent = currentAdminUser;
+                    adminInfo.style.display = 'flex';
+                }
+            } else {
+                adminBtn.classList.remove('admin-logged-in');
+                adminStatusText.textContent = 'Admin';
+                adminNameDisplay.style.display = 'none';
+                adminNameDisplay.textContent = '';
+
+                // Esconde info adicional se existir
+                if (adminInfo) {
+                    adminInfo.style.display = 'none';
+                }
+            }
         }
-    } else {
-        adminBtn.classList.remove('admin-logged-in');
-        adminStatusText.textContent = 'Admin';
-        adminNameDisplay.style.display = 'none';
-        adminNameDisplay.textContent = '';
-        
-        // Esconde info adicional se existir
-        if (adminInfo) {
-            adminInfo.style.display = 'none';
+
+        // Variável para armazenar o nome do admin logado
+        let currentAdminUser = null;
+
+        // Modifique a função loginAdminSession para armazenar o nome do admin
+        async function loginAdminSession() {
+            const adminEmail = document.getElementById('adminUnlockName').value.trim();
+            const password = document.getElementById('adminUnlockPassword').value;
+
+            if (!adminEmail || !password) {
+                showNotification('Por favor, preencha e-mail e senha.', 'error');
+                return;
+            }
+
+            toggleLoading('adminUnlockConfirmBtn', true);
+
+            try {
+                // Tenta fazer o login no Firebase Auth
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
+
+                // SUCESSO!
+                isAdminLoggedIn = true;
+                currentAdminUser = adminEmail.split('@')[0]; // Pega a parte antes do @ como nome
+                document.body.classList.remove('non-admin');
+
+                // Atualiza a exibição
+                updateAdminDisplay();
+
+
+                closeAdminUnlockModal();
+
+                // Mostra os controles de admin
+                document.getElementById('videoList').classList.add('admin-mode');
+                document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
+                document.getElementById('clearChatBtn').style.display = 'inline-block';
+                enableAdminPlayerControls();
+
+                // Atualiza o botão de pular para o modo Admin
+                document.getElementById('skipVoteBtnText').textContent = 'Pular Vídeo (Admin)';
+                document.getElementById('voteCounterWrapper').style.display = 'none'
+
+            } catch (error) {
+                console.error('Erro de autenticação do admin:', error);
+                if (error.code === 'auth/wrong-password') {
+                    showNotification('Senha incorreta.', 'error');
+                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+                    showNotification('E-mail não encontrado ou inválido.', 'error');
+                } else {
+                    showNotification('Erro de autenticação.', 'error');
+                }
+            } finally {
+                toggleLoading('adminUnlockConfirmBtn', false);
+            }
         }
-    }
-}
 
-// Variável para armazenar o nome do admin logado
-let currentAdminUser = null;
+        // Modifique a função logoutAdminSession para limpar o nome
+        function logoutAdminSession() {
+            isAdminLoggedIn = false;
+            currentAdminUser = null;
+            document.body.classList.add('non-admin');
 
-// Modifique a função loginAdminSession para armazenar o nome do admin
-async function loginAdminSession() {
-    const adminEmail = document.getElementById('adminUnlockName').value.trim();
-    const password = document.getElementById('adminUnlockPassword').value;
+            // Atualiza a exibição
+            updateAdminDisplay();
 
-    if (!adminEmail || !password) {
-        showNotification('Por favor, preencha e-mail e senha.', 'error');
-        return;
-    }
+            showNotification('Modo Admin DESATIVADO.', 'info');
 
-    toggleLoading('adminUnlockConfirmBtn', true);
-
-    try {
-        // Tenta fazer o login no Firebase Auth
-        const userCredential = await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
-        
-        // SUCESSO!
-        isAdminLoggedIn = true;
-        currentAdminUser = adminEmail.split('@')[0]; // Pega a parte antes do @ como nome
-        document.body.classList.remove('non-admin');
-        
-        // Atualiza a exibição
-        updateAdminDisplay();
-        
-        
-        closeAdminUnlockModal();
-
-        // Mostra os controles de admin
-        document.getElementById('videoList').classList.add('admin-mode');
-        document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
-        
-        enableAdminPlayerControls();
-
-        // Atualiza o botão de pular para o modo Admin
-        document.getElementById('skipVoteBtnText').textContent = 'Pular Vídeo (Admin)';
-        document.getElementById('voteCounterWrapper').style.display = 'none'
-
-    } catch (error) {
-        console.error('Erro de autenticação do admin:', error);
-        if (error.code === 'auth/wrong-password') {
-            showNotification('Senha incorreta.', 'error');
-        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
-            showNotification('E-mail não encontrado ou inválido.', 'error');
-        } else {
-            showNotification('Erro de autenticação.', 'error');
+            // Esconde os controles de admin
+            document.getElementById('videoList').classList.remove('admin-mode');
+            document.getElementById('bulkRemoveBtn').style.display = 'none';
+            document.getElementById('clearChatBtn').style.display = 'none';
+            // Limpa os checkboxes
+            document.querySelectorAll('.video-select-checkbox').forEach(cb => cb.checked = false);
+            // Restaura o botão de pular para o modo Votação
+            document.getElementById('skipVoteBtnText').textContent = 'Votar para Pular';
+            document.getElementById('voteCounterWrapper').style.display = 'inline';
+            disableAdminPlayerControls();
         }
-    } finally {
-        toggleLoading('adminUnlockConfirmBtn', false);
-    }
-}
 
-// Modifique a função logoutAdminSession para limpar o nome
-function logoutAdminSession() {
-    isAdminLoggedIn = false;
-    currentAdminUser = null;
-    document.body.classList.add('non-admin');
-    
-    // Atualiza a exibição
-    updateAdminDisplay();
-    
-    showNotification('Modo Admin DESATIVADO.', 'info');
-
-    // Esconde os controles de admin
-    document.getElementById('videoList').classList.remove('admin-mode');
-    document.getElementById('bulkRemoveBtn').style.display = 'none';
-    
-    // Limpa os checkboxes
-    document.querySelectorAll('.video-select-checkbox').forEach(cb => cb.checked = false);
-    // Restaura o botão de pular para o modo Votação
-        document.getElementById('skipVoteBtnText').textContent = 'Votar para Pular';
-        document.getElementById('voteCounterWrapper').style.display = 'inline';
-    disableAdminPlayerControls();
-}
-
-/**
-         * Função "portão" que decide se deve VOTAR ou PULAR (admin).
-         * Esta função é chamada pelo botão principal de skip.
-         */
+        /**
+                 * Função "portão" que decide se deve VOTAR ou PULAR (admin).
+                 * Esta função é chamada pelo botão principal de skip.
+                 */
         function handleSkipOrVote() {
             if (isAdminLoggedIn) {
                 // Admin logado: Pula o vídeo imediatamente
@@ -1430,37 +1528,37 @@ function logoutAdminSession() {
         const overlayPlayBtn = document.getElementById('overlayPlayBtn');
         const overlayPlayIcon = document.getElementById('overlayPlayIcon');
         const overlayVolume = document.getElementById('overlayVolume');
-        
+
 
         const overlayFullscreenBtn = document.getElementById('overlayFullscreenBtn');
 
-        
-overlayFullscreenBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleFullscreen();
-});
 
-function toggleFullscreen() {
-    const container = document.getElementById('player-container');
-    if (!document.fullscreenElement) {
-        if (container.requestFullscreen) {
-            container.requestFullscreen();
-        } else if (container.webkitRequestFullscreen) {
-            container.webkitRequestFullscreen();
-        } else if (container.msRequestFullscreen) {
-            container.msRequestFullscreen();
+        overlayFullscreenBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleFullscreen();
+        });
+
+        function toggleFullscreen() {
+            const container = document.getElementById('player-container');
+            if (!document.fullscreenElement) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+
         }
-    } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
-        }
-    }
-    
-}
 
         function updateOverlayPlayIcon() {
             if (!player || typeof player.getPlayerState !== 'function') return;
@@ -1694,6 +1792,304 @@ function toggleFullscreen() {
             }
         });
 
+        // ====================================================================
+        // Funções do Chat (Integradas)
+        // ====================================================================
+
+        /**
+         * Inicializa os listeners do chat.
+         */
+        function initializeChatFunctions() {
+            loadChatMessages();
+            setupTypingListeners();
+        }
+
+        /**
+         * Carrega as mensagens do chat e ouve por novas.
+         */
+        function loadChatMessages() {
+            chatMessagesRef.orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
+                const messages = snapshot.val() || {};
+                displayMessages(messages);
+            });
+        }
+
+        /**
+         * Configura os listeners de "digitando".
+         */
+        function setupTypingListeners() {
+            chatTypingRef.on('value', (snapshot) => {
+                const typingUsers = snapshot.val() || {};
+                updateTypingIndicator(typingUsers);
+            });
+        }
+
+        /**
+         * Envia a mensagem do chat para o Firebase.
+         */
+        function sendChatMessage() {
+            const messageInput = document.getElementById('chatMessageInput');
+            const messageText = messageInput.value.trim();
+
+            if (messageText === '') return;
+
+            // Pega o nome do usuário da sessão (do index.html)
+            const userName = sessionStorage.getItem('ytSessionUser') || 'Visitante';
+
+            // Para o indicador de "digitando"
+            stopTyping();
+
+            // --- MODIFICAÇÃO AQUI ---
+            // Cria a mensagem base
+            const messageData = {
+                userId: userVoteId, // Reutiliza o ID único do sistema de votação
+                userName: userName,
+                userIsAdmin: isAdminLoggedIn, // Reutiliza a variável global de admin
+                text: messageText,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            // Adiciona dados de resposta, se houver
+            if (currentReplyMessage) {
+                messageData.replyToId = currentReplyMessage.id;
+                messageData.replyToUser = currentReplyMessage.user;
+                messageData.replyToText = currentReplyMessage.text;
+            }
+
+            // Salva no Firebase
+            chatMessagesRef.push(messageData)
+                .then(() => {
+                    messageInput.value = ''; // Limpa o campo
+                    cancelReply(); // <-- LIMPA O CONTEXTO DE RESPOSTA
+                })
+                .catch((error) => {
+                    console.error('Erro ao enviar mensagem:', error);
+                    showNotification('Erro ao enviar mensagem', 'error');
+                });
+        }
+
+        /**
+         * Lida com a tecla Enter no input do chat.
+         */
+        function handleChatInput(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            } else {
+                startTyping(); // Inicia indicador de digitação
+            }
+        }
+
+        /**
+         * Informa ao Firebase que o usuário está digitando.
+         */
+        function startTyping() {
+            const userName = sessionStorage.getItem('ytSessionUser') || 'Visitante';
+
+            if (!isTyping) {
+                isTyping = true;
+                chatTypingRef.child(userVoteId).set({
+                    name: userName,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
+
+            // Reinicia o timeout
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(stopTyping, 3000);
+        }
+
+        /**
+         * Informa ao Firebase que o usuário parou de digitar.
+         */
+        function stopTyping() {
+            if (isTyping) {
+                isTyping = false;
+                chatTypingRef.child(userVoteId).remove();
+            }
+            clearTimeout(typingTimeout);
+        }
+
+        /**
+         * Mostra quem está digitando.
+         */
+        function updateTypingIndicator(typingUsers) {
+            const typingIndicator = document.getElementById('typingIndicator');
+            const typingUserSpan = document.getElementById('typingUser');
+
+            const now = Date.now();
+            const activeTypers = Object.entries(typingUsers)
+                .filter(([userId, data]) => {
+                    if (userId === userVoteId) return false; // Não mostrar a si mesmo
+                    return (now - (data.timestamp || 0)) < 3000;
+                })
+                .map(([_, data]) => data.name);
+
+            if (activeTypers.length > 0) {
+                typingUserSpan.textContent = activeTypers.join(', ');
+                typingIndicator.classList.add('active');
+            } else {
+                typingIndicator.classList.remove('active');
+            }
+        }
+
+        /**
+         * Renderiza as mensagens na tela.
+         */
+        function displayMessages(messages) {
+            const chatContainer = document.getElementById('chatMessages');
+            const emptyChat = chatContainer.querySelector('.empty-chat');
+
+            if (Object.keys(messages).length > 0 && emptyChat) {
+                emptyChat.remove();
+            }
+
+            const typingIndicator = document.getElementById('typingIndicator');
+            chatContainer.innerHTML = ''; // Limpa o chat
+            if (typingIndicator) {
+                chatContainer.appendChild(typingIndicator); // Readiciona o indicador
+            }
+
+            // --- MODIFICAÇÃO AQUI ---
+            // Itera sobre as CHAVES (keys) do objeto, não só os valores
+            // O "orderByChild" do Firebase já garante a ordem
+            Object.keys(messages).forEach(key => {
+                const message = messages[key];
+                // Passa a CHAVE (ID) e o objeto da mensagem
+                const messageElement = createMessageElement(key, message);
+                chatContainer.appendChild(messageElement);
+            });
+
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function getUserColor(str) {
+            if (!str || str === 'Visitante') return 'hsl(0, 0%, 70%)'; // Cor padrão para 'Visitante'
+
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const hue = hash % 360; // 0 a 360
+            const saturation = 70; // Fixo: 70% (bom e colorido)
+            const lightness = 65;  // Fixo: 65% (claro, bom em fundo escuro)
+
+            return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        }
+        /**
+     * Cria o elemento HTML para uma única mensagem (ESTILO BOLHA). (MODIFICADA)
+     * @param {string} messageKey - O ID (chave) da mensagem no Firebase.
+     * @param {object} message - O objeto da mensagem.
+     */
+        function createMessageElement(messageKey, message) {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message';
+            messageElement.id = 'msg-' + messageKey; // ID para o scroll
+
+            // Verifica se é "minha"
+            const isMine = (message.userId === userVoteId);
+            if (isMine) {
+                messageElement.classList.add('mine');
+            }
+
+            if (message.userIsAdmin) {
+                messageElement.classList.add('admin');
+            }
+            if (message.isSystem) {
+                messageElement.classList.add('system');
+            }
+
+            // Sanitização
+            const safeText = (message.text || '')
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+            const safeUser = (message.userName || 'Visitante')
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            // --- NOVA LÓGICA DE COR ---
+            let userColorStyle = ''; // String de estilo
+            if (!message.userIsAdmin && !message.isSystem) {
+                // Se NÃO for admin e NÃO for sistema, calcula a cor
+                const color = getUserColor(message.userName);
+                userColorStyle = `style="color: ${color}"`;
+            }
+            // Se for admin, o CSS (.chat-message.admin .chat-user) vai cuidar disso.
+            // --- FIM DA NOVA LÓGICA ---
+
+            // --- 1. Bloco de Resposta (Se esta MENSAGEM é uma resposta) ---
+            let replyHtml = '';
+            if (message.replyToId) {
+                const safeReplyText = (message.replyToText || '')
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+                const safeReplyUser = (message.replyToUser || 'Alguém')
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+
+                replyHtml = `
+            <div class="chat-reply-block" onclick="scrollToMessage('${message.replyToId}')">
+                <div class="chat-reply-block-user">${safeReplyUser}</div>
+                <div class="chat-reply-block-text">${safeReplyText}</div>
+            </div>
+        `;
+            }
+
+            // --- 2. Botão de Resposta (Para RESPONDER a esta mensagem) ---
+            // Cria um snippet de texto seguro para o onclick
+            let snippet = safeText.length > 40 ? safeText.substring(0, 40) + '...' : safeText;
+            snippet = snippet.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+
+            const replyBtnHtml = `
+        <button class="chat-reply-btn" title="Responder" onclick="setReplyContext('${messageKey}', '${safeUser}', '${snippet}')">
+            <i class="fas fa-reply"></i>
+        </button>
+    `;
+
+            // --- 3. Montagem Final ---
+            const timeString = formatTime(message.timestamp);
+
+            messageElement.innerHTML = `
+        ${replyHtml} 
+        <div class="chat-message-header">
+            <div class="chat-user ${message.userIsAdmin ? 'admin-badge' : ''}" ${userColorStyle}>
+                ${message.userIsAdmin ? '<i class="fas fa-crown"></i>' : ''}
+                ${safeUser}
+            </div>
+        </div>
+        <div class="chat-text">${safeText}</div>
+        <div class="chat-time">${timeString}</div>
+        ${replyBtnHtml}
+    `;
+
+            return messageElement;
+        }
+
+        /**
+         * Formata o timestamp para exibição.
+         */
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const messageTime = new Date(timestamp);
+            const now = new Date();
+
+            if (now.toDateString() === messageTime.toDateString()) {
+                return messageTime.toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            return messageTime.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // ====================================================================
+        // Fim das Funções do Chat
+        // ====================================================================
         // Efeito de fade-in na carga da página
         document.addEventListener('DOMContentLoaded', function () {
             document.body.style.opacity = '0';
@@ -1704,194 +2100,305 @@ function toggleFullscreen() {
         });
 
         // Variáveis para o sistema de votação
-let currentSongRef = null;
-let votesRef = null;
-let userVoteId = null;
-let onlineUsersCount = 0;
+        let currentSongRef = null;
+        let votesRef = null;
+        let userVoteId = null;
+        // ====================================================================
+        // Variáveis do Chat (Integrado)
+        // ====================================================================
+        const chatMessagesRef = database.ref('chat/messages');
+        const chatTypingRef = database.ref('chat/typing');
+        let isTyping = false;
+        let typingTimeout;
+        let currentReplyMessage = null;
+        let onlineUsersCount = 0;
 
-// Calcula votos necessários baseado em usuários online
-function calculateVotesNeeded() {
-    // Se há poucos usuários, precisa da maioria
-    if (onlineUsersCount <= 2) return 2;
-    if (onlineUsersCount <= 5) return Math.ceil(onlineUsersCount * 0.6); // 60%
-    return Math.ceil(onlineUsersCount * 0.5); // 50% para salas maiores
-}
-
-// Inicializa o sistema de votação
-function initializeVotingSystem() {
-    currentSongRef = database.ref('currentSong');
-    votesRef = database.ref('currentSong/votes');
-    
-    // Gera um ID único para este usuário
-    userVoteId = sessionStorage.getItem('userVoteId') || generateUserId();
-    sessionStorage.setItem('userVoteId', userVoteId);
-    
-    // Monitora número de usuários online
-    presenceRef.on('value', (snap) => {
-        onlineUsersCount = snap.numChildren();
-        updateVotesNeededDisplay();
-    });
-    
-    // Monitora mudanças na votação
-    votesRef.on('value', (snapshot) => {
-        updateVoteDisplay(snapshot.val());
-    });
-    
-    // Reseta votos quando a música muda
-    videoQueueRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            const firstVideo = Object.values(data)[0];
-            if (firstVideo) {
-                const videoId = extractVideoId(firstVideo.videoUrl);
-                resetVotesForNewSong(videoId);
-            }
-        } else {
-            // Fila vazia - reseta votos
-            resetVotes();
+        // Calcula votos necessários baseado em usuários online
+        function calculateVotesNeeded() {
+            // Se há poucos usuários, precisa da maioria
+            if (onlineUsersCount <= 2) return 2;
+            if (onlineUsersCount <= 5) return Math.ceil(onlineUsersCount * 0.6); // 60%
+            return Math.ceil(onlineUsersCount * 0.5); // 50% para salas maiores
         }
-    });
-}
 
-// Atualiza a exibição dos votos necessários
-function updateVotesNeededDisplay() {
-    const votesNeeded = calculateVotesNeeded();
-    const votesNeededElement = document.getElementById('votesNeeded');
-    if (votesNeededElement) {
-        votesNeededElement.textContent = votesNeeded;
-    }
-}
+        // Inicializa o chat
+        initializeChatFunctions();
+        // Inicializa o sistema de votação
+        function initializeVotingSystem() {
+            currentSongRef = database.ref('currentSong');
+            votesRef = database.ref('currentSong/votes');
 
-// Atualiza a exibição dos votos no botão
-function updateVoteDisplay(votes) {
-    const voteCountElement = document.getElementById('voteCount');
-    const votesNeededElement = document.getElementById('votesNeeded');
-    const skipVoteBtn = document.getElementById('skipVoteBtn');
-    const skipVoteBtnText = document.getElementById('skipVoteBtnText');
-    
-    if (!votes) {
-        voteCountElement.textContent = '0';
-        updateVotesNeededDisplay();
-        skipVoteBtnText.textContent = 'Votar para Pular';
-        skipVoteBtn.disabled = false;
-        skipVoteBtn.classList.remove('voted');
-        return;
-    }
-    
-    const voteCount = Object.keys(votes).length;
-    const votesNeeded = calculateVotesNeeded();
-    
-    voteCountElement.textContent = voteCount;
-    votesNeededElement.textContent = votesNeeded;
-    
-    // Verifica se o usuário atual já votou
-    const hasVoted = votes[userVoteId] !== undefined;
-    
-    if (hasVoted) {
-        skipVoteBtnText.textContent = 'Você Votou';
-        skipVoteBtn.disabled = true;
-        skipVoteBtn.classList.add('voted');
-    } else {
-        skipVoteBtnText.textContent = 'Votar para Pular';
-        skipVoteBtn.disabled = false;
-        skipVoteBtn.classList.remove('voted');
-    }
-    
-    // Se atingiu o limite de votos, pula a música
-    if (voteCount >= votesNeeded) {
-        skipSongByVote();
-    }
-}
+            // Gera um ID único para este usuário
+            userVoteId = sessionStorage.getItem('userVoteId') || generateUserId();
+            sessionStorage.setItem('userVoteId', userVoteId);
 
-// Função principal de votação
-function castVoteToSkip() {
-    if (!userVoteId) {
-        showNotification('Erro: Sistema de votação não inicializado', 'error');
-        return;
-    }
-    
-    // Verifica se há vídeos na fila
-    if (videoQueue.length === 0) {
-        showNotification('Não há músicas na fila para pular', 'info');
-        return;
-    }
-    
-    // Verifica se há usuários suficientes online
-    if (onlineUsersCount < 2) {
-        showNotification('Não há usuários suficientes online para votação', 'info');
-        return;
-    }
-    
-    toggleLoading('skipVoteBtn', true);
-    
-    // Registra o voto
-    votesRef.child(userVoteId).set({
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        userName: currentSessionUser || 'Anônimo',
-        userId: userVoteId
-    })
-    .then(() => {
-        showNotification('Seu voto foi registrado!', 'success');
-    })
-    .catch((error) => {
-        console.error('Erro ao votar:', error);
-        showNotification('Erro ao registrar voto', 'error');
-    })
-    .finally(() => {
-        toggleLoading('skipVoteBtn', false);
-    });
-}
+            // Monitora número de usuários online
+            presenceRef.on('value', (snap) => {
+                onlineUsersCount = snap.numChildren();
+                updateVotesNeededDisplay();
+            });
 
-// Pula a música quando a votação é bem-sucedida
-function skipSongByVote() {
-    if (videoQueue.length === 0) return;
-    
-    const votesNeeded = calculateVotesNeeded();
-    showNotification(`Votação bem-sucedida! (${votesNeeded}/${votesNeeded} votos) Pulando música...`, 'success');
-    
-    // Remove o primeiro vídeo da fila (música atual)
-    const firstVideoId = videoQueue[0].id;
-    videoQueueRef.child(firstVideoId).remove()
-        .then(() => {
-            showNotification('Música pulada por votação popular!', 'success');
-            // Reseta os votos após um delay
-            setTimeout(resetVotes, 1000);
-        })
-        .catch((error) => {
-            console.error('Erro ao pular música por votação:', error);
-            showNotification('Erro ao pular música', 'error');
+            // Monitora mudanças na votação
+            votesRef.on('value', (snapshot) => {
+                updateVoteDisplay(snapshot.val());
+            });
+
+            // Reseta votos quando a música muda
+            videoQueueRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const firstVideo = Object.values(data)[0];
+                    if (firstVideo) {
+                        const videoId = extractVideoId(firstVideo.videoUrl);
+                        resetVotesForNewSong(videoId);
+                    }
+                } else {
+                    // Fila vazia - reseta votos
+                    resetVotes();
+                }
+            });
+        }
+
+        // Atualiza a exibição dos votos necessários
+        function updateVotesNeededDisplay() {
+            const votesNeeded = calculateVotesNeeded();
+            const votesNeededElement = document.getElementById('votesNeeded');
+            if (votesNeededElement) {
+                votesNeededElement.textContent = votesNeeded;
+            }
+        }
+
+        // Atualiza a exibição dos votos no botão
+        function updateVoteDisplay(votes) {
+            const voteCountElement = document.getElementById('voteCount');
+            const votesNeededElement = document.getElementById('votesNeeded');
+            const skipVoteBtn = document.getElementById('skipVoteBtn');
+            const skipVoteBtnText = document.getElementById('skipVoteBtnText');
+
+            if (!votes) {
+                voteCountElement.textContent = '0';
+                updateVotesNeededDisplay();
+                skipVoteBtnText.textContent = 'Votar para Pular';
+                skipVoteBtn.disabled = false;
+                skipVoteBtn.classList.remove('voted');
+                return;
+            }
+
+            const voteCount = Object.keys(votes).length;
+            const votesNeeded = calculateVotesNeeded();
+
+            voteCountElement.textContent = voteCount;
+            votesNeededElement.textContent = votesNeeded;
+
+            // Verifica se o usuário atual já votou
+            const hasVoted = votes[userVoteId] !== undefined;
+
+            if (hasVoted) {
+                skipVoteBtnText.textContent = 'Você Votou';
+                skipVoteBtn.disabled = true;
+                skipVoteBtn.classList.add('voted');
+            } else {
+                skipVoteBtnText.textContent = 'Votar para Pular';
+                skipVoteBtn.disabled = false;
+                skipVoteBtn.classList.remove('voted');
+            }
+
+            // Se atingiu o limite de votos, pula a música
+            if (voteCount >= votesNeeded) {
+                skipSongByVote();
+            }
+        }
+
+        // Função principal de votação
+        function castVoteToSkip() {
+            if (!userVoteId) {
+                showNotification('Erro: Sistema de votação não inicializado', 'error');
+                return;
+            }
+
+            // Verifica se há vídeos na fila
+            if (videoQueue.length === 0) {
+                showNotification('Não há músicas na fila para pular', 'info');
+                return;
+            }
+
+            // Verifica se há usuários suficientes online
+            if (onlineUsersCount < 2) {
+                showNotification('Não há usuários suficientes online para votação', 'info');
+                return;
+            }
+
+            toggleLoading('skipVoteBtn', true);
+
+            // Registra o voto
+            votesRef.child(userVoteId).set({
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                userName: currentSessionUser || 'Anônimo',
+                userId: userVoteId
+            })
+                .then(() => {
+                    showNotification('Seu voto foi registrado!', 'success');
+                })
+                .catch((error) => {
+                    console.error('Erro ao votar:', error);
+                    showNotification('Erro ao registrar voto', 'error');
+                })
+                .finally(() => {
+                    toggleLoading('skipVoteBtn', false);
+                });
+        }
+
+        // Pula a música quando a votação é bem-sucedida
+        function skipSongByVote() {
+            if (videoQueue.length === 0) return;
+
+            const votesNeeded = calculateVotesNeeded();
+            showNotification(`Votação bem-sucedida! (${votesNeeded}/${votesNeeded} votos) Pulando música...`, 'success');
+
+            // Remove o primeiro vídeo da fila (música atual)
+            const firstVideoId = videoQueue[0].id;
+            videoQueueRef.child(firstVideoId).remove()
+                .then(() => {
+                    showNotification('Música pulada por votação popular!', 'success');
+                    // Reseta os votos após um delay
+                    setTimeout(resetVotes, 1000);
+                })
+                .catch((error) => {
+                    console.error('Erro ao pular música por votação:', error);
+                    showNotification('Erro ao pular música', 'error');
+                });
+        }
+
+        // Reseta os votos para uma nova música
+        function resetVotesForNewSong(videoId) {
+            if (!currentSongRef) return;
+
+            currentSongRef.set({
+                currentVideoId: videoId,
+                votes: {},
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                onlineUsersCount: onlineUsersCount
+            });
+        }
+
+        // Reseta os votos
+        function resetVotes() {
+            if (votesRef) {
+                votesRef.set({});
+            }
+        }
+
+        // Gera ID único para usuário
+        function generateUserId() {
+            return 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        }
+
+        // Inicializa o sistema de votação quando o DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(initializeVotingSystem, 1000);
         });
-}
 
-// Reseta os votos para uma nova música
-function resetVotesForNewSong(videoId) {
-    if (!currentSongRef) return;
-    
-    currentSongRef.set({
-        currentVideoId: videoId,
-        votes: {},
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        onlineUsersCount: onlineUsersCount
-    });
-}
+        // ====================================================================
+        // Funções de Resposta do Chat (NOVAS)
+        // ====================================================================
 
-// Reseta os votos
-function resetVotes() {
-    if (votesRef) {
-        votesRef.set({});
-    }
-}
+        /**
+         * Prepara o contexto de resposta
+         * (messageKey é o ID do firebase)
+         * (userName é o nome do autor original)
+         * (messageText é o texto original)
+         */
+        function setReplyContext(messageKey, userName, messageText) {
+            currentReplyMessage = {
+                id: messageKey,
+                user: userName,
+                text: messageText
+            };
 
-// Gera ID único para usuário
-function generateUserId() {
-    return 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-}
+            // Pega a barra de ações principal
+            const actionsBar = document.getElementById('chatActionsBar');
+            const contextBox = document.getElementById('chatReplyContext');
 
-// Inicializa o sistema de votação quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(initializeVotingSystem, 1000);
-});
+            contextBox.querySelector('.chat-reply-user').textContent = `Respondendo a ${userName}`;
+            contextBox.querySelector('.chat-reply-text').textContent = messageText;
+
+            // Mostra AMBOS (o contêiner e o conteúdo)
+            contextBox.style.display = 'flex';
+            actionsBar.style.display = 'block'; // <-- ESTA LINHA É NOVA
+
+            document.getElementById('chatMessageInput').focus();
+        }
+
+        /**
+         * Cancela a resposta
+         */
+        function cancelReply() {
+            currentReplyMessage = null;
+
+            // Pega a barra de ações principal
+            const actionsBar = document.getElementById('chatActionsBar');
+            const contextBox = document.getElementById('chatReplyContext');
+
+            // Esconde AMBOS
+            contextBox.style.display = 'none';
+            actionsBar.style.display = 'none'; // <-- ESTA LINHA É NOVA
+        }
+
+        /**
+         * Rola a tela até a mensagem original
+         */
+        function scrollToMessage(messageKey) {
+            const element = document.getElementById('msg-' + messageKey);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Adiciona um destaque temporário
+                element.classList.remove('message-highlighted'); // Remove
+                void element.offsetWidth; // "Reflow" para forçar a animação
+                element.classList.add('message-highlighted'); // Adiciona
+            } else {
+                showNotification('Mensagem original não encontrada (pode estar muito antiga)', 'info');
+            }
+        }
+
+        /**
+         * Limpa TODO o histórico do chat. (Função de Admin)
+         */
+        async function handleClearChat() {
+            // Dupla verificação de segurança
+            if (!isAdminLoggedIn) {
+                showNotification('Apenas administradores podem limpar o chat.', 'error');
+                return;
+            }
+
+            // Confirmação final
+            if (!confirm('Tem certeza que deseja apagar TODO o histórico do chat para TODOS os usuários? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+
+            console.log('Admin limpando o chat...');
+            try {
+                // 1. Remove todas as mensagens do Firebase
+                await chatMessagesRef.remove();
+
+                // 2. (Opcional) Adiciona uma mensagem de "Chat limpo"
+                await chatMessagesRef.push({
+                    userId: 'system',
+                    userName: 'Sistema',
+                    text: 'O histórico do chat foi limpo por um administrador.',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    isSystem: true // Marca como mensagem de sistema
+                });
+
+                showNotification('Histórico do chat foi limpo com sucesso!', 'success');
+
+            } catch (error) {
+                console.error('Erro ao limpar o chat:', error);
+                showNotification('Erro ao limpar o chat. Verifique as regras do Firebase.', 'error');
+            }
+        }
     </script>
+    </div>
 </body>
 
 </html>
