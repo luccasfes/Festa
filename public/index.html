@@ -85,10 +85,12 @@
                     <h3>Escolha de: <span id="currentUser">Nenhum vídeo em execução</span></h3>
                     <p class="current-url" id="currentVideoUrl">Nenhuma URL disponível</p>
                 </div>
-                <button class="btn primary skip-video-button" onclick="castVoteToSkip()" id="skipVoteBtn">
+               <button class="btn primary skip-video-button" onclick="handleSkipOrVote()" id="skipVoteBtn">
     <i class="fas fa-forward"></i> 
     <span id="skipVoteBtnText">Votar para Pular</span>
-    (<span id="voteCount">0</span>/<span id="votesNeeded">0</span>)
+    <span id="voteCounterWrapper">
+        (<span id="voteCount">0</span>/<span id="votesNeeded">0</span>)
+    </span>
     <span id="skipVoteBtnLoader" class="loading" style="display: none;"></span>
 </button>
             </section>
@@ -1141,6 +1143,10 @@ async function loginAdminSession() {
         
         enableAdminPlayerControls();
 
+        // Atualiza o botão de pular para o modo Admin
+        document.getElementById('skipVoteBtnText').textContent = 'Pular Vídeo (Admin)';
+        document.getElementById('voteCounterWrapper').style.display = 'none'
+
     } catch (error) {
         console.error('Erro de autenticação do admin:', error);
         if (error.code === 'auth/wrong-password') {
@@ -1172,12 +1178,29 @@ function logoutAdminSession() {
     
     // Limpa os checkboxes
     document.querySelectorAll('.video-select-checkbox').forEach(cb => cb.checked = false);
-    
+    // Restaura o botão de pular para o modo Votação
+        document.getElementById('skipVoteBtnText').textContent = 'Votar para Pular';
+        document.getElementById('voteCounterWrapper').style.display = 'inline';
     disableAdminPlayerControls();
 }
+
+/**
+         * Função "portão" que decide se deve VOTAR ou PULAR (admin).
+         * Esta função é chamada pelo botão principal de skip.
+         */
+        function handleSkipOrVote() {
+            if (isAdminLoggedIn) {
+                // Admin logado: Pula o vídeo imediatamente
+                console.log('Admin logado. Pulando vídeo (via handleSkipOrVote)...');
+                executeSkipVideo(); // Esta é a função de skip direto
+            } else {
+                // Usuário normal: Registra um voto
+                console.log('Usuário normal. Registrando voto para pular (via handleSkipOrVote)...');
+                castVoteToSkip(); // Esta é a função de votação
+            }
+        }
         // Variável para armazenar o ID do vídeo a ser removido (o que acabou de tocar)
         // (Mantenha esta variável no escopo global ou onde 'videoToRemoveId' está)
-
         /**
                  * Função "portão" para pular o vídeo.
                  * Verifica se o admin está logado. Se sim, pula direto.
