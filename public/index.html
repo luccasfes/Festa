@@ -1708,14 +1708,7 @@
             setVolumeFromOverlay(e.target.value);
         });
 
-        // Também atualiza ícone quando o estado do player muda pela API (ex.: autoplay)
-        function onPlayerStateChange(event) {
-            // chama seu código existente para ended, etc.
-            // === mantenha o bloco que você já tinha para YT.PlayerState.ENDED ===
-            // ... (seu código anterior de onPlayerStateChange permanece)
-            // depois, atualize ícone do overlay
-            setTimeout(updateOverlayPlayIcon, 50);
-        }
+        
 
         function handleClearQueue() {
             if (isAdminLoggedIn) {
