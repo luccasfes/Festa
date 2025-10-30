@@ -228,7 +228,7 @@
                 </div>
 
                 <div class="search-controls">
-                    <input type="text" id="ytSearchQuery" placeholder="Digite sua busca">
+                    <input type="text" id="ytSearchQuery" placeholder="Digite sua busca" onkeypress="handleYTSearchKeyPress(event)">
                     <button class="btn primary" onclick="searchYouTube()">
                         <i class="fas fa-search"></i> Buscar
                     </button>
@@ -537,6 +537,17 @@
             });
         }
 
+        
+    /**
+     * Lida com a tecla Enter no input de busca do YouTube.
+     */
+    function handleYTSearchKeyPress(event) {
+        // Verifica se a tecla pressionada foi 'Enter'
+        if (event.key === 'Enter') {
+            searchYouTube(); //
+        }
+    }
+    /* --- FIM DA NOVA FUNÇÃO --- */
         // ====================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyCDlr4XHXuwWQ9Zj9dd2yoctLhFz1vbbyM",

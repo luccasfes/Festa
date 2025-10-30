@@ -1163,7 +1163,14 @@ body::before {
         height: 180px;
     }
 }
-
+.search-controls {
+            flex-direction: column; /* Empilha o input e o botão */
+        }
+        
+        .search-controls button {
+            width: 100%; /* Faz o botão "Buscar" ocupar a largura toda */
+        }
+        
 @media (max-width: 480px) {
     body {
         padding: 10px;
