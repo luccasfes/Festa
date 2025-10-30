@@ -23,14 +23,18 @@
     <div id="particles"></div>
     <div class="container">
         <header class="app-header">
-            <button class="btn small" id="adminUnlockBtn" onclick="openAdminUnlockModal()">
-                <i class="fas fa-lock"></i>
-                <span id="adminStatusText">Admin</span>
-                <span id="adminNameDisplay" style="margin-left: 5px; display: none;"></span>
-            </button>
+            <div class="header-controls-left">
+                <button class="btn small" id="adminUnlockBtn" onclick="openAdminUnlockModal()">
+                    <i class="fas fa-lock"></i>
+                    <span id="adminStatusText">Admin</span>
+                    <span id="adminNameDisplay" style="margin-left: 5px; display: none;"></span>
+                </button>
 
+                <button class="btn small" id="panelBtn" onclick="FuncaoParaAbrirPainel()">
+                    <i class="fas fa-cog"></i> <span>Painel</span>
+                </button>
+            </div>
             <h1><i class="fas fa-music"></i> FlowLink<i class="fas fa-headphones"></i></h1>
-
             <div class="presence-indicator">
                 <i class="fas fa-users"></i>
                 <span id="userCount">0</span> online
@@ -297,6 +301,60 @@
                 <button class="btn danger" onclick="executeBulkRemove()" id="bulkRemoveConfirmBtn">
                     <span id="bulkRemoveConfirmBtnText">Remover</span>
                     <span id="bulkRemoveConfirmBtnLoader" class="loading" style="display: none;"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="panelModal" class="modal admin-panel-modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closePanelModal()">×</span>
+
+            <div class="admin-panel-header">
+                <h3><i class="fas fa-user-shield"></i> Painel Admin - FlowLink</h3>
+            </div>
+
+            <div class="admin-panel-body">
+                <h4 style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fas fa-server"></i> Salas Ativas</span>
+                    
+                    <div style="display: flex;"> <button class="btn small secondary" onclick="loadAdminPanelRooms()" title="Atualizar lista">
+                            <i class="fas fa-sync-alt"></i> Atualizar
+                        </button>
+                        
+                        <button class="btn small danger" onclick="openDeleteAllRoomsModal()" title="Deletar TODAS as salas" style="margin-left: 10px;">
+                            <i class="fas fa-exclamation-triangle"></i> Deletar Tudo
+                        </button>
+                    </div>
+                </h4>
+
+                <div id="adminRoomLoader" class="loading-yt" style="display: none; padding: 40px 0;">
+                    Carregando salas...
+                </div>
+
+                <div id="adminRoomList" class="admin-room-list">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteAllRoomsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeDeleteAllRoomsModal()">×</span>
+            <h3><i class="fas fa-exclamation-triangle"></i> Deletar Todas as Salas</h3>
+            <p>
+                Tem certeza que deseja deletar <strong>TODAS</strong> as salas ativas?
+                <br><br>
+                Esta ação é <strong>irreversível</strong> e apagará todas as filas e chats de todos os usuários.
+            </p>
+
+            <div class="modal-buttons">
+                <button class="btn secondary" onclick="closeDeleteAllRoomsModal()">
+                    Cancelar
+                </button>
+                <button class="btn danger" onclick="executeDeleteAllRooms()" id="deleteAllRoomsConfirmBtn">
+                    <span id="deleteAllRoomsConfirmBtnText">Sim, Deletar Tudo</span>
+                    <span id="deleteAllRoomsConfirmBtnLoader" class="loading" style="display: none;"></span>
                 </button>
             </div>
         </div>
@@ -650,6 +708,7 @@
                 closeAdminUnlockModal();
 
                 // *** PARTE 2: Mostra os controles de admin ***
+                document.getElementById('panelBtn').style.display = 'flex';
                 document.getElementById('videoList').classList.add('admin-mode');
                 document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
                 document.getElementById('clearChatBtn').style.display = 'inline-block';
@@ -812,6 +871,7 @@
             showNotification('Modo Admin DESATIVADO.', 'info');
 
             // *** PARTE 2: Esconde os controles de admin ***
+            document.getElementById('panelBtn').style.display = 'none';
             document.getElementById('videoList').classList.remove('admin-mode');
             document.getElementById('bulkRemoveBtn').style.display = 'none';
             document.getElementById('clearChatBtn').style.display = 'none';
@@ -1268,14 +1328,15 @@
 
                 // Atualiza a exibição
                 updateAdminDisplay();
-
-
                 closeAdminUnlockModal();
 
                 // Mostra os controles de admin
                 document.getElementById('videoList').classList.add('admin-mode');
                 document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
                 document.getElementById('clearChatBtn').style.display = 'inline-block';
+
+                document.getElementById('panelBtn').style.display = 'flex';
+
                 enableAdminPlayerControls();
 
                 // Atualiza o botão de pular para o modo Admin
@@ -1298,6 +1359,7 @@
 
         // Modifique a função logoutAdminSession para limpar o nome
         function logoutAdminSession() {
+            document.getElementById('adminPanelBtn').style.display = 'none';
             isAdminLoggedIn = false;
             currentAdminUser = null;
             document.body.classList.add('non-admin');
@@ -1814,6 +1876,8 @@
                 closeNextVideoModal();
                 closeAdminUnlockModal();
                 closeBulkRemoveConfirmModal();
+                closePanelModal();
+                closeDeleteAllRoomsModal();
             }
         });
 
@@ -1826,6 +1890,8 @@
                 closeNextVideoModal();
                 closeAdminUnlockModal();
                 closeBulkRemoveConfirmModal();
+                closePanelModal();
+                closeDeleteAllRoomsModal();
             }
         });
 
@@ -2335,6 +2401,19 @@
             setTimeout(initializeVotingSystem, 1000);
         });
 
+        function FuncaoParaAbrirPainel() {
+            // 1. Carrega os dados das salas do Firebase
+            loadAdminPanelRooms();
+            // 2. Abre o modal
+            document.getElementById('panelModal').style.display = 'flex';
+        }
+
+        /**
+         * Fecha o modal do Painel de Controle Admin.
+         */
+        function closePanelModal() {
+            document.getElementById('panelModal').style.display = 'none';
+        }
         // ====================================================================
         // Funções de Resposta do Chat (NOVAS)
         // ====================================================================
@@ -2434,6 +2513,167 @@
                 showNotification('Erro ao limpar o chat. Verifique as regras do Firebase.', 'error');
             }
         }
+
+        /**
+ * Carrega as salas ativas no painel de admin.
+ */
+        async function loadAdminPanelRooms() {
+            const listElement = document.getElementById('adminRoomList');
+            const loaderElement = document.getElementById('adminRoomLoader');
+
+            if (!listElement || !loaderElement) {
+                console.error('Elementos do painel admin não encontrados.');
+                return;
+            }
+
+            listElement.innerHTML = ''; // Limpa a lista antiga
+            loaderElement.style.display = 'block'; // Mostra o loader
+
+            try {
+                // 1. Referência para o nó principal 'rooms'
+                const roomsRef = database.ref('rooms');
+
+                // 2. Busca os dados UMA VEZ
+                const snapshot = await roomsRef.once('value');
+                const roomsData = snapshot.val();
+
+                if (!roomsData) {
+                    // Se não houver salas, mostra mensagem
+                    loaderElement.innerHTML = '<div class="empty-yt"><i class="fas fa-ghost"></i><p>Nenhuma sala ativa encontrada.</p></div>';
+                    return;
+                }
+
+                const roomIds = Object.keys(roomsData);
+                let htmlToRender = '';
+
+                // 3. Itera por cada sala encontrada
+                roomIds.forEach(roomId => {
+                    const room = roomsData[roomId];
+
+                    // *** IMPORTANTE: Estou assumindo que você salva 'name' e 'createdAt' dentro de cada sala ***
+                    // Se você não salvar, 'room.name' será nulo e 'room.createdAt' também.
+                    const roomName = room.roomName || 'Sala sem nome'; // Ex: "VIP"
+
+                    // Tenta formatar a data, se existir
+                    let createdAt = 'Data desconhecida';
+                    if (room.createdAt) {
+                        try {
+                            createdAt = new Date(room.createdAt).toLocaleString('pt-BR');
+                        } catch (e) {
+                            createdAt = 'Invalid Date'; // Igual ao da sua imagem
+                        }
+                    }
+
+                    // 4. Cria o HTML para o item
+                    htmlToRender += `
+                <div class="admin-room-item" data-room-id="${roomId}">
+                    <div class="room-info">
+                        <strong>${roomName}</strong>
+                        <span>Criada em: ${createdAt}</span>
+                        <span>ID: ${roomId}</span>
+                    </div>
+                    <div class="room-actions">
+                        <button class="btn small secondary" onclick="goToRoom('${roomId}')" title="Abrir sala em nova aba">
+                            <i class="fas fa-eye"></i> Ver
+                        </button>
+                        <button class="btn small danger" onclick="deleteRoom('${roomId}')" title="Deletar sala">
+                            <i class="fas fa-trash"></i> Deletar
+                        </button>
+                    </div>
+                </div>
+            `;
+                });
+
+                listElement.innerHTML = htmlToRender;
+                loaderElement.style.display = 'none'; // Esconde o loader
+
+            } catch (error) {
+                console.error('Erro ao carregar salas:', error);
+                loaderElement.innerHTML = '<div class="error-yt"><i class="fas fa-exclamation-triangle"></i><p>Erro ao carregar salas.</p></div>';
+            }
+        }
+
+        /**
+         * (Função Auxiliar) Redireciona o admin para a sala selecionada.
+         */
+        function goToRoom(roomId) {
+            if (!roomId) return;
+            // Abre a sala (index.html) em uma nova aba com o ID da sala
+            window.open(`index.html?room=${roomId}`, '_blank');
+        }
+
+        /**
+         * (Função Auxiliar) Deleta uma sala do Firebase.
+         */
+        async function deleteRoom(roomId) {
+            if (!roomId) return;
+
+            // Pega o nome da sala pelo HMTL para a confirmação
+            const roomElement = document.querySelector(`.admin-room-item[data-room-id="${roomId}"]`);
+            const roomName = roomElement ? roomElement.querySelector('strong').textContent : 'Sala';
+
+            if (confirm(`Tem certeza que deseja deletar a sala "${roomName}"? \n\nID: ${roomId}\n\nISSO É IRREVERSÍVEL E VAI APAGAR TODA A FILA E CHAT DELA.`)) {
+                try {
+                    // Remove a sala inteira do Firebase
+                    await database.ref(`rooms/${roomId}`).remove();
+
+                    showNotification(`Sala "${roomName}" deletada com sucesso.`, 'success');
+
+                    // Remove o item da lista na tela
+                    if (roomElement) {
+                        roomElement.style.transition = 'all 0.3s ease';
+                        roomElement.style.opacity = '0';
+                        roomElement.style.transform = 'translateX(-20px)';
+                        setTimeout(() => roomElement.remove(), 300);
+                    }
+
+                } catch (error) {
+                    console.error('Erro ao deletar sala:', error);
+                    showNotification('Erro ao deletar sala.', 'error');
+                }
+            }
+        }
+        /**
+                 * Abre o modal de confirmação para deletar TODAS as salas.
+                 */
+        function openDeleteAllRoomsModal() {
+            document.getElementById('deleteAllRoomsModal').style.display = 'flex';
+        }
+
+        /**
+         * Fecha o modal de confirmação para deletar TODAS as salas.
+         */
+        function closeDeleteAllRoomsModal() {
+            document.getElementById('deleteAllRoomsModal').style.display = 'none';
+        }
+
+        /**
+         * Executa a remoção de TODAS as salas do Firebase.
+         */
+        async function executeDeleteAllRooms() {
+            toggleLoading('deleteAllRoomsConfirmBtn', true);
+
+            try {
+                // Pega a referência principal 'rooms'
+                const roomsRef = database.ref('rooms');
+
+                // Remove TUDO de 'rooms'
+                await roomsRef.remove();
+
+                showNotification('Todas as salas foram deletadas com sucesso.', 'success');
+
+                // Atualiza a lista no modal (que agora estará vazia)
+                loadAdminPanelRooms(); //
+
+            } catch (error) {
+                console.error('Erro ao deletar todas as salas:', error);
+                showNotification('Erro ao deletar salas.', 'error');
+            } finally {
+                toggleLoading('deleteAllRoomsConfirmBtn', false);
+                closeDeleteAllRoomsModal();
+            }
+        }
+
     </script>
     </div>
 </body>

@@ -188,6 +188,7 @@ body::before {
     50% { opacity: 1; transform: scale(1.1); }
 }
 
+/* ANTES (Seu código atual) */
 #adminUnlockBtn {
     position: absolute;
     top: 20px;
@@ -1849,4 +1850,169 @@ body:not(.non-admin) .player-overlay-controls {
 .chat-message.message-highlighted {
   background-color: var(--bubble-theirs-bg);
   animation: highlight-message 1.5s ease-out;
+}
+
+/* 1. Estiliza o novo container que segura os botões */
+.header-controls-left {
+    position: absolute;
+    top: 20px;
+    left: 25px;
+    z-index: 2;
+    
+    display: flex;
+    flex-direction: column; /* Empilha os botões verticalmente */
+    gap: 10px; /* Adiciona um espaço de 10px entre eles */
+}
+
+/* 2. Remove o posicionamento absoluto do botão Admin (o container agora faz isso) */
+#adminUnlockBtn {
+    position: static; /* Remove o 'position: absolute' original */
+    top: auto;
+    left: auto;
+    z-index: auto;
+}
+
+/* 3. Estiliza o novo botão Painel (usei o azul padrão do seu app) */
+#panelBtn {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
+    color: white;
+    border: none;
+    font-weight: 700;
+    display: none; /* <-- ADICIONADO: Esconde o botão por padrão */
+}
+
+/* 4. Garante que AMBOS os botões tenham o mesmo tamanho (como pedido) */
+.header-controls-left .btn.small {
+    min-width: 110px; /* Pega a largura do botão admin original */
+    justify-content: center; /* Centraliza o ícone e o texto */
+}
+
+/* 5. Ajuste para mobile: esconde o container inteiro em telas pequenas */
+@media (max-width: 768px) {
+    /* Esconde o NOVO container em vez do botão individual */
+    .header-controls-left {
+        display: none;
+    }
+    
+    /* Garante que a regra antiga que escondia #adminUnlockBtn seja sobrescrita */
+    #adminUnlockBtn {
+        display: flex; 
+    }
+}
+
+/* =================================== */
+/* === PAINEL ADMIN - SALAS ATIVAS === */
+/* =================================== */
+
+/* Deixa o modal do painel maior e sem padding interno inicial */
+#panelModal.admin-panel-modal .modal-content {
+    max-width: 800px;
+    width: 95%;
+    padding: 0;
+    overflow: hidden;
+}
+
+.admin-panel-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    padding: 20px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.admin-panel-header h3 {
+    margin: 0;
+    color: white; /* Sobrescreve a cor 'accent-color' do h3 padrão */
+    font-size: 1.3rem;
+}
+
+/* Garante que o botão 'Sair' não ocupe 100% */
+.admin-panel-header .btn {
+    width: auto;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.admin-panel-body {
+    padding: 25px;
+    max-height: 60vh; /* Limita a altura e cria scroll */
+    overflow-y: auto;
+    background: var(--card-bg); /* Fundo escuro para o conteúdo */
+    /* Estilização da barra de scroll (opcional, mas fica bonito) */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color) #2a2a2a;
+}
+.admin-panel-body::-webkit-scrollbar {
+    width: 8px;
+}
+.admin-panel-body::-webkit-scrollbar-track {
+    background: #2a2a2a;
+}
+.admin-panel-body::-webkit-scrollbar-thumb {
+    background-color: var(--accent-color);
+    border-radius: 10px;
+}
+
+
+.admin-panel-body h4 {
+    font-size: 1.3rem;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-room-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.admin-room-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Para telas menores */
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    transition: var(--transition);
+}
+
+.admin-room-item:hover {
+    border-color: var(--accent-color);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.room-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    word-break: break-all; /* Quebra o ID da sala se for muito longo */
+}
+
+.room-info strong {
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.room-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0; /* Impede que os botões quebrem */
+}
+
+.room-actions .btn {
+    width: auto; /* Tira o width 100% */
 }

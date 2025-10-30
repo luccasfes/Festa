@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <link rel="icon" type="image/x-icon" href="assets/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - FlowLink</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos específicos para o admin */
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .admin-container {
+            max-width: 900px;
+            width: 100%;
+        }
+        #loginView, #dashboardView {
+            width: 100%;
+        }
+        .room-list {
+            list-style: none;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 10px;
+            /* Estilos da barra de rolagem (copiados do style.css) */
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) #2a2a2a;
+        }
+        .room-list::-webkit-scrollbar { width: 8px; }
+        .room-list::-webkit-scrollbar-track { background: #2a2a2a; border-radius: 10px; }
+        .room-list::-webkit-scrollbar-thumb { background: linear-gradient(135deg, var(--accent-color), var(--primary-color)); border-radius: 10px; }
+        
+        .room-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            transition: var(--transition);
+        }
+        .room-item:hover {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: var(--accent-color);
+        }
+        .room-info { flex: 1; }
+        .room-info h4 { color: var(--text-primary); margin-bottom: 5px; }
+        .room-info p { color: var(--text-secondary); font-size: 0.85rem; }
+        .room-actions { display: flex; gap: 10px; }
+        .room-actions .btn { width: auto; } /* Botões não ocupam 100% */
+    </style>
+</head>
+
+<body>
+    <div id="particles"></div>
+    <div class="container admin-container">
+        <header class="app-header">
+            <h1><i class="fas fa-user-shield"></i> Painel Admin - FlowLink</h1>
+        </header>
+
+        <main id="loginView">
+            <section class="card" style="text-align: center;">
+                <h2><i class="fas fa-lock"></i> Acesso Restrito</h2>
+                <p style="color: var(--text-primary); margin: 20px 0;">
+                    Por favor, faça login com sua conta de administrador.
+                </p>
+                
+                <div class="input-group" style="text-align: left;">
+                    <label for="adminEmail">E-mail do Admin:</label>
+                    <input type="email" id="adminEmail" placeholder="seu-email@admin.com">
+                </div>
+                <div class="input-group" style="text-align: left;">
+                    <label for="adminPassword">Senha:</label>
+                    <input type="password" id="adminPassword">
+                </div>
+
+                <button class="btn primary" onclick="adminLogin()" id="adminLoginBtn">
+                    <span id="adminLoginBtnText">Entrar</span>
+                    <span id="adminLoginBtnLoader" class="loading" style="display: none;"></span>
+                </button>
+            </section>
+        </main>
+
+        <main id="dashboardView" style="display: none;">
+            <section class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2><i class="fas fa-server"></i> Salas Ativas</h2>
+                    <button class="btn secondary small" onclick="adminLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+                <ul id="roomList" class="room-list">
+                    <li class="empty-queue" id="loadingRooms">Carregando salas...</li>
+                </ul>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // ====================================================================
+        // Configuração do Firebase (COPIE A MESMA DO SEU INDEX.HTML)
+        // ====================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDlr4XHXuwWQ9Zj9dd2yoctLhFz1vbbyM",
+            authDomain: "flowlink-7fd57.firebaseapp.com",
+            databaseURL: "https://flowlink-7fd57-default-rtdb.firebaseio.com",
+            projectId: "flowlink-7fd57",
+            storageBucket: "flowlink-7fd57.firebasestorage.app",
+            messagingSenderId: "1035085936175",
+            appId: "1:1035085936175:web:2732042d77792118b8f8da",
+            measurementId: "G-B0NE1GDVQK"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        const roomsRef = database.ref('rooms');
+
+        // ====================================================================
+        // IDs dos Administradores (Copie os UIDs do Firebase)
+        // ====================================================================
+        const ADMIN_UIDS = [
+            'PTkwuSLcpaRvtVWOzJH79NrwReA2',
+            'liOoyPGRKHgYX1Q81irll97kBSD3',
+            'QwUYZ2Ls20fDtlUFDXs5lKjouN12'
+        ];
+
+        // ====================================================================
+        // Funções de UI (Login/Dashboard)
+        // ====================================================================
+        const loginView = document.getElementById('loginView');
+        const dashboardView = document.getElementById('dashboardView');
+        const roomListEl = document.getElementById('roomList');
+        const loadingRoomsEl = document.getElementById('loadingRooms');
+
+        function showLoginView() {
+            loginView.style.display = 'block';
+            dashboardView.style.display = 'none';
+        }
+        
+        function showDashboardView() {
+            loginView.style.display = 'none';
+            dashboardView.style.display = 'block';
+            loadActiveRooms(); // Carrega as salas QUANDO o admin estiver logado
+        }
+
+        // ====================================================================
+        // Lógica de Autenticação
+        // ====================================================================
+        
+        // Monitora o estado do login
+        auth.onAuthStateChanged(user => {
+            if (user && ADMIN_UIDS.includes(user.uid)) {
+                // Usuário está logado E é um admin
+                console.log('Admin autenticado:', user.email);
+                showDashboardView();
+            } else if (user) {
+                // Usuário está logado, MAS NÃO é admin
+                console.warn('Usuário não-admin tentou acessar:', user.email);
+                alert('Acesso negado. Esta conta não é administradora.');
+                adminLogout();
+            } else {
+                // Ninguém logado
+                console.log('Nenhum usuário logado.');
+                showLoginView();
+            }
+        });
+
+        async function adminLogin() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (!email || !password) {
+                alert('Preencha e-mail e senha.');
+                return;
+            }
+
+            toggleLoading('adminLoginBtn', true);
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                // O 'onAuthStateChanged' vai detectar o login e mudar a tela.
+            } catch (error) {
+                console.error('Erro no login:', error);
+                alert('Falha no login: ' + error.message);
+            } finally {
+                toggleLoading('adminLoginBtn', false);
+            }
+        }
+
+        function adminLogout() {
+            auth.signOut();
+        }
+
+        // ====================================================================
+        // Lógica do Dashboard (Ver e Deletar)
+        // ====================================================================
+
+        function loadActiveRooms() {
+            loadingRoomsEl.style.display = 'block';
+
+            roomsRef.on('value', snapshot => {
+                roomListEl.innerHTML = ''; // Limpa a lista
+                
+                if (!snapshot.exists()) {
+                    roomListEl.innerHTML = '<li class="empty-queue">Nenhuma sala ativa encontrada.</li>';
+                    return;
+                }
+
+                snapshot.forEach(roomSnap => {
+                    const roomId = roomSnap.key;
+                    const roomData = roomSnap.val();
+                    
+                    const roomName = roomData.roomName || 'Sala sem nome';
+                    const createdAt = new Date(roomData.createdAt).toLocaleString('pt-BR');
+
+                    const li = document.createElement('li');
+                    li.className = 'room-item';
+                    li.innerHTML = `
+                        <div class="room-info">
+                            <h4>${roomName}</h4>
+                            <p><strong>Criada em:</strong> ${createdAt}</p>
+                            <p><strong>ID:</strong> ${roomId}</p>
+                        </div>
+                        <div class="room-actions">
+                            <a href="index.html?room=${roomId}" target="_blank" class="btn secondary small">
+                                <i class="fas fa-eye"></i> Ver
+                            </a>
+                            <button class="btn danger small" onclick="confirmDeleteRoom('${roomId}', '${roomName}')">
+                                <i class="fas fa-trash"></i> Deletar
+                            </button>
+                        </div>
+                    `;
+                    roomListEl.appendChild(li);
+                });
+            }, error => {
+                // Isso vai acontecer se o usuário NÃO for admin, graças às nossas Regras!
+                console.error('Erro ao ler salas (Verifique as Regras do Firebase):', error);
+                roomListEl.innerHTML = '<li class="empty-queue" style="color: var(--danger-color);">Erro: Você não tem permissão para ver as salas.</li>';
+                adminLogout(); // Força o logout
+            });
+        }
+
+        function confirmDeleteRoom(roomId, roomName) {
+            if (confirm(`Tem certeza que deseja DELETAR a sala "${roomName}" (${roomId})?\n\nEsta ação é irreversível e vai apagar o chat, a fila e tudo que há nela.`)) {
+                deleteRoom(roomId);
+            }
+        }
+
+        async function deleteRoom(roomId) {
+            try {
+                await database.ref('rooms/' + roomId).remove();
+                console.log(`Sala ${roomId} deletada com sucesso.`);
+                // O listener 'on("value")' vai atualizar a lista automaticamente.
+            } catch (error) {
+                console.error('Erro ao deletar sala:', error);
+                alert('Erro ao deletar sala.');
+            }
+        }
+
+        // Função utilitária de Loading (copiada do create.html)
+        function toggleLoading(buttonId, isLoading) {
+            const btn = document.getElementById(buttonId);
+            const btnText = btn.querySelector(`#${buttonId}Text`);
+            const btnLoader = btn.querySelector(`#${buttonId}Loader`);
+            if (isLoading) {
+                btn.disabled = true;
+                btnText.style.display = 'none';
+                btnLoader.style.display = 'inline-block';
+            } else {
+                btn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoader.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
