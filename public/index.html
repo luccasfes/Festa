@@ -2549,10 +2549,14 @@
                 // 3. Itera por cada sala encontrada
                 roomIds.forEach(roomId => {
                     const room = roomsData[roomId];
+                    const roomName = room.roomName || 'Sala sem nome'; //
 
-                    // *** IMPORTANTE: Estou assumindo que você salva 'name' e 'createdAt' dentro de cada sala ***
-                    // Se você não salvar, 'room.name' será nulo e 'room.createdAt' também.
-                    const roomName = room.roomName || 'Sala sem nome'; // Ex: "VIP"
+                    // --- INÍCIO DA NOVA LÓGICA ---
+                    // Pega o objeto 'presence' da sala, ou um objeto vazio se não existir
+                    const presenceData = room.presence || {};
+                    // Conta quantas chaves (usuários) existem dentro de 'presence'
+                    const userCountInRoom = Object.keys(presenceData).length;
+                    // --- FIM DA NOVA LÓGICA ---
 
                     // Tenta formatar a data, se existir
                     let createdAt = 'Data desconhecida';
@@ -2560,28 +2564,32 @@
                         try {
                             createdAt = new Date(room.createdAt).toLocaleString('pt-BR');
                         } catch (e) {
-                            createdAt = 'Invalid Date'; // Igual ao da sua imagem
+                            createdAt = 'Invalid Date';
                         }
                     }
 
                     // 4. Cria o HTML para o item
                     htmlToRender += `
-                <div class="admin-room-item" data-room-id="${roomId}">
-                    <div class="room-info">
-                        <strong>${roomName}</strong>
-                        <span>Criada em: ${createdAt}</span>
-                        <span>ID: ${roomId}</span>
-                    </div>
-                    <div class="room-actions">
-                        <button class="btn small secondary" onclick="goToRoom('${roomId}')" title="Abrir sala em nova aba">
-                            <i class="fas fa-eye"></i> Ver
-                        </button>
-                        <button class="btn small danger" onclick="deleteRoom('${roomId}')" title="Deletar sala">
-                            <i class="fas fa-trash"></i> Deletar
-                        </button>
-                    </div>
-                </div>
-            `;
+                        <div class="admin-room-item" data-room-id="${roomId}">
+                            <div class="room-info">
+                                <strong>${roomName}</strong>
+                                
+                                <span style="color: var(--success-color); font-weight: 600; font-size: 0.95rem; margin: 4px 0;">
+                                    <i class="fas fa-users"></i> ${userCountInRoom} online
+                                </span>
+                                <span>Criada em: ${createdAt}</span>
+                                <span>ID: ${roomId}</span>
+                            </div>
+                            <div class="room-actions">
+                                <button class="btn small secondary" onclick="goToRoom('${roomId}')" title="Abrir sala em nova aba">
+                                    <i class="fas fa-eye"></i> Ver
+                                </button>
+                                <button class="btn small danger" onclick="deleteRoom('${roomId}')" title="Deletar sala">
+                                    <i class="fas fa-trash"></i> Deletar
+                                </button>
+                            </div>
+                        </div>
+                    `;
                 });
 
                 listElement.innerHTML = htmlToRender;
