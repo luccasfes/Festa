@@ -1368,29 +1368,31 @@
             }
         }
 
-        // Modifique a função logoutAdminSession para limpar o nome
+        
         function logoutAdminSession() {
-            document.getElementById('adminPanelBtn').style.display = 'none';
-            isAdminLoggedIn = false;
-            currentAdminUser = null;
-            document.body.classList.add('non-admin');
+    
+    document.getElementById('panelBtn').style.display = 'none'; 
+    
+    isAdminLoggedIn = false;
+    currentAdminUser = null; 
+    document.body.classList.add('non-admin');
 
-            // Atualiza a exibição
-            updateAdminDisplay();
+    // Atualiza a exibição
+    updateAdminDisplay(); 
 
-            showNotification('Modo Admin DESATIVADO.', 'info');
+    showNotification('Modo Admin DESATIVADO.', 'info');
 
-            // Esconde os controles de admin
-            document.getElementById('videoList').classList.remove('admin-mode');
-            document.getElementById('bulkRemoveBtn').style.display = 'none';
-            document.getElementById('clearChatBtn').style.display = 'none';
-            // Limpa os checkboxes
-            document.querySelectorAll('.video-select-checkbox').forEach(cb => cb.checked = false);
-            // Restaura o botão de pular para o modo Votação
-            document.getElementById('skipVoteBtnText').textContent = 'Votar para Pular';
-            document.getElementById('voteCounterWrapper').style.display = 'inline';
-            disableAdminPlayerControls();
-        }
+    // Esconde os controles de admin
+    document.getElementById('videoList').classList.remove('admin-mode');
+    document.getElementById('bulkRemoveBtn').style.display = 'none';
+    document.getElementById('clearChatBtn').style.display = 'none';
+    // Limpa os checkboxes
+    document.querySelectorAll('.video-select-checkbox').forEach(cb => cb.checked = false);
+    // Restaura o botão de pular para o modo Votação
+    document.getElementById('skipVoteBtnText').textContent = 'Votar para Pular';
+    document.getElementById('voteCounterWrapper').style.display = 'inline';
+    disableAdminPlayerControls();
+}
 
         /**
                  * Função "portão" que decide se deve VOTAR ou PULAR (admin).
