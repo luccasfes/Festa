@@ -127,7 +127,8 @@
                     </div>
                     <div class="user-info">
                         <span id="userNameDisplay">Visitante</span>
-                       <button class="btn small secondary" onclick="openEditNameModal()" style="margin-left: 10px;" title="Alterar seu nome">
+                        <button class="btn small secondary" onclick="openEditNameModal()" style="margin-left: 10px;"
+                            title="Alterar seu nome">
                             <i class="fas fa-edit"></i>
                         </button>
                     </div>
@@ -226,7 +227,8 @@
 
                 <div id="userNameInputGroup" class="input-group">
                     <label for="ytSearchName"><i class="fas fa-user"></i> Seu Nome:</label>
-                    <input type="text" id="ytSearchName" placeholder="Quem está adicionando?">
+                    <input type="text" id="ytSearchName" placeholder="Quem está adicionando?"
+                        onkeypress="handleNameInputKeyPress(event)">
                     <button class="btn small primary" onclick="setSessionUser()">Confirmar</button>
                 </div>
 
@@ -367,22 +369,22 @@
     </div>
 
     <div id="editNameModal" class="modal">
-    <div class="modal-content">
-        <span class="close-button" onclick="closeEditNameModal()">×</span>
-        <h3><i class="fas fa-edit"></i> Alterar seu Nome</h3>
-        <p>Seu nome é usado no chat e para identificar os vídeos que você adiciona.</p>
-        
-        <div class="input-group">
-            <label for="editNameInput"><i class="fas fa-user"></i> Seu Nome:</label>
-            <input type="text" id="editNameInput" placeholder="Como você quer ser chamado?" maxlength="25">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeEditNameModal()">×</span>
+            <h3><i class="fas fa-edit"></i> Alterar seu Nome</h3>
+            <p>Seu nome é usado no chat e para identificar os vídeos que você adiciona.</p>
+
+            <div class="input-group">
+                <label for="editNameInput"><i class="fas fa-user"></i> Seu Nome:</label>
+                <input type="text" id="editNameInput" placeholder="Como você quer ser chamado?" maxlength="25">
+            </div>
+
+            <button class="btn primary" onclick="saveUserName()" id="saveUserNameBtn">
+                <span id="saveUserNameBtnText">Salvar Nome</span>
+                <span id="saveUserNameBtnLoader" class="loading" style="display: none;"></span>
+            </button>
         </div>
-        
-        <button class="btn primary" onclick="saveUserName()" id="saveUserNameBtn">
-            <span id="saveUserNameBtnText">Salvar Nome</span>
-            <span id="saveUserNameBtnLoader" class="loading" style="display: none;"></span>
-        </button>
     </div>
-</div>
 
     <!-- //sessão -->
     <script>
@@ -466,70 +468,70 @@
         }
 
         function openEditNameModal() {
-    // Pega o nome atual (da sessão ou do display)
-    const currentName = sessionStorage.getItem('ytSessionUser') || '';
-    document.getElementById('editNameInput').value = currentName;
-    
-    // Abre o modal
-    document.getElementById('editNameModal').style.display = 'flex';
-    document.getElementById('editNameInput').focus();
-}
+            // Pega o nome atual (da sessão ou do display)
+            const currentName = sessionStorage.getItem('ytSessionUser') || '';
+            document.getElementById('editNameInput').value = currentName;
 
-/**
- * Fecha o modal de edição de nome.
- */
-function closeEditNameModal() {
-    document.getElementById('editNameModal').style.display = 'none';
-}
+            // Abre o modal
+            document.getElementById('editNameModal').style.display = 'flex';
+            document.getElementById('editNameInput').focus();
+        }
 
-/**
- * Salva o novo nome do usuário na sessão e no Firebase.
- */
-function saveUserName() {
-    toggleLoading('saveUserNameBtn', true); // Ativa o loading
+        /**
+         * Fecha o modal de edição de nome.
+         */
+        function closeEditNameModal() {
+            document.getElementById('editNameModal').style.display = 'none';
+        }
 
-    const newName = document.getElementById('editNameInput').value.trim();
+        /**
+         * Salva o novo nome do usuário na sessão e no Firebase.
+         */
+        function saveUserName() {
+            toggleLoading('saveUserNameBtn', true); // Ativa o loading
 
-    if (!newName) {
-        showNotification('Por favor, digite um nome.', 'error');
-        toggleLoading('saveUserNameBtn', false); // Desativa o loading
-        return;
-    }
+            const newName = document.getElementById('editNameInput').value.trim();
 
-    // 1. Salva o nome na sessão (variável global e sessionStorage)
-    currentSessionUser = newName; 
-    sessionStorage.setItem('ytSessionUser', newName);
+            if (!newName) {
+                showNotification('Por favor, digite um nome.', 'error');
+                toggleLoading('saveUserNameBtn', false); // Desativa o loading
+                return;
+            }
 
-    // 2. Atualiza o display do chat
-    document.getElementById('userNameDisplay').textContent = newName;
+            // 1. Salva o nome na sessão (variável global e sessionStorage)
+            currentSessionUser = newName;
+            sessionStorage.setItem('ytSessionUser', newName);
 
-    // 3. Atualiza o nome na lista de presença do Firebase
-    if (myPresenceRef) {
-        myPresenceRef.update({ name: newName });
-    }
+            // 2. Atualiza o display do chat
+            document.getElementById('userNameDisplay').textContent = newName;
 
-    // 4. (Importante!) Atualiza o nome no modal do YouTube também
-    document.getElementById('currentSessionUser').textContent = newName;
+            // 3. Atualiza o nome na lista de presença do Firebase
+            if (myPresenceRef) {
+                myPresenceRef.update({ name: newName });
+            }
 
-    // Simula um pequeno delay para o feedback (opcional)
-    setTimeout(() => {
-        toggleLoading('saveUserNameBtn', false); // Desativa o loading
-        showNotification('Nome atualizado para ' + newName, 'success');
-        closeEditNameModal();
-    }, 300);
-}
+            // 4. (Importante!) Atualiza o nome no modal do YouTube também
+            document.getElementById('currentSessionUser').textContent = newName;
 
-// Também adicione o 'Enter' para salvar
-document.addEventListener('DOMContentLoaded', () => {
-    const editNameInput = document.getElementById('editNameInput');
-    if(editNameInput) {
-        editNameInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                saveUserName();
+            // Simula um pequeno delay para o feedback (opcional)
+            setTimeout(() => {
+                toggleLoading('saveUserNameBtn', false); // Desativa o loading
+                showNotification('Nome atualizado para ' + newName, 'success');
+                closeEditNameModal();
+            }, 300);
+        }
+
+        // Também adicione o 'Enter' para salvar
+        document.addEventListener('DOMContentLoaded', () => {
+            const editNameInput = document.getElementById('editNameInput');
+            if (editNameInput) {
+                editNameInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        saveUserName();
+                    }
+                });
             }
         });
-    }
-});
         function setSessionUser() {
             const userName = document.getElementById('ytSearchName').value.trim();
 
@@ -551,6 +553,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // *** NOVA LINHA: Atualiza o nome na lista de presença ***
             if (myPresenceRef) {
                 myPresenceRef.update({ name: userName });
+            }
+        }
+
+        function handleNameInputKeyPress(event) {
+            // Verifica se a tecla pressionada foi 'Enter'
+            if (event.key === 'Enter') {
+                // Chama a MESMA função do botão "Confirmar"
+                setSessionUser();
             }
         }
 
@@ -790,27 +800,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Coloque isso perto de onde você define o roomRef
 
-const roomNameDisplay = document.getElementById('roomNameDisplay');
-const roomCreatorDisplay = document.getElementById('roomCreatorDisplay');
+        const roomNameDisplay = document.getElementById('roomNameDisplay');
+        const roomCreatorDisplay = document.getElementById('roomCreatorDisplay');
 
-// Listener para os dados da sala
-roomRef.on('value', (snapshot) => {
-    const roomData = snapshot.val();
-    if (roomData) {
-        const roomName = roomData.roomName || 'Sala FlowLink';
-        const creatorName = roomData.creatorName || 'Desconhecido';
+        // Listener para os dados da sala
+        roomRef.on('value', (snapshot) => {
+            const roomData = snapshot.val();
+            if (roomData) {
+                const roomName = roomData.roomName || 'Sala FlowLink';
+                const creatorName = roomData.creatorName || 'Desconhecido';
 
-        if (roomNameDisplay) {
-            roomNameDisplay.textContent = roomName;
-        }
-        if (roomCreatorDisplay) {
-            roomCreatorDisplay.textContent = creatorName;
-        }
+                if (roomNameDisplay) {
+                    roomNameDisplay.textContent = roomName;
+                }
+                if (roomCreatorDisplay) {
+                    roomCreatorDisplay.textContent = creatorName;
+                }
 
-        // Bônus: Atualiza o título da aba do navegador!
-        document.title = `${roomName} - FlowLink`;
-    }
-});
+                // Bônus: Atualiza o título da aba do navegador!
+                document.title = `${roomName} - FlowLink`;
+            }
+        });
 
 
 
@@ -2265,87 +2275,87 @@ roomRef.on('value', (snapshot) => {
                 });
         }
 
-     // Editar emsnagem
-function showEditUI(messageKey, base64Text) {
-    try {
-        // 1. Decodifica o texto original (seguro para UTF-8)
-        const rawText = decodeURIComponent(escape(atob(base64Text)));
+        // Editar emsnagem
+        function showEditUI(messageKey, base64Text) {
+            try {
+                // 1. Decodifica o texto original (seguro para UTF-8)
+                const rawText = decodeURIComponent(escape(atob(base64Text)));
 
-        // 2. Pega todos os elementos da mensagem
-        const textElement = document.getElementById(`text-${messageKey}`);
-        const editContainer = document.getElementById(`edit-container-${messageKey}`);
-        const actionsContainer = document.getElementById(`actions-${messageKey}`);
-        const editInput = editContainer.querySelector('.chat-edit-input');
+                // 2. Pega todos os elementos da mensagem
+                const textElement = document.getElementById(`text-${messageKey}`);
+                const editContainer = document.getElementById(`edit-container-${messageKey}`);
+                const actionsContainer = document.getElementById(`actions-${messageKey}`);
+                const editInput = editContainer.querySelector('.chat-edit-input');
 
-        // 3. Esconde o texto e os botões de ação
-        textElement.style.display = 'none';
-        actionsContainer.style.display = 'none';
-        
-        // 4. Mostra a caixa de edição
-        editContainer.style.display = 'block';
+                // 3. Esconde o texto e os botões de ação
+                textElement.style.display = 'none';
+                actionsContainer.style.display = 'none';
 
-        // 5. Preenche o textarea com o texto original e foca nele
-        editInput.value = rawText;
-        editInput.focus();
-        
-        // Auto-ajusta a altura do textarea (bônus)
-        editInput.style.height = 'auto';
-        editInput.style.height = (editInput.scrollHeight) + 'px';
+                // 4. Mostra a caixa de edição
+                editContainer.style.display = 'block';
 
-    } catch (e) {
-        console.error("Erro ao decodificar texto para edição:", e);
-        showNotification('Erro ao tentar editar a mensagem.', 'error');
-    }
-}
+                // 5. Preenche o textarea com o texto original e foca nele
+                editInput.value = rawText;
+                editInput.focus();
 
-/**
- * NOVO: Cancela a edição e reverte a UI.
- */
-function cancelEdit(messageKey) {
-    // 1. Pega todos os elementos
-    const textElement = document.getElementById(`text-${messageKey}`);
-    const editContainer = document.getElementById(`edit-container-${messageKey}`);
-    const actionsContainer = document.getElementById(`actions-${messageKey}`);
+                // Auto-ajusta a altura do textarea (bônus)
+                editInput.style.height = 'auto';
+                editInput.style.height = (editInput.scrollHeight) + 'px';
 
-    // 2. Esconde a caixa de edição
-    editContainer.style.display = 'none';
+            } catch (e) {
+                console.error("Erro ao decodificar texto para edição:", e);
+                showNotification('Erro ao tentar editar a mensagem.', 'error');
+            }
+        }
 
-    // 3. Mostra o texto original e os botões de ação novamente
-    textElement.style.display = 'block';
-    actionsContainer.style.display = 'flex'; // 'flex' ou 'block'
-}
+        /**
+         * NOVO: Cancela a edição e reverte a UI.
+         */
+        function cancelEdit(messageKey) {
+            // 1. Pega todos os elementos
+            const textElement = document.getElementById(`text-${messageKey}`);
+            const editContainer = document.getElementById(`edit-container-${messageKey}`);
+            const actionsContainer = document.getElementById(`actions-${messageKey}`);
 
-/**
- * NOVO: Salva a mensagem editada no Firebase.
- */
-async function saveEdit(messageKey) {
-    // 1. Pega o novo texto do textarea
-    const editInput = document.getElementById(`edit-container-${messageKey}`).querySelector('.chat-edit-input');
-    const newText = editInput.value.trim();
+            // 2. Esconde a caixa de edição
+            editContainer.style.display = 'none';
 
-    if (!newText) {
-        showNotification('A mensagem não pode ficar vazia.', 'error');
-        return;
-    }
+            // 3. Mostra o texto original e os botões de ação novamente
+            textElement.style.display = 'block';
+            actionsContainer.style.display = 'flex'; // 'flex' ou 'block'
+        }
 
-    try {
-        // 2. Atualiza a mensagem no Firebase
-        await chatMessagesRef.child(messageKey).update({
-            text: newText,
-            isEdited: true, // Marca a mensagem como editada
-            lastEdited: firebase.database.ServerValue.TIMESTAMP // (Opcional)
-        });
-        
-        showNotification('Mensagem atualizada!', 'success');
-        // A UI vai se atualizar sozinha por causa do listener 'on("value")',
-        // mas chamamos cancelEdit() para esconder a caixa imediatamente.
-        cancelEdit(messageKey);
+        /**
+         * NOVO: Salva a mensagem editada no Firebase.
+         */
+        async function saveEdit(messageKey) {
+            // 1. Pega o novo texto do textarea
+            const editInput = document.getElementById(`edit-container-${messageKey}`).querySelector('.chat-edit-input');
+            const newText = editInput.value.trim();
 
-    } catch (error) {
-        console.error("Erro ao salvar edição:", error);
-        showNotification('Erro ao salvar. Tente novamente.', 'error');
-    }
-}
+            if (!newText) {
+                showNotification('A mensagem não pode ficar vazia.', 'error');
+                return;
+            }
+
+            try {
+                // 2. Atualiza a mensagem no Firebase
+                await chatMessagesRef.child(messageKey).update({
+                    text: newText,
+                    isEdited: true, // Marca a mensagem como editada
+                    lastEdited: firebase.database.ServerValue.TIMESTAMP // (Opcional)
+                });
+
+                showNotification('Mensagem atualizada!', 'success');
+                // A UI vai se atualizar sozinha por causa do listener 'on("value")',
+                // mas chamamos cancelEdit() para esconder a caixa imediatamente.
+                cancelEdit(messageKey);
+
+            } catch (error) {
+                console.error("Erro ao salvar edição:", error);
+                showNotification('Erro ao salvar. Tente novamente.', 'error');
+            }
+        }
         /**
          * Lida com a tecla Enter no input do chat.
          */
@@ -2459,73 +2469,73 @@ async function saveEdit(messageKey) {
      * @param {object} message - O objeto da mensagem.
      */
         function createMessageElement(messageKey, message) {
-    const messageElement = document.createElement('div');
-    messageElement.className = 'chat-message';
-    messageElement.id = 'msg-' + messageKey; // ID para o scroll
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message';
+            messageElement.id = 'msg-' + messageKey; // ID para o scroll
 
-    // Verifica se é "minha"
-    const isMine = (message.userId === userVoteId);
-    if (isMine) {
-        messageElement.classList.add('mine');
-    }
+            // Verifica se é "minha"
+            const isMine = (message.userId === userVoteId);
+            if (isMine) {
+                messageElement.classList.add('mine');
+            }
 
-    if (message.userIsAdmin) {
-        messageElement.classList.add('admin');
-    }
-    if (message.isSystem) {
-        messageElement.classList.add('system');
-    }
+            if (message.userIsAdmin) {
+                messageElement.classList.add('admin');
+            }
+            if (message.isSystem) {
+                messageElement.classList.add('system');
+            }
 
-    // Sanitização
-    const safeText = (message.text || '')
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-    const safeUser = (message.userName || 'Visitante')
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+            // Sanitização
+            const safeText = (message.text || '')
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+            const safeUser = (message.userName || 'Visitante')
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
 
-    // --- LÓGICA DE COR ---
-    let userColorStyle = '';
-    if (!message.userIsAdmin && !message.isSystem) {
-        const color = getUserColor(message.userName);
-        userColorStyle = `style="color: ${color}"`;
-    }
+            // --- LÓGICA DE COR ---
+            let userColorStyle = '';
+            if (!message.userIsAdmin && !message.isSystem) {
+                const color = getUserColor(message.userName);
+                userColorStyle = `style="color: ${color}"`;
+            }
 
-    // --- 1. Bloco de Resposta (Se esta MENSAGEM é uma resposta) ---
-    let replyHtml = '';
-    if (message.replyToId) {
-        const safeReplyText = (message.replyToText || '')
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-        const safeReplyUser = (message.replyToUser || 'Alguém')
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
+            // --- 1. Bloco de Resposta (Se esta MENSAGEM é uma resposta) ---
+            let replyHtml = '';
+            if (message.replyToId) {
+                const safeReplyText = (message.replyToText || '')
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+                const safeReplyUser = (message.replyToUser || 'Alguém')
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
 
-        replyHtml = `
+                replyHtml = `
         <div class="chat-reply-block" onclick="scrollToMessage('${message.replyToId}')">
             <div class="chat-reply-block-user">${safeReplyUser}</div>
             <div class="chat-reply-block-text">${safeReplyText}</div>
         </div>
         `;
-    }
+            }
 
-    // --- 2. Botão de Resposta (Para RESPONDER a esta mensagem) ---
-    let snippet = safeText.length > 40 ? safeText.substring(0, 40) + '...' : safeText;
-    snippet = snippet.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+            // --- 2. Botão de Resposta (Para RESPONDER a esta mensagem) ---
+            let snippet = safeText.length > 40 ? safeText.substring(0, 40) + '...' : safeText;
+            snippet = snippet.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
 
-    const replyBtnHtml = `
+            const replyBtnHtml = `
         <button class="chat-reply-btn" title="Responder" onclick="setReplyContext('${messageKey}', '${safeUser}', '${snippet}')">
             <i class="fas fa-reply"></i>
         </button>
     `;
 
-    // --- 3. Montagem Final ---
-    const timeString = formatTime(message.timestamp);
-    
-    const safeBase64Text = btoa(unescape(encodeURIComponent(message.text || '')));
+            // --- 3. Montagem Final ---
+            const timeString = formatTime(message.timestamp);
 
-    // --- INÍCIO DA MUDANÇA ---
-    messageElement.innerHTML = `
+            const safeBase64Text = btoa(unescape(encodeURIComponent(message.text || '')));
+
+            // --- INÍCIO DA MUDANÇA ---
+            messageElement.innerHTML = `
         ${replyHtml} 
         <div class="chat-message-header">
             <div class="chat-user ${message.userIsAdmin ? 'admin-badge' : ''}" ${userColorStyle}>
@@ -2608,10 +2618,10 @@ async function saveEdit(messageKey) {
         </div>
 
         `;
-    // --- FIM DA MUDANÇA ---
+            // --- FIM DA MUDANÇA ---
 
-    return messageElement;
-}
+            return messageElement;
+        }
 
         /**
          * Formata o timestamp para exibição.
@@ -2992,50 +3002,50 @@ async function saveEdit(messageKey) {
                 const roomIds = Object.keys(roomsData);
                 let htmlToRender = '';
 
-               // 3. Itera por cada sala encontrada
-roomIds.forEach(roomId => {
-    const room = roomsData[roomId];
-    
-    // Valores padrão com fallbacks robustos
-    const roomName = room.roomName?.trim() || 'Sala sem nome';
-    const creatorName = room.creatorName?.trim() || 'Desconhecido';
-    
-    // Contagem de usuários online
-    const presenceData = room.presence || {};
-    const userCountInRoom = Object.keys(presenceData).length;
-    
-    // Contagem de vídeos na fila
-    const queueData = room.videoQueue || {};
-    const queueCount = Object.keys(queueData).length;
-    
-    // Formatação de data com tratamento de erro
-    let createdAt = 'Data desconhecida';
-    let timeAgo = '';
-    if (room.createdAt) {
-        try {
-            const createdDate = new Date(room.createdAt);
-            if (!isNaN(createdDate.getTime())) {
-                createdAt = createdDate.toLocaleString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                
-                // Calcula há quanto tempo foi criada
-                timeAgo = getTimeAgo(createdDate);
-            }
-        } catch (e) {
-            console.warn(`Erro ao formatar data da sala ${roomId}:`, e);
-        }
-    }
+                // 3. Itera por cada sala encontrada
+                roomIds.forEach(roomId => {
+                    const room = roomsData[roomId];
 
-    // Determina cor baseada na atividade
-    const activityLevel = getActivityLevel(userCountInRoom, queueCount);
-    
-    // 4. Cria o HTML para o item
-    htmlToRender += `
+                    // Valores padrão com fallbacks robustos
+                    const roomName = room.roomName?.trim() || 'Sala sem nome';
+                    const creatorName = room.creatorName?.trim() || 'Desconhecido';
+
+                    // Contagem de usuários online
+                    const presenceData = room.presence || {};
+                    const userCountInRoom = Object.keys(presenceData).length;
+
+                    // Contagem de vídeos na fila
+                    const queueData = room.videoQueue || {};
+                    const queueCount = Object.keys(queueData).length;
+
+                    // Formatação de data com tratamento de erro
+                    let createdAt = 'Data desconhecida';
+                    let timeAgo = '';
+                    if (room.createdAt) {
+                        try {
+                            const createdDate = new Date(room.createdAt);
+                            if (!isNaN(createdDate.getTime())) {
+                                createdAt = createdDate.toLocaleString('pt-BR', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+
+                                // Calcula há quanto tempo foi criada
+                                timeAgo = getTimeAgo(createdDate);
+                            }
+                        } catch (e) {
+                            console.warn(`Erro ao formatar data da sala ${roomId}:`, e);
+                        }
+                    }
+
+                    // Determina cor baseada na atividade
+                    const activityLevel = getActivityLevel(userCountInRoom, queueCount);
+
+                    // 4. Cria o HTML para o item
+                    htmlToRender += `
 <div class="admin-room-item" data-room-id="${roomId}" data-activity="${activityLevel}">
     <div class="room-header">
         <div class="room-title-section">
@@ -3085,53 +3095,53 @@ roomIds.forEach(roomId => {
     </div>
 </div>
 `;
-});
+                });
 
-// Funções auxiliares para melhorar a exibição
-function getTimeAgo(date) {
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+                // Funções auxiliares para melhorar a exibição
+                function getTimeAgo(date) {
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Agora mesmo';
-    if (diffMins < 60) return `Há ${diffMins} min`;
-    if (diffHours < 24) return `Há ${diffHours} h`;
-    if (diffDays === 1) return 'Ontem';
-    if (diffDays < 7) return `Há ${diffDays} dias`;
-    if (diffDays < 30) return `Há ${Math.floor(diffDays / 7)} sem`;
-    return `Há ${Math.floor(diffDays / 30)} mes`;
-}
+                    if (diffMins < 1) return 'Agora mesmo';
+                    if (diffMins < 60) return `Há ${diffMins} min`;
+                    if (diffHours < 24) return `Há ${diffHours} h`;
+                    if (diffDays === 1) return 'Ontem';
+                    if (diffDays < 7) return `Há ${diffDays} dias`;
+                    if (diffDays < 30) return `Há ${Math.floor(diffDays / 7)} sem`;
+                    return `Há ${Math.floor(diffDays / 30)} mes`;
+                }
 
-function getActivityLevel(userCount, queueCount) {
-    if (userCount > 5 || queueCount > 10) return 'high';
-    if (userCount > 2 || queueCount > 5) return 'medium';
-    if (userCount > 0 || queueCount > 0) return 'low';
-    return 'inactive';
-}
+                function getActivityLevel(userCount, queueCount) {
+                    if (userCount > 5 || queueCount > 10) return 'high';
+                    if (userCount > 2 || queueCount > 5) return 'medium';
+                    if (userCount > 0 || queueCount > 0) return 'low';
+                    return 'inactive';
+                }
 
-function formatLastActivity(timestamp) {
-    try {
-        const activityDate = new Date(timestamp);
-        const now = new Date();
-        const diffHours = Math.floor((now - activityDate) / 3600000);
-        
-        if (diffHours < 1) return 'Menos de 1 hora';
-        if (diffHours === 1) return '1 hora atrás';
-        if (diffHours < 24) return `${diffHours} horas atrás`;
-        if (diffHours < 48) return 'Ontem';
-        return `${Math.floor(diffHours / 24)} dias atrás`;
-    } catch (e) {
-        return 'Desconhecido';
-    }
-}
+                function formatLastActivity(timestamp) {
+                    try {
+                        const activityDate = new Date(timestamp);
+                        const now = new Date();
+                        const diffHours = Math.floor((now - activityDate) / 3600000);
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+                        if (diffHours < 1) return 'Menos de 1 hora';
+                        if (diffHours === 1) return '1 hora atrás';
+                        if (diffHours < 24) return `${diffHours} horas atrás`;
+                        if (diffHours < 48) return 'Ontem';
+                        return `${Math.floor(diffHours / 24)} dias atrás`;
+                    } catch (e) {
+                        return 'Desconhecido';
+                    }
+                }
+
+                function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
 
                 listElement.innerHTML = htmlToRender;
                 loaderElement.style.display = 'none'; // Esconde o loader
@@ -3154,7 +3164,7 @@ function escapeHtml(text) {
         /**
          * (Função Auxiliar) Deleta uma sala do Firebase.
          */
-       async function deleteRoom(roomId) {
+        async function deleteRoom(roomId) {
             if (!roomId) return;
 
             // Pega o nome da sala pelo HMTL para a confirmação
