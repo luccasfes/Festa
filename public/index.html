@@ -642,7 +642,7 @@
 
         // Agora, vamos ouvir a contagem total de usuários online (DESTA SALA)
         const userCountElement = document.getElementById('userCount');
-        presenceRef.on('value', (snap) => {
+       presenceRef.on('value', (snap) => {
             const count = snap.numChildren();
 
             // Atualiza o header
@@ -655,6 +655,26 @@
             if (chatOnlineCount) {
                 chatOnlineCount.textContent = count;
             }
+
+            
+            // --- INÍCIO DA NOVA LÓGICA "MODO SOLO" ---
+            
+            // Se o admin estiver logado, a lógica dele tem prioridade. Não faça nada.
+            if (isAdminLoggedIn) {
+                return; 
+            }
+
+            // Se o usuário está sozinho E NÃO é admin
+            if (count === 1) {
+                console.log('Usuário sozinho — liberando player completo (Modo Solo).');
+                enableSoloPlayerControls();
+            } 
+            // Se mais de um usuário E NÃO é admin
+            else if (count > 1) {
+                console.log('Mais de um usuário — bloqueando player (Modo Festa).');
+                disableSoloPlayerControls();
+            }
+            // --- FIM DA NOVA LÓGICA ---
         });
         // ====================================================================
         // Fim do Sistema de Presença
@@ -790,104 +810,201 @@
                 }
             });
         }
-
+        function disableAdminPlayerControls() {
+            console.log('Desativando Modo Admin...');
+            // Quando o admin sai, a lógica de solo/festa assume.
+            // Não precisamos recriar o player aqui, apenas chamamos a função correta.
+            const userCount = parseInt(document.getElementById('userCount').textContent, 10) || 0;
+            if (userCount === 1) {
+                enableSoloPlayerControls();
+            } else {
+                disableSoloPlayerControls();
+            }
+        }
 
         function enableAdminPlayerControls() {
-            if (!player || typeof YT === 'undefined') return;
+            console.log('Ativando Modo Admin Completo...');
+            const currentTime = player ? player.getCurrentTime() : 0;
+            let currentVideoId = null;
 
-            const currentVideoId = player.getVideoData().video_id;
-            const currentTime = player.getCurrentTime();
+            if (videoQueue.length > 0) {
+                currentVideoId = extractVideoId(videoQueue[0].videoUrl);
+            }
 
-            player.destroy(); // remove o player atual
+            if (player) {
+                player.destroy();
+            }
 
-            // recria com controles nativos
+            // 1. Recria o player com controles nativos
             player = new YT.Player('videoPlayer', {
                 height: '100%',
                 width: '100%',
                 videoId: currentVideoId,
                 playerVars: {
                     autoplay: 1,
-                    controls: 1, // <-- habilita os botões do YouTube
+                    controls: 1,
                     modestbranding: 1,
                     rel: 0
                 },
                 events: {
                     onReady: (event) => {
-                        event.target.seekTo(currentTime);
+                        if (currentVideoId) event.target.seekTo(currentTime);
                         event.target.playVideo();
+                        document.getElementById('player-mask').style.display = 'none';
                     },
                     onStateChange: onPlayerStateChange
                 }
             });
 
-            function enableAdminPlayerControls() {
-                if (!player || typeof YT === 'undefined') return;
+            // 2. Garante que o overlay customizado está escondido
+            const overlay = document.querySelector('.player-overlay-controls');
+            if (overlay) overlay.style.display = 'none';
 
-                let videoData;
-                try {
-                    videoData = player.getVideoData();
-                } catch (e) {
-                    console.warn('Player não está pronto, não é possível ativar controles de admin.');
-                    return; // Sai se o player não estiver pronto
-                }
+            // 3. MOSTRA O BOTÃO "LIMPAR FILA" (A CORREÇÃO PRINCIPAL)
+            document.querySelector('.clear-queue-button').style.display = 'inline-block';
 
-                const currentVideoId = videoData ? videoData.video_id : null;
-
-                // Se não houver vídeo (fila vazia), apenas saia.
-                if (!currentVideoId) {
-                    console.log('Nenhum vídeo tocando. Controles de admin ativados (sem recriar player).');
-                    // Esconde a máscara mesmo se não houver vídeo
-                    document.getElementById('player-mask').style.display = 'none';
-                    return;
-                }
-                // --- FIM DA CORREÇÃO ---
-
-                const currentTime = player.getCurrentTime();
-
-                player.destroy(); // remove o player atual
-
-                // recria com controles nativos
-                player = new YT.Player('videoPlayer', {
-                    height: '100%',
-                    width: '100%',
-                    videoId: currentVideoId,
-                    playerVars: {
-                        autoplay: 1,
-                        controls: 1, // <-- habilita os botões do YouTube
-                        modestbranding: 1,
-                        rel: 0
-                    },
-                    events: {
-                        onReady: (event) => {
-                            event.target.seekTo(currentTime);
-                            event.target.playVideo();
-
-                            // 👇 Esconde a máscara para liberar cliques
-                            document.getElementById('player-mask').style.display = 'none';
-                        },
-                        onStateChange: onPlayerStateChange
-                    }
-                });
-            }
-
+            // 4. Garante que o botão de pular está visível e com texto de Admin
+            document.querySelector('.skip-video-button').style.display = 'inline-block';
+            document.getElementById('skipVoteBtnText').textContent = 'Pular Vídeo (Admin)';
+            document.getElementById('voteCounterWrapper').style.display = 'none';
         }
 
+        /**
+         * NOVO: Habilita os controles do player para o modo "solo".
+         * (Usuário está sozinho na sala, mas não é admin)
+         */
+      function enableSoloPlayerControls() {
+            console.log('Ativando Modo Solo...');
+            const currentTime = player ? player.getCurrentTime() : 0;
+            let currentVideoId = null;
+
+            // LÓGICA CORRIGIDA: Pega o vídeo da fila, não do player antigo.
+            if (videoQueue.length > 0) {
+                currentVideoId = extractVideoId(videoQueue[0].videoUrl);
+            }
+
+            if (player) {
+                player.destroy();
+            }
+
+            player = new YT.Player('videoPlayer', {
+                height: '100%',
+                width: '100%',
+                videoId: currentVideoId, // Usa o ID pego da fila
+                playerVars: {
+                    autoplay: 1,
+                    controls: 1,
+                    modestbranding: 1,
+                    rel: 0
+                },
+                events: {
+                    onReady: (event) => {
+                        if (currentVideoId) event.target.seekTo(currentTime);
+                        event.target.playVideo();
+                        document.getElementById('player-mask').style.display = 'none';
+                    },
+                    onStateChange: onPlayerStateChange
+                }
+            });
+
+            const overlay = document.querySelector('.player-overlay-controls');
+            if (overlay) overlay.style.display = 'none';
+
+            document.querySelector('.clear-queue-button').style.display = 'inline-block';
+            document.querySelector('.skip-video-button').style.display = 'inline-block';
+            document.getElementById('skipVoteBtnText').textContent = 'Pular (Modo Solo)';
+            document.getElementById('voteCounterWrapper').style.display = 'none';
+        }
+
+        /**
+         * NOVO: Desabilita os controles do player quando mais alguém entra.
+         * (Volta ao modo "festa" padrão)
+         */
+       function disableSoloPlayerControls() {
+            console.log('Desativando Modo Solo (Modo Festa)...');
+            const currentTime = player ? player.getCurrentTime() : 0;
+            let currentVideoId = null;
+
+            // LÓGICA CORRIGIDA: Pega o vídeo da fila.
+            if (videoQueue.length > 0) {
+                currentVideoId = extractVideoId(videoQueue[0].videoUrl);
+            }
+
+            if (player) {
+                player.destroy();
+            }
+
+            player = new YT.Player('videoPlayer', {
+                height: '100%',
+                width: '100%',
+                videoId: currentVideoId,
+                playerVars: {
+                    autoplay: 1,
+                    controls: 0,
+                    modestbranding: 1,
+                    rel: 0,
+                    disablekb: 1
+                },
+                events: {
+                    onReady: (event) => {
+                        if (currentVideoId) event.target.seekTo(currentTime);
+                        event.target.playVideo();
+                        document.getElementById('player-mask').style.display = 'block';
+                    },
+                    onStateChange: onPlayerStateChange
+                }
+            });
+
+            const overlay = document.querySelector('.player-overlay-controls');
+            if (overlay) overlay.style.display = 'flex';
+
+            document.querySelector('.clear-queue-button').style.display = 'none';
+            document.querySelector('.skip-video-button').style.display = 'inline-block';
+            document.getElementById('skipVoteBtnText').textContent = 'Votar para Pular';
+            document.getElementById('voteCounterWrapper').style.display = 'inline';
+        }
 
         function logoutAdminSession() {
-            isAdminLoggedIn = false; // Desliga o modo admin
+
+            document.getElementById('panelBtn').style.display = 'none';
+
+            isAdminLoggedIn = false;
+            currentAdminUser = null;
             document.body.classList.add('non-admin');
-            const adminBtn = document.getElementById('adminUnlockBtn');
-            adminBtn.classList.remove('admin-logged-in'); // Deixa o botão vermelho
-            adminBtn.innerHTML = '<i class="fas fa-lock"></i> Admin'; // Muda o ícone
+
+            // Atualiza a exibição
+            updateAdminDisplay();
+
             showNotification('Modo Admin DESATIVADO.', 'info');
 
-            // *** PARTE 2: Esconde os controles de admin ***
-            document.getElementById('panelBtn').style.display = 'none';
+            // Esconde os controles de admin
             document.getElementById('videoList').classList.remove('admin-mode');
             document.getElementById('bulkRemoveBtn').style.display = 'none';
             document.getElementById('clearChatBtn').style.display = 'none';
             // Limpa os checkboxes
             document.querySelectorAll('.video-select-checkbox').forEach(cb => cb.checked = false);
+            // Restaura o botão de pular para o modo Votação
+            document.getElementById('skipVoteBtnText').textContent = 'Votar para Pular';
+            document.getElementById('voteCounterWrapper').style.display = 'inline';
+            
+            // Trava o player (estado padrão de não-admin)
+            disableAdminPlayerControls();
+            
+            // --- INÍCIO DA NOVA LÓGICA PÓS-LOGOUT ---
+            // Verifica a contagem atual para decidir o que fazer com os controles
+            const userCount = parseInt(document.getElementById('userCount').textContent, 10) || 0;
+
+            if (userCount === 1) {
+                // Se o usuário ficou sozinho, reativa o Modo Solo
+                console.log('Admin saiu. Usuário está sozinho. Reativando Modo Solo.');
+                enableSoloPlayerControls(); 
+            } else {
+                // Se há mais gente, garante que o botão de limpar fila está escondido
+                console.log('Admin saiu. Modo Festa ativado.');
+                document.querySelector('.clear-queue-button').style.display = 'none';
+                document.querySelector('.skip-video-button').style.display = 'inline-block'; // Garante que votação está visível
+            }
+            // --- FIM DA NOVA LÓGICA ---
         }
 
         // Adiciona o listener do "olho" da senha para o novo modal
@@ -1337,22 +1454,18 @@
                 currentAdminUser = adminEmail.split('@')[0]; // Pega a parte antes do @ como nome
                 document.body.classList.remove('non-admin');
 
-                // Atualiza a exibição
+                // Atualiza a exibição do nome no botão
                 updateAdminDisplay();
                 closeAdminUnlockModal();
 
-                // Mostra os controles de admin
+                // Mostra os controles GERAIS de admin (painel, remoção em lote, etc.)
                 document.getElementById('videoList').classList.add('admin-mode');
                 document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
                 document.getElementById('clearChatBtn').style.display = 'inline-block';
-
                 document.getElementById('panelBtn').style.display = 'flex';
 
+                // CHAMA A FUNÇÃO CENTRALIZADA para cuidar do player e botões associados
                 enableAdminPlayerControls();
-
-                // Atualiza o botão de pular para o modo Admin
-                document.getElementById('skipVoteBtnText').textContent = 'Pular Vídeo (Admin)';
-                document.getElementById('voteCounterWrapper').style.display = 'none'
 
             } catch (error) {
                 console.error('Erro de autenticação do admin:', error);
@@ -1399,13 +1512,16 @@
                  * Esta função é chamada pelo botão principal de skip.
                  */
         function handleSkipOrVote() {
-            if (isAdminLoggedIn) {
-                // Admin logado: Pula o vídeo imediatamente
-                console.log('Admin logado. Pulando vídeo (via handleSkipOrVote)...');
+            // NOVO: Verifica a contagem de usuários diretamente
+            const userCount = parseInt(document.getElementById('userCount').textContent, 10) || 0;
+
+            // Se for admin OU se estiver sozinho na sala, pula direto
+            if (isAdminLoggedIn || userCount === 1) {
+                console.log('Admin ou Modo Solo. Pulando vídeo (via handleSkipOrVote)...');
                 executeSkipVideo(); // Esta é a função de skip direto
             } else {
-                // Usuário normal: Registra um voto
-                console.log('Usuário normal. Registrando voto para pular (via handleSkipOrVote)...');
+                // Usuário normal em grupo: Registra um voto
+                console.log('Usuário normal em grupo. Registrando voto para pular (via handleSkipOrVote)...');
                 castVoteToSkip(); // Esta é a função de votação
             }
         }
@@ -1620,16 +1736,40 @@
                 width: '100%',
                 playerVars: {
                     'autoplay': 1,
-                    'controls': 0,        // <- esconder controles nativos
+                    'controls': 0,        // Começa com 0 (padrão 'festa')
                     'modestbranding': 1,
                     'rel': 0,
-                    'disablekb': 1        // desativa teclas de atalho para evitar seek via teclado
+                    'disablekb': 1
                 },
                 events: {
                     'onReady': (event) => {
-                        // define volume inicial e carrega fila
+                        // 1. Configurações padrão
                         player.setVolume(50);
                         loadVideoQueue();
+
+                        // --- INÍCIO DA CORREÇÃO ---
+                        // Assim que o player estiver pronto, verificamos qual
+                        // modo (Solo, Festa ou Admin) deve ser ativado.
+
+                        // 2. Pega a contagem de usuários que o Firebase já registrou
+                        const userCountElement = document.getElementById('userCount');
+                        const currentCount = userCountElement ? parseInt(userCountElement.textContent, 10) : 0;
+
+                        // 3. Decide qual modo ativar
+                        if (isAdminLoggedIn) {
+                            // Se o Admin já logou, ativa os controles de Admin
+                            console.log('Player PRONTO. Ativando Modo Admin inicial.');
+                            enableAdminPlayerControls();
+                        } else if (currentCount === 1) {
+                            // Se só tem 1 usuário (e não é admin), ativa o Modo Solo
+                            console.log('Player PRONTO. Ativando Modo Solo inicial.');
+                            enableSoloPlayerControls();
+                        } else {
+                            // Se tiver mais de 1 (e não é admin), ativa o Modo Festa
+                            console.log('Player PRONTO. Ativando Modo Festa inicial.');
+                            disableSoloPlayerControls();
+                        }
+                        // --- FIM DA CORREÇÃO ---
                     },
                     'onStateChange': onPlayerStateChange
                 }
@@ -1713,13 +1853,16 @@
         
 
         function handleClearQueue() {
-            if (isAdminLoggedIn) {
-                // Admin está logado: executa a lógica de limpar diretamente
-                console.log('Admin logado. Limpando fila...');
-                executeClearQueue(); // Não precisa de 'await'
+            // NOVO: Verifica a contagem de usuários diretamente
+            const userCount = parseInt(document.getElementById('userCount').textContent, 10) || 0;
+
+            // Se for admin OU se estiver sozinho na sala, limpa direto
+            if (isAdminLoggedIn || userCount === 1) {
+                console.log('Admin ou Modo Solo. Limpando fila...');
+                executeClearQueue();
             } else {
-                // Admin não está logado: abre o modal para pedir credenciais
-                console.log('Admin não logado. Abrindo modal de autenticação...');
+                // Admin não está logado E está em grupo: abre o modal para pedir credenciais
+                console.log('Admin não logado em grupo. Abrindo modal de autenticação...');
                 openModal();
             }
         }
