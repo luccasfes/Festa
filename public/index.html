@@ -383,40 +383,44 @@ function updatePlayerMode() {
         return;
     }
 
-    // --- INÍCIO DA CORREÇÃO ---
-    // Se a fila de vídeos estiver VAZIA, nós NÃO vamos recriar o player.
-    // Apenas ajustamos os botões para o estado correto (Solo ou Festa).
-    if (videoQueue.length === 0) {
-        console.log('updatePlayerMode: Fila vazia. Ajustando botões sem recriar player.');
+    // --- LÓGICA SIMPLIFICADA ---
+    // O player agora nasce com 'controls: 1' (Modo Solo, por causa do Passo 1)
+    
+    if (onlineUserCount <= 1) {
+        // --- MODO SOLO ---
+        // O player já está correto (controls: 1).
         
-        if (onlineUserCount <= 1) { // Modo Solo com fila vazia
+        console.log('updatePlayerMode: Modo Solo ATIVADO.');
+        
+        if (videoQueue.length === 0) {
+            // Fila vazia: Apenas ajustamos os botões e garantimos que a máscara está desligada.
+            console.log('... fila vazia, apenas ajustando botões.');
             document.querySelector('.clear-queue-button').style.display = 'inline-block';
             document.querySelector('.skip-video-button').style.display = 'inline-block';
             document.getElementById('skipVoteBtnText').textContent = 'Pular (Modo Solo)';
             document.getElementById('voteCounterWrapper').style.display = 'none';
-        } else { // Modo Festa com fila vazia
-            document.querySelector('.clear-queue-button').style.display = 'none';
-            document.querySelector('.skip-video-button').style.display = 'inline-block';
-            document.getElementById('skipVoteBtnText').textContent = 'Votar para Pular';
-            document.getElementById('voteCounterWrapper').style.display = 'inline';
-        }
-        
-        // Impede que o resto da função (que destrói o player) execute
-        return; 
-    }
-    // --- FIM DA CORREÇÃO ---
-
-    // O código abaixo só será executado se a fila NÃO estiver vazia.
-    if (onlineUserCount <= 1) {
-        console.log('Modo Solo ATIVADO. (Contagem: ' + onlineUserCount + ')');
-        if (typeof enableSoloPlayerControls === 'function') {
-            enableSoloPlayerControls();
+            
+            // Garante que o player inicial (controls: 1) esteja visível
+            document.getElementById('player-mask').style.display = 'none';
+            const overlay = document.querySelector('.player-overlay-controls');
+            if (overlay) overlay.style.display = 'none';
+        } else {
+            // Fila tem itens: chama a função completa para garantir que 
+            // o player foi recriado (caso ele estivesse vindo do Modo Festa).
+            console.log('... fila com itens, chamando enableSoloPlayerControls.');
+            if (typeof enableSoloPlayerControls === 'function') {
+                 enableSoloPlayerControls(); //
+            }
         }
 
     } else {
-        console.log('Modo Sincronizado ATIVADO. (Contagem: ' + onlineUserCount + ')');
+        // --- MODO FESTA ---
+        // Estamos em grupo, PRECISAMOS bloquear o player.
+        // Chamamos a função que recria o player com 'controls: 0'.
+        
+        console.log('updatePlayerMode: Modo Festa ATIVADO.');
         if (typeof disableSoloPlayerControls === 'function') {
-            disableSoloPlayerControls();
+            disableSoloPlayerControls(); //
         }
     }
 }
@@ -1780,7 +1784,7 @@ presenceRef.on('value', (snap) => {
         width: '100%',
         playerVars: {
             'autoplay': 1,
-            'controls': 0,
+            'controls': 1,
             'modestbranding': 1,
             'rel': 0,
             'disablekb': 1
