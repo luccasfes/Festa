@@ -2,63 +2,319 @@
 <html lang="pt-BR">
 
 <head>
-    <link rel="icon" type="image/x-icon" href="assets/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criar Sala - FlowLink</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Meta tags para SEO e compartilhamento -->
+    <meta name="description" content="Crie sua sala de música colaborativa no FlowLink e compartilhe com amigos">
+    <meta name="theme-color" content="#6366f1">
+    
+    <link rel="icon" type="image/x-icon" href="assets/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     
     <link rel="stylesheet" href="style.css">
+    
     <style>
-        /* Estilo extra para centralizar o card */
-        body {
+        /* Estilos otimizados - FUNDO ESCURO MANTIDO */
+        :root {
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+        }
+        
+       
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .creation-card {
+            text-align: center;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background: var(--dark-2);
+            border: 1px solid var(--dark-3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .step-indicator {
             display: flex;
-            align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            margin-bottom: 2rem;
+            gap: 8px;
+        }
+        
+        .step {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--dark-3);
+            transition: all 0.3s ease;
+        }
+        
+        .step.active {
+            background: var(--primary-color);
+            transform: scale(1.2);
+        }
+        
+        .feature-list {
+            text-align: left;
+            margin: 1.5rem 0;
+            padding: 0;
+            list-style: none;
+        }
+        
+        .feature-list li {
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+        }
+        
+        .feature-list li i {
+            color: var(--success-color);
+            margin-right: 0.5rem;
+            width: 20px;
+        }
+        
+        .link-container {
+            position: relative;
+            margin: 1.5rem 0;
+        }
+        
+        .link-input {
+            width: 100%;
+            padding: 12px 50px 12px 15px;
+            border: 2px solid var(--dark-3);
+            border-radius: 8px;
+            background: var(--dark-1);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .link-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .copy-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--dark-3);
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+        
+        .btn {
+            flex: 1;
+            min-width: 140px;
+            max-width: 200px;
+        }
+        
+        .success-animation {
+            animation: bounceIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        /* Responsividade melhorada */
+        @media (max-width: 768px) {
+            .creation-card {
+                padding: 1.5rem;
+                margin: 0 10px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                max-width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .creation-card {
+                padding: 1rem;
+            }
+        }
+
+        /* Estilo para o contador de caracteres */
+        .char-counter {
+            text-align: right;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
         }
     </style>
 </head>
 
 <body>
     <div id="particles"></div>
-    <div class="container" style="max-width: 600px;">
+    
+    <div class="container">
         <header class="app-header">
             <h1><i class="fas fa-music"></i> FlowLink<i class="fas fa-headphones"></i></h1>
         </header>
 
         <main>
-            <section class="card" style="text-align: center;">
-                <h2><i class="fas fa-plus-circle"></i> Criar uma Nova Sala</h2>
+            <section class="creation-card">
+                <!-- Indicador de progresso -->
+                <div class="step-indicator">
+                    <div class="step active" id="step1"></div>
+                    <div class="step" id="step2"></div>
+                </div>
                 
-                <p style="color: var(--text-primary); font-size: 1.1rem; margin: 20px 0;">
-                    Clique no botão abaixo para gerar um link exclusivo e convidar seus amigos.
-                </p>
+                <!-- Seção de Criação -->
+                <div id="createSection">
+                    <h2><i class="fas fa-plus-circle"></i> Criar Nova Sala</h2>
+                    
+                    <p style="color: var(--text-secondary); margin: 1rem 0 1.5rem;">
+                        Crie uma sala personalizada para curtir músicas com seus amigos em tempo real
+                    </p>
 
-                <div class="input-group">
-                    <label for="roomName">Nome da Sala (Opcional):</label>
-                    <input type="text" id="roomName" placeholder="Ex: Sala da Galera">
+                    <div class="input-group">
+                        <label for="roomName">
+                            <i class="fas fa-tag"></i> Nome da Sala (Opcional):
+                        </label>
+                        <input type="text" id="roomName" placeholder="Ex: Festa da Galera, Chill Lounge..." maxlength="50">
+                        <div class="char-counter">
+                            <span id="charCount">0</span>/50
+                        </div>
+                    </div>
+
+                    <div class="feature-list">
+                        <h4 style="color: var(--text-primary); margin-bottom: 1rem;">
+                            <i class="fas fa-star"></i> O que você ganha:
+                        </h4>
+                        <li><i class="fas fa-check"></i> Modo Solo</li>
+                        <li><i class="fas fa-check"></i> Fila de vídeos colaborativa</li>
+                        <li><i class="fas fa-check"></i> Chat em tempo real</li>
+                        <li><i class="fas fa-check"></i> Sistema de votação para pular músicas</li>
+                        <li><i class="fas fa-check"></i> Sincronização automática entre usuários</li>
+                        <li><i class="fas fa-check"></i> Busca integrada do YouTube</li>
+                    </div>
+
+                    <button class="btn primary" onclick="createNewRoom()" id="createRoomBtn">
+                        <span id="createRoomBtnText">
+                            <i class="fas fa-rocket"></i> Criar Sala
+                        </span>
+                        <span id="createRoomBtnLoader" class="loading" style="display: none;"></span>
+                    </button>
                 </div>
 
-                <button class="btn primary" onclick="createNewRoom()" id="createRoomBtn">
-                    <span id="createRoomBtnText">
-                        <i class="fas fa-link"></i> Gerar Link da Sala
-                    </span>
-                    <span id="createRoomBtnLoader" class="loading" style="display: none;"></span>
-                </button>
+                <!-- Seção de Sucesso -->
+                <div id="roomCreatedSection" style="display: none;">
+                    <h2 class="success-animation">
+                        <i class="fas fa-check-circle" style="color: var(--success-color);"></i> Sala Criada!
+                    </h2>
+                    
+                    <p style="color: var(--text-secondary); margin: 1rem 0 1.5rem;">
+                        Sua sala está pronta! Compartilhe o link abaixo com seus amigos:
+                    </p>
+
+                    <div class="input-group">
+                        <label for="roomLink">
+                            <i class="fas fa-link"></i> Link de Convite:
+                        </label>
+                        <div class="link-container">
+                            <input type="text" id="roomLink" readonly class="link-input">
+                            <button class="copy-btn" onclick="copyLink()" title="Copiar link" id="copyBtn">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <a href="#" id="goToRoomLink" class="btn primary">
+                            <i class="fas fa-sign-in-alt"></i> Entrar na Sala
+                        </a>
+                        <button class="btn secondary" onclick="createAnotherRoom()">
+                            <i class="fas fa-plus"></i> Nova Sala
+                        </button>
+                        <button class="btn" onclick="shareLink()" id="shareBtn" style="display: none;">
+                            <i class="fas fa-share-alt"></i> Compartilhar
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: var(--dark-3); border-radius: 8px;">
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Dica:</strong> Todos que tiverem o link poderão entrar na sala e adicionar músicas.
+                        </p>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
 
+    <div id="notification" class="notification">
+        <span id="notificationMessage"></span>
+    </div>
+
     <script>
         // ====================================================================
-        // Configuração do Firebase (COPIE A MESMA DO SEU INDEX.HTML)
+        // CONFIGURAÇÃO E INICIALIZAÇÃO
         // ====================================================================
+        
         const firebaseConfig = {
             apiKey: "AIzaSyCDlr4XHXuwWQ9Zj9dd2yoctLhFz1vbbyM",
             authDomain: "flowlink-7fd57.firebaseapp.com",
@@ -70,56 +326,297 @@
             measurementId: "G-B0NE1GDVQK"
         };
 
+        // Inicialização do Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const roomsRef = database.ref('rooms');
 
-        // Função para ativar/desativar o loading do botão
+        let notificationTimer = null;
+        let currentRoomId = null;
+
+        // ====================================================================
+        // FUNÇÕES DE UTILIDADE
+        // ====================================================================
+
+        /**
+         * Exibe notificação temporária
+         */
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationMessage = document.getElementById('notificationMessage');
+
+            if (notificationTimer) {
+                clearTimeout(notificationTimer);
+            }
+
+            notificationMessage.textContent = message;
+            notification.className = 'notification';
+            notification.classList.add(type, 'show');
+
+            notificationTimer = setTimeout(() => {
+                notification.classList.remove('show');
+                notificationTimer = null;
+            }, 4000);
+        }
+
+        /**
+         * Sanitiza entrada de texto para prevenir XSS
+         */
+        function sanitizeHTML(str) {
+            if (!str) return "";
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        /**
+         * Controla estado de loading dos botões
+         */
         function toggleLoading(buttonId, isLoading) {
             const btn = document.getElementById(buttonId);
+            if (!btn) return;
+
             const btnText = btn.querySelector(`#${buttonId}Text`);
             const btnLoader = btn.querySelector(`#${buttonId}Loader`);
 
             if (isLoading) {
                 btn.disabled = true;
-                btnText.style.display = 'none';
-                btnLoader.style.display = 'inline-block';
+                if (btnText) btnText.style.display = 'none';
+                if (btnLoader) btnLoader.style.display = 'inline-block';
             } else {
                 btn.disabled = false;
-                btnText.style.display = 'inline';
-                btnLoader.style.display = 'none';
+                if (btnText) btnText.style.display = 'inline';
+                if (btnLoader) btnLoader.style.display = 'none';
             }
         }
 
-        // Função principal para criar a sala
+        /**
+         * Gera ID amigável para sala
+         */
+        function generateRoomId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 8; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        /**
+         * Atualiza contador de caracteres
+         */
+        function updateCharCounter() {
+            const roomName = document.getElementById('roomName');
+            const charCount = document.getElementById('charCount');
+            if (roomName && charCount) {
+                charCount.textContent = roomName.value.length;
+                
+                // Altera cor quando estiver perto do limite
+                if (roomName.value.length > 45) {
+                    charCount.style.color = 'var(--warning-color)';
+                } else {
+                    charCount.style.color = 'var(--text-secondary)';
+                }
+            }
+        }
+
+        // ====================================================================
+        // FUNÇÕES PRINCIPAIS
+        // ====================================================================
+
+        /**
+         * Cria uma nova sala
+         */
         async function createNewRoom() {
             toggleLoading('createRoomBtn', true);
-            const roomNameInput = document.getElementById('roomName').value.trim();
-            const roomName = roomNameInput || "Sala Anônima";
+            
+            const roomNameInput = document.getElementById('roomName');
+            const sanitizedName = sanitizeHTML(roomNameInput.value.trim());
+            const roomName = sanitizedName || "Sala FlowLink";
+            const roomId = generateRoomId();
 
             try {
-                // 1. Cria uma nova entrada no Firebase em "/rooms"
-                const newRoomRef = roomsRef.push();
+                // Verifica se a sala já existe (raro, mas possível)
+                const existingRoom = await roomsRef.child(roomId).once('value');
+                if (existingRoom.exists()) {
+                    showNotification('ID de sala em uso. Tente novamente.', 'error');
+                    toggleLoading('createRoomBtn', false);
+                    return;
+                }
 
-                // 2. Salva informações iniciais (opcional, mas bom para organização)
-                await newRoomRef.set({
+                // Cria a sala no Firebase
+                await roomsRef.child(roomId).set({
                     roomName: roomName,
-                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    createdBy: 'user',
+                    userCount: 0
                 });
 
-                // 3. Pega o ID único gerado pelo push()
-                const newRoomId = newRoomRef.key;
-
-                // 4. Redireciona o usuário para a sala
-                console.log(`Sala criada: ${newRoomId}. Redirecionando...`);
-                window.location.href = `index.html?room=${newRoomId}`;
-
+                currentRoomId = roomId;
+                
+                // Constrói a URL
+                const baseUrl = window.location.origin + window.location.pathname;
+                const roomUrl = baseUrl.replace('create.html', 'index.html') + `?room=${roomId}`;
+                
+                // Atualiza a interface
+                showSuccessSection(roomUrl, roomName);
+                
             } catch (error) {
-                console.error("Erro ao criar a sala:", error);
-                alert("Não foi possível criar a sala. Verifique sua conexão e as regras do Firebase.");
+                console.error("Erro ao criar sala:", error);
+                showNotification('Erro ao criar sala. Tente novamente.', 'error');
                 toggleLoading('createRoomBtn', false);
             }
         }
+
+        /**
+         * Mostra seção de sucesso após criação
+         */
+        function showSuccessSection(roomUrl, roomName) {
+            document.getElementById('roomLink').value = roomUrl;
+            document.getElementById('goToRoomLink').href = roomUrl;
+            
+            // Atualiza steps
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+            
+            // Transição suave entre seções
+            const createSection = document.getElementById('createSection');
+            const successSection = document.getElementById('roomCreatedSection');
+            
+            createSection.style.opacity = '0';
+            setTimeout(() => {
+                createSection.style.display = 'none';
+                successSection.style.display = 'block';
+                successSection.style.opacity = '0';
+                
+                setTimeout(() => {
+                    successSection.style.opacity = '1';
+                }, 50);
+            }, 300);
+
+            // Mostra botão de compartilhar se a API estiver disponível
+            if (navigator.share) {
+                document.getElementById('shareBtn').style.display = 'inline-block';
+            }
+            
+            // Foca no input do link para facilitar cópia
+            setTimeout(() => {
+                document.getElementById('roomLink').select();
+            }, 500);
+        }
+
+        /**
+         * Copia link para área de transferência
+         */
+        async function copyLink() {
+            const linkInput = document.getElementById('roomLink');
+            const copyBtn = document.getElementById('copyBtn');
+            
+            try {
+                await navigator.clipboard.writeText(linkInput.value);
+                
+                // Feedback visual
+                const originalHtml = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                copyBtn.style.background = 'var(--success-color)';
+                
+                showNotification('Link copiado!', 'success');
+                
+                // Restaura após 2 segundos
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHtml;
+                    copyBtn.style.background = '';
+                }, 2000);
+                
+            } catch (err) {
+                // Fallback para navegadores mais antigos
+                linkInput.select();
+                document.execCommand('copy');
+                showNotification('Link copiado!', 'success');
+            }
+        }
+
+        /**
+         * Compartilha link usando Web Share API
+         */
+        async function shareLink() {
+            const roomUrl = document.getElementById('roomLink').value;
+            const roomName = document.getElementById('roomName').value || 'Sala FlowLink';
+            
+            try {
+                await navigator.share({
+                    title: `Entre na minha sala: ${roomName}`,
+                    text: `Junte-se a mim no FlowLink para curtir músicas juntos!`,
+                    url: roomUrl
+                });
+            } catch (err) {
+                // Usuário cancelou o compartilhamento ou API não disponível
+                console.log('Compartilhamento cancelado ou não suportado');
+            }
+        }
+
+        /**
+         * Cria outra sala (volta para estado inicial)
+         */
+        function createAnotherRoom() {
+            const createSection = document.getElementById('createSection');
+            const successSection = document.getElementById('roomCreatedSection');
+            
+            // Reseta formulário
+            document.getElementById('roomName').value = '';
+            updateCharCounter();
+            
+            // Atualiza steps
+            document.getElementById('step1').classList.add('active');
+            document.getElementById('step2').classList.remove('active');
+            
+            // Transição suave
+            successSection.style.opacity = '0';
+            setTimeout(() => {
+                successSection.style.display = 'none';
+                createSection.style.display = 'block';
+                createSection.style.opacity = '0';
+                
+                setTimeout(() => {
+                    createSection.style.opacity = '1';
+                }, 50);
+            }, 300);
+            
+            currentRoomId = null;
+        }
+
+        // ====================================================================
+        // EVENT LISTENERS E INICIALIZAÇÃO
+        // ====================================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Contador de caracteres em tempo real
+            const roomNameInput = document.getElementById('roomName');
+            if (roomNameInput) {
+                roomNameInput.addEventListener('input', updateCharCounter);
+                updateCharCounter(); // Inicializa contador
+            }
+            
+            // Enter no campo de nome cria a sala
+            roomNameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    createNewRoom();
+                }
+            });
+            
+            // Verifica se Web Share API está disponível
+            if (navigator.share) {
+                console.log('Web Share API disponível');
+            }
+            
+            // Foca no input de nome ao carregar
+            roomNameInput.focus();
+        });
+
+        // Previne envio do formulário se existir
+        document.addEventListener('submit', function(e) {
+            e.preventDefault();
+        });
     </script>
 </body>
 </html>
