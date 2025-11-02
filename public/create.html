@@ -25,9 +25,10 @@
         :root {
             --success-color: #10b981;
             --warning-color: #f59e0b;
+            --error-color: #ef4444;
         }
         
-       
+        
         
         .container {
             max-width: 600px;
@@ -142,6 +143,29 @@
             animation: bounceIn 0.6s ease-out;
         }
         
+        .required-field::after {
+            content: " *";
+            color: var(--error-color);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .creator-info {
+            background: var(--dark-3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .creator-info p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -204,6 +228,14 @@
             color: var(--text-secondary);
             margin-top: 5px;
         }
+        
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            text-align: left;
+            display: none;
+        }
     </style>
 </head>
 
@@ -228,24 +260,47 @@
                     <h2><i class="fas fa-plus-circle"></i> Criar Nova Sala</h2>
                     
                     <p style="color: var(--text-secondary); margin: 1rem 0 1.5rem;">
-                        Crie uma sala personalizada para curtir músicas com seus amigos em tempo real
+                        Identifique-se e crie uma sala personalizada para curtir músicas com amigos
                     </p>
 
-                    <div class="input-group">
-                        <label for="roomName">
-                            <i class="fas fa-tag"></i> Nome da Sala (Opcional):
-                        </label>
-                        <input type="text" id="roomName" placeholder="Ex: Festa da Galera, Chill Lounge..." maxlength="50">
-                        <div class="char-counter">
-                            <span id="charCount">0</span>/50
+                    <div class="form-group">
+                        <div class="input-group">
+                            <label for="creatorName" class="required-field">
+                                <i class="fas fa-user"></i> Seu Nome (Criador):
+                            </label>
+                            <input type="text" id="creatorName" placeholder="Como você quer ser chamado?" required maxlength="30">
+                            <div class="char-counter">
+                                <span id="creatorCharCount">0</span>/30
+                            </div>
+                            <div class="error-message" id="creatorNameError">
+                                Por favor, digite seu nome
+                            </div>
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="input-group">
+                            <label for="roomName">
+                                <i class="fas fa-tag"></i> Nome da Sala (Opcional):
+                            </label>
+                            <input type="text" id="roomName" placeholder="Ex: Festa da Galera, Chill Lounge..." maxlength="50">
+                            <div class="char-counter">
+                                <span id="roomCharCount">0</span>/50
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="creator-info">
+                        <p>
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Seu nome será visível</strong> para todos os participantes como criador da sala
+                        </p>
                     </div>
 
                     <div class="feature-list">
                         <h4 style="color: var(--text-primary); margin-bottom: 1rem;">
                             <i class="fas fa-star"></i> O que você ganha:
                         </h4>
-                        <li><i class="fas fa-check"></i> Modo Solo</li>
                         <li><i class="fas fa-check"></i> Fila de vídeos colaborativa</li>
                         <li><i class="fas fa-check"></i> Chat em tempo real</li>
                         <li><i class="fas fa-check"></i> Sistema de votação para pular músicas</li>
@@ -253,7 +308,7 @@
                         <li><i class="fas fa-check"></i> Busca integrada do YouTube</li>
                     </div>
 
-                    <button class="btn primary" onclick="createNewRoom()" id="createRoomBtn">
+                    <button class="btn primary" onclick="validateAndCreateRoom()" id="createRoomBtn">
                         <span id="createRoomBtnText">
                             <i class="fas fa-rocket"></i> Criar Sala
                         </span>
@@ -267,8 +322,19 @@
                         <i class="fas fa-check-circle" style="color: var(--success-color);"></i> Sala Criada!
                     </h2>
                     
+                    <div class="creator-info" style="margin: 1.5rem 0;">
+                        <p>
+                            <i class="fas fa-crown"></i> 
+                            <strong>Criador:</strong> <span id="displayCreatorName"></span>
+                        </p>
+                        <p style="margin-top: 0.5rem;">
+                            <i class="fas fa-users"></i> 
+                            <strong>Sala:</strong> <span id="displayRoomName"></span>
+                        </p>
+                    </div>
+
                     <p style="color: var(--text-secondary); margin: 1rem 0 1.5rem;">
-                        Sua sala está pronta! Compartilhe o link abaixo com seus amigos:
+                        Compartilhe o link abaixo com seus amigos:
                     </p>
 
                     <div class="input-group">
@@ -333,6 +399,7 @@
 
         let notificationTimer = null;
         let currentRoomId = null;
+        let currentCreatorName = '';
 
         // ====================================================================
         // FUNÇÕES DE UTILIDADE
@@ -405,19 +472,41 @@
         /**
          * Atualiza contador de caracteres
          */
-        function updateCharCounter() {
-            const roomName = document.getElementById('roomName');
-            const charCount = document.getElementById('charCount');
-            if (roomName && charCount) {
-                charCount.textContent = roomName.value.length;
+        function updateCharCounter(inputId, counterId) {
+            const input = document.getElementById(inputId);
+            const counter = document.getElementById(counterId);
+            if (input && counter) {
+                counter.textContent = input.value.length;
                 
                 // Altera cor quando estiver perto do limite
-                if (roomName.value.length > 45) {
-                    charCount.style.color = 'var(--warning-color)';
+                if (input.value.length > (inputId === 'creatorName' ? 25 : 45)) {
+                    counter.style.color = 'var(--warning-color)';
                 } else {
-                    charCount.style.color = 'var(--text-secondary)';
+                    counter.style.color = 'var(--text-secondary)';
                 }
             }
+        }
+
+        /**
+         * Valida o formulário antes de criar a sala
+         */
+        function validateForm() {
+            const creatorName = document.getElementById('creatorName').value.trim();
+            const creatorNameError = document.getElementById('creatorNameError');
+            
+            let isValid = true;
+
+            // Valida nome do criador (obrigatório)
+            if (!creatorName) {
+                creatorNameError.style.display = 'block';
+                document.getElementById('creatorName').style.borderColor = 'var(--error-color)';
+                isValid = false;
+            } else {
+                creatorNameError.style.display = 'none';
+                document.getElementById('creatorName').style.borderColor = '';
+            }
+
+            return isValid;
         }
 
         // ====================================================================
@@ -425,15 +514,31 @@
         // ====================================================================
 
         /**
+         * Valida e cria uma nova sala
+         */
+        function validateAndCreateRoom() {
+            if (!validateForm()) {
+                showNotification('Preencha seu nome para criar a sala', 'error');
+                return;
+            }
+            createNewRoom();
+        }
+
+        /**
          * Cria uma nova sala
          */
         async function createNewRoom() {
             toggleLoading('createRoomBtn', true);
             
+            const creatorNameInput = document.getElementById('creatorName');
             const roomNameInput = document.getElementById('roomName');
-            const sanitizedName = sanitizeHTML(roomNameInput.value.trim());
-            const roomName = sanitizedName || "Sala FlowLink";
+            
+            const sanitizedCreatorName = sanitizeHTML(creatorNameInput.value.trim());
+            const sanitizedRoomName = sanitizeHTML(roomNameInput.value.trim());
+            
+            const roomName = sanitizedRoomName || "Sala FlowLink";
             const roomId = generateRoomId();
+            currentCreatorName = sanitizedCreatorName;
 
             try {
                 // Verifica se a sala já existe (raro, mas possível)
@@ -447,6 +552,7 @@
                 // Cria a sala no Firebase
                 await roomsRef.child(roomId).set({
                     roomName: roomName,
+                    creatorName: currentCreatorName,
                     createdAt: firebase.database.ServerValue.TIMESTAMP,
                     createdBy: 'user',
                     userCount: 0
@@ -459,7 +565,7 @@
                 const roomUrl = baseUrl.replace('create.html', 'index.html') + `?room=${roomId}`;
                 
                 // Atualiza a interface
-                showSuccessSection(roomUrl, roomName);
+                showSuccessSection(roomUrl, roomName, currentCreatorName);
                 
             } catch (error) {
                 console.error("Erro ao criar sala:", error);
@@ -471,9 +577,11 @@
         /**
          * Mostra seção de sucesso após criação
          */
-        function showSuccessSection(roomUrl, roomName) {
+        function showSuccessSection(roomUrl, roomName, creatorName) {
             document.getElementById('roomLink').value = roomUrl;
             document.getElementById('goToRoomLink').href = roomUrl;
+            document.getElementById('displayCreatorName').textContent = creatorName;
+            document.getElementById('displayRoomName').textContent = roomName;
             
             // Atualiza steps
             document.getElementById('step1').classList.remove('active');
@@ -542,11 +650,12 @@
         async function shareLink() {
             const roomUrl = document.getElementById('roomLink').value;
             const roomName = document.getElementById('roomName').value || 'Sala FlowLink';
+            const creatorName = document.getElementById('creatorName').value;
             
             try {
                 await navigator.share({
-                    title: `Entre na minha sala: ${roomName}`,
-                    text: `Junte-se a mim no FlowLink para curtir músicas juntos!`,
+                    title: `${creatorName} convida você para: ${roomName}`,
+                    text: `Junte-se a ${creatorName} no FlowLink para curtir músicas juntos!`,
                     url: roomUrl
                 });
             } catch (err) {
@@ -562,9 +671,12 @@
             const createSection = document.getElementById('createSection');
             const successSection = document.getElementById('roomCreatedSection');
             
-            // Reseta formulário
+            // Reseta formulário (mantém apenas o nome do criador)
+            const creatorName = document.getElementById('creatorName').value;
             document.getElementById('roomName').value = '';
-            updateCharCounter();
+            
+            updateCharCounter('creatorName', 'creatorCharCount');
+            updateCharCounter('roomName', 'roomCharCount');
             
             // Atualiza steps
             document.getElementById('step1').classList.add('active');
@@ -579,6 +691,8 @@
                 
                 setTimeout(() => {
                     createSection.style.opacity = '1';
+                    // Foca no campo do nome da sala para facilitar
+                    document.getElementById('roomName').focus();
                 }, 50);
             }, 300);
             
@@ -590,17 +704,37 @@
         // ====================================================================
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Contador de caracteres em tempo real
+            // Contadores de caracteres em tempo real
+            const creatorNameInput = document.getElementById('creatorName');
             const roomNameInput = document.getElementById('roomName');
+            
+            if (creatorNameInput) {
+                creatorNameInput.addEventListener('input', function() {
+                    updateCharCounter('creatorName', 'creatorCharCount');
+                    // Remove erro quando usuário começar a digitar
+                    if (this.value.trim()) {
+                        document.getElementById('creatorNameError').style.display = 'none';
+                        this.style.borderColor = '';
+                    }
+                });
+            }
+            
             if (roomNameInput) {
-                roomNameInput.addEventListener('input', updateCharCounter);
-                updateCharCounter(); // Inicializa contador
+                roomNameInput.addEventListener('input', function() {
+                    updateCharCounter('roomName', 'roomCharCount');
+                });
             }
             
             // Enter no campo de nome cria a sala
             roomNameInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
-                    createNewRoom();
+                    validateAndCreateRoom();
+                }
+            });
+            
+            creatorNameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('roomName').focus();
                 }
             });
             
@@ -609,8 +743,12 @@
                 console.log('Web Share API disponível');
             }
             
-            // Foca no input de nome ao carregar
-            roomNameInput.focus();
+            // Foca no input do criador ao carregar
+            creatorNameInput.focus();
+            
+            // Inicializa contadores
+            updateCharCounter('creatorName', 'creatorCharCount');
+            updateCharCounter('roomName', 'roomCharCount');
         });
 
         // Previne envio do formulário se existir
