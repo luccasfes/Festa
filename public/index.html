@@ -127,7 +127,7 @@
                     </div>
                     <div class="user-info">
                         <span id="userNameDisplay">Visitante</span>
-                        <button class="btn small secondary" onclick="openYTSearchModal()" style="margin-left: 10px;">
+                       <button class="btn small secondary" onclick="openEditNameModal()" style="margin-left: 10px;" title="Alterar seu nome">
                             <i class="fas fa-edit"></i>
                         </button>
                     </div>
@@ -366,6 +366,24 @@
         </div>
     </div>
 
+    <div id="editNameModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeEditNameModal()">×</span>
+        <h3><i class="fas fa-edit"></i> Alterar seu Nome</h3>
+        <p>Seu nome é usado no chat e para identificar os vídeos que você adiciona.</p>
+        
+        <div class="input-group">
+            <label for="editNameInput"><i class="fas fa-user"></i> Seu Nome:</label>
+            <input type="text" id="editNameInput" placeholder="Como você quer ser chamado?" maxlength="25">
+        </div>
+        
+        <button class="btn primary" onclick="saveUserName()" id="saveUserNameBtn">
+            <span id="saveUserNameBtnText">Salvar Nome</span>
+            <span id="saveUserNameBtnLoader" class="loading" style="display: none;"></span>
+        </button>
+    </div>
+</div>
+
     <!-- //sessão -->
     <script>
 
@@ -447,6 +465,71 @@
             }
         }
 
+        function openEditNameModal() {
+    // Pega o nome atual (da sessão ou do display)
+    const currentName = sessionStorage.getItem('ytSessionUser') || '';
+    document.getElementById('editNameInput').value = currentName;
+    
+    // Abre o modal
+    document.getElementById('editNameModal').style.display = 'flex';
+    document.getElementById('editNameInput').focus();
+}
+
+/**
+ * Fecha o modal de edição de nome.
+ */
+function closeEditNameModal() {
+    document.getElementById('editNameModal').style.display = 'none';
+}
+
+/**
+ * Salva o novo nome do usuário na sessão e no Firebase.
+ */
+function saveUserName() {
+    toggleLoading('saveUserNameBtn', true); // Ativa o loading
+
+    const newName = document.getElementById('editNameInput').value.trim();
+
+    if (!newName) {
+        showNotification('Por favor, digite um nome.', 'error');
+        toggleLoading('saveUserNameBtn', false); // Desativa o loading
+        return;
+    }
+
+    // 1. Salva o nome na sessão (variável global e sessionStorage)
+    currentSessionUser = newName; 
+    sessionStorage.setItem('ytSessionUser', newName);
+
+    // 2. Atualiza o display do chat
+    document.getElementById('userNameDisplay').textContent = newName;
+
+    // 3. Atualiza o nome na lista de presença do Firebase
+    if (myPresenceRef) {
+        myPresenceRef.update({ name: newName });
+    }
+
+    // 4. (Importante!) Atualiza o nome no modal do YouTube também
+    document.getElementById('currentSessionUser').textContent = newName;
+
+    // Simula um pequeno delay para o feedback (opcional)
+    setTimeout(() => {
+        toggleLoading('saveUserNameBtn', false); // Desativa o loading
+        showNotification('Nome atualizado para ' + newName, 'success');
+        closeEditNameModal();
+    }, 300);
+}
+
+// Também adicione o 'Enter' para salvar
+document.addEventListener('DOMContentLoaded', () => {
+    const editNameInput = document.getElementById('editNameInput');
+    if(editNameInput) {
+        editNameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                saveUserName();
+            }
+        });
+    }
+});
         function setSessionUser() {
             const userName = document.getElementById('ytSearchName').value.trim();
 
@@ -2081,11 +2164,13 @@ roomRef.on('value', (snapshot) => {
                 closeModal();
                 closeRemoveModal();
                 closeYTSearchModal();
+                closeEditNameModal();
                 closeNextVideoModal();
                 closeAdminUnlockModal();
                 closeBulkRemoveConfirmModal();
                 closePanelModal();
                 closeDeleteAllRoomsModal();
+
             }
         });
 
@@ -2095,6 +2180,7 @@ roomRef.on('value', (snapshot) => {
                 closeModal();
                 closeRemoveModal();
                 closeYTSearchModal();
+                closeEditNameModal();
                 closeNextVideoModal();
                 closeAdminUnlockModal();
                 closeBulkRemoveConfirmModal();
