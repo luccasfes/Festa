@@ -649,7 +649,7 @@
 
             try {
                 // Substitua pela sua chave de API do YouTube
-                const API_KEY = 'AIzaSyADkfhlsuGQspanjkzd_2ypc023a5Zl4i0';
+                const API_KEY = 'AIzaSyCgGlbDNSG7Y2qh1KrUn-_syRpN1PHbeQg';
                 const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(query)}&key=${API_KEY}&type=video`);
 
                 if (!response.ok) throw new Error('Erro na API do YouTube');
@@ -1335,7 +1335,7 @@
                         }
 
                         // Se não tiver em cache, busca da API do YouTube
-                        const API_KEY = 'AIzaSyADkfhlsuGQspanjkzd_2ypc023a5Zl4i0'; // Substitua pela sua chave
+                        const API_KEY = 'AIzaSyCgGlbDNSG7Y2qh1KrUn-_syRpN1PHbeQg'; // Substitua pela sua chave
                         const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${API_KEY}`);
 
                         if (response.ok) {
