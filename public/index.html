@@ -2265,6 +2265,87 @@ roomRef.on('value', (snapshot) => {
                 });
         }
 
+     // Editar emsnagem
+function showEditUI(messageKey, base64Text) {
+    try {
+        // 1. Decodifica o texto original (seguro para UTF-8)
+        const rawText = decodeURIComponent(escape(atob(base64Text)));
+
+        // 2. Pega todos os elementos da mensagem
+        const textElement = document.getElementById(`text-${messageKey}`);
+        const editContainer = document.getElementById(`edit-container-${messageKey}`);
+        const actionsContainer = document.getElementById(`actions-${messageKey}`);
+        const editInput = editContainer.querySelector('.chat-edit-input');
+
+        // 3. Esconde o texto e os botões de ação
+        textElement.style.display = 'none';
+        actionsContainer.style.display = 'none';
+        
+        // 4. Mostra a caixa de edição
+        editContainer.style.display = 'block';
+
+        // 5. Preenche o textarea com o texto original e foca nele
+        editInput.value = rawText;
+        editInput.focus();
+        
+        // Auto-ajusta a altura do textarea (bônus)
+        editInput.style.height = 'auto';
+        editInput.style.height = (editInput.scrollHeight) + 'px';
+
+    } catch (e) {
+        console.error("Erro ao decodificar texto para edição:", e);
+        showNotification('Erro ao tentar editar a mensagem.', 'error');
+    }
+}
+
+/**
+ * NOVO: Cancela a edição e reverte a UI.
+ */
+function cancelEdit(messageKey) {
+    // 1. Pega todos os elementos
+    const textElement = document.getElementById(`text-${messageKey}`);
+    const editContainer = document.getElementById(`edit-container-${messageKey}`);
+    const actionsContainer = document.getElementById(`actions-${messageKey}`);
+
+    // 2. Esconde a caixa de edição
+    editContainer.style.display = 'none';
+
+    // 3. Mostra o texto original e os botões de ação novamente
+    textElement.style.display = 'block';
+    actionsContainer.style.display = 'flex'; // 'flex' ou 'block'
+}
+
+/**
+ * NOVO: Salva a mensagem editada no Firebase.
+ */
+async function saveEdit(messageKey) {
+    // 1. Pega o novo texto do textarea
+    const editInput = document.getElementById(`edit-container-${messageKey}`).querySelector('.chat-edit-input');
+    const newText = editInput.value.trim();
+
+    if (!newText) {
+        showNotification('A mensagem não pode ficar vazia.', 'error');
+        return;
+    }
+
+    try {
+        // 2. Atualiza a mensagem no Firebase
+        await chatMessagesRef.child(messageKey).update({
+            text: newText,
+            isEdited: true, // Marca a mensagem como editada
+            lastEdited: firebase.database.ServerValue.TIMESTAMP // (Opcional)
+        });
+        
+        showNotification('Mensagem atualizada!', 'success');
+        // A UI vai se atualizar sozinha por causa do listener 'on("value")',
+        // mas chamamos cancelEdit() para esconder a caixa imediatamente.
+        cancelEdit(messageKey);
+
+    } catch (error) {
+        console.error("Erro ao salvar edição:", error);
+        showNotification('Erro ao salvar. Tente novamente.', 'error');
+    }
+}
         /**
          * Lida com a tecla Enter no input do chat.
          */
@@ -2378,88 +2459,109 @@ roomRef.on('value', (snapshot) => {
      * @param {object} message - O objeto da mensagem.
      */
         function createMessageElement(messageKey, message) {
-            const messageElement = document.createElement('div');
-            messageElement.className = 'chat-message';
-            messageElement.id = 'msg-' + messageKey; // ID para o scroll
+    const messageElement = document.createElement('div');
+    messageElement.className = 'chat-message';
+    messageElement.id = 'msg-' + messageKey; // ID para o scroll
 
-            // Verifica se é "minha"
-            const isMine = (message.userId === userVoteId);
-            if (isMine) {
-                messageElement.classList.add('mine');
-            }
+    // Verifica se é "minha"
+    const isMine = (message.userId === userVoteId);
+    if (isMine) {
+        messageElement.classList.add('mine');
+    }
 
-            if (message.userIsAdmin) {
-                messageElement.classList.add('admin');
-            }
-            if (message.isSystem) {
-                messageElement.classList.add('system');
-            }
+    if (message.userIsAdmin) {
+        messageElement.classList.add('admin');
+    }
+    if (message.isSystem) {
+        messageElement.classList.add('system');
+    }
 
-            // Sanitização
-            const safeText = (message.text || '')
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-            const safeUser = (message.userName || 'Visitante')
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
+    // Sanitização
+    const safeText = (message.text || '')
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    const safeUser = (message.userName || 'Visitante')
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 
-            // --- NOVA LÓGICA DE COR ---
-            let userColorStyle = ''; // String de estilo
-            if (!message.userIsAdmin && !message.isSystem) {
-                // Se NÃO for admin e NÃO for sistema, calcula a cor
-                const color = getUserColor(message.userName);
-                userColorStyle = `style="color: ${color}"`;
-            }
-            // Se for admin, o CSS (.chat-message.admin .chat-user) vai cuidar disso.
-            // --- FIM DA NOVA LÓGICA ---
+    // --- LÓGICA DE COR ---
+    let userColorStyle = '';
+    if (!message.userIsAdmin && !message.isSystem) {
+        const color = getUserColor(message.userName);
+        userColorStyle = `style="color: ${color}"`;
+    }
 
-            // --- 1. Bloco de Resposta (Se esta MENSAGEM é uma resposta) ---
-            let replyHtml = '';
-            if (message.replyToId) {
-                const safeReplyText = (message.replyToText || '')
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;");
-                const safeReplyUser = (message.replyToUser || 'Alguém')
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;");
+    // --- 1. Bloco de Resposta (Se esta MENSAGEM é uma resposta) ---
+    let replyHtml = '';
+    if (message.replyToId) {
+        const safeReplyText = (message.replyToText || '')
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        const safeReplyUser = (message.replyToUser || 'Alguém')
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
 
-                replyHtml = `
-            <div class="chat-reply-block" onclick="scrollToMessage('${message.replyToId}')">
-                <div class="chat-reply-block-user">${safeReplyUser}</div>
-                <div class="chat-reply-block-text">${safeReplyText}</div>
-            </div>
+        replyHtml = `
+        <div class="chat-reply-block" onclick="scrollToMessage('${message.replyToId}')">
+            <div class="chat-reply-block-user">${safeReplyUser}</div>
+            <div class="chat-reply-block-text">${safeReplyText}</div>
+        </div>
         `;
-            }
+    }
 
-            // --- 2. Botão de Resposta (Para RESPONDER a esta mensagem) ---
-            // Cria um snippet de texto seguro para o onclick
-            let snippet = safeText.length > 40 ? safeText.substring(0, 40) + '...' : safeText;
-            snippet = snippet.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+    // --- 2. Botão de Resposta (Para RESPONDER a esta mensagem) ---
+    let snippet = safeText.length > 40 ? safeText.substring(0, 40) + '...' : safeText;
+    snippet = snippet.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
 
-            const replyBtnHtml = `
+    const replyBtnHtml = `
         <button class="chat-reply-btn" title="Responder" onclick="setReplyContext('${messageKey}', '${safeUser}', '${snippet}')">
             <i class="fas fa-reply"></i>
         </button>
     `;
 
-            // --- 3. Montagem Final ---
-            const timeString = formatTime(message.timestamp);
+    // --- 3. Montagem Final ---
+    const timeString = formatTime(message.timestamp);
+    
+    const safeBase64Text = btoa(unescape(encodeURIComponent(message.text || '')));
 
-            messageElement.innerHTML = `
+    // --- INÍCIO DA MUDANÇA ---
+    messageElement.innerHTML = `
         ${replyHtml} 
         <div class="chat-message-header">
             <div class="chat-user ${message.userIsAdmin ? 'admin-badge' : ''}" ${userColorStyle}>
                 ${message.userIsAdmin ? '<i class="fas fa-crown"></i>' : ''}
                 ${safeUser}
             </div>
-        </div>
-        <div class="chat-text">${safeText}</div>
-        <div class="chat-time">${timeString}</div>
-        ${replyBtnHtml}
-    `;
+            
+            <div class="chat-message-actions" id="actions-${messageKey}">
+                ${replyBtnHtml} 
+                
+                ${isMine ? `<button class="chat-edit-btn" title="Editar" onclick="showEditUI('${messageKey}', '${safeBase64Text}')">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>` : ''} 
+            </div>
+            </div>
 
-            return messageElement;
-        }
+        <div class="chat-text" id="text-${messageKey}">${safeText}</div>
+
+        <div class="chat-edit-container" id="edit-container-${messageKey}" style="display: none;">
+            <textarea class="chat-edit-input"></textarea> 
+            <div class="chat-edit-actions">
+                <button class="btn small secondary" onclick="cancelEdit('${messageKey}')">Cancelar</button>
+                <button class="btn small primary" onclick="saveEdit('${messageKey}')">Salvar</button>
+            </div>
+        </div>
+
+        <div class="chat-time">
+            ${timeString}
+            ${message.isEdited ? '<span class="edited-marker"> (editado)</span>' : ''}
+        </div>
+
+        `;
+    // --- FIM DA MUDANÇA ---
+
+    return messageElement;
+}
 
         /**
          * Formata o timestamp para exibição.

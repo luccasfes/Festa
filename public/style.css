@@ -1545,8 +1545,11 @@ body:not(.non-admin) .player-overlay-controls {
 
 /* ESTRUTURA DENTRO DA BOLHA */
 .chat-message-header {
-    display: block;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     margin-bottom: 4px;
+    position: relative; 
 }
 
 .chat-user {
@@ -1734,33 +1737,25 @@ body:not(.non-admin) .player-overlay-controls {
 }
 
 .chat-reply-btn {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    background: rgba(0,0,0,0.1);
-    color: rgba(0,0,0,0.5);
-    border: none;
-    border-radius: 50%;
+    background: var(--dark-3);
+    border: 1px solid var(--dark-3);
+    color: var(--text-secondary);
+    border-radius: 5px;
     width: 28px;
     height: 28px;
-    cursor: pointer;
-    opacity: 0; /* Começa invisível */
-    transition: opacity 0.2s ease;
     font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    /* Adicionado para garantir o alinhamento */
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2;
 }
-
-.chat-message.mine .chat-reply-btn {
-    /* Ajusta cor para a bolha escura */
-    background: rgba(255,255,255,0.15);
-    color: rgba(255,255,255,0.7);
-}
-
-.chat-message:hover .chat-reply-btn {
-    opacity: 1; /* Aparece ao passar o mouse */
+            
+.chat-reply-btn:hover {
+    background: var(--primary-color);
+    color: white;
 }
 
 /* 2. Contexto de Resposta (acima da caixa de input) */
@@ -2242,4 +2237,83 @@ body:not(.non-admin) .player-overlay-controls {
 #roomCreatorDisplay {
     color: #4a7fff;
     font-weight: 500;
+}
+
+/* ====================================================================
+   ESTILOS DE EDIÇÃO DE MENSAGEM DO CHAT
+   ==================================================================== */
+
+/* Contêiner para os botões de ação (Reply, Edit) */
+.chat-message-actions {
+    /* position: absolute; (REMOVIDO) */
+    /* top: 4px; (REMOVIDO) */
+    /* right: 8px; (REMOVIDO) */
+    display: flex;
+    gap: 4px;
+    opacity: 0; /* Escondido por padrão */
+    transition: opacity 0.2s ease;
+    z-index: 2; /* Garante que fique sobre o nome se ele for longo */
+    flex-shrink: 0; /* Impede que os botões quebrem a linha */
+}
+
+/* Mostra os botões quando o mouse passa sobre a mensagem */
+.chat-message:hover .chat-message-actions {
+    opacity: 1;
+}
+
+/* Botão de Editar */
+.chat-edit-btn {
+    background: var(--dark-3);
+    border: 1px solid var(--dark-3);
+    color: var(--text-secondary);
+    border-radius: 5px;
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.chat-edit-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* O marcador '(editado)' */
+.edited-marker {
+    font-style: italic;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+/* O contêiner da caixa de edição */
+.chat-edit-container {
+    margin-top: 5px;
+}
+
+/* O textarea de edição */
+.chat-edit-input {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--dark-1);
+    border: 1px solid var(--dark-3);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 40px;
+}
+.chat-edit-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Botões de Salvar/Cancelar */
+.chat-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
 }
