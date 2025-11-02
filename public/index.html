@@ -366,64 +366,64 @@
     <!-- //sessão -->
     <script>
 
-/**
- * ESTA É A VERSÃO CORRIGIDA DA "PORTEIRA"
- * Ela só executa a lógica do player se ele estiver 100% pronto.
- */
-function updatePlayerMode() {
-    // Guarda de segurança: Não faz nada se o player não estiver pronto
-    if (!isPlayerReady) {
-        console.warn('updatePlayerMode: Player ainda não está pronto. Ignorando.');
-        return;
-    }
-    
-    // Se o Admin estiver logado, ele ignora o Modo Solo.
-    if (isAdminLoggedIn) {
-        console.log('updatePlayerMode: Admin está logado. Modo Solo ignorado.');
-        return;
-    }
+        /**
+         * ESTA É A VERSÃO CORRIGIDA DA "PORTEIRA"
+         * Ela só executa a lógica do player se ele estiver 100% pronto.
+         */
+        function updatePlayerMode() {
+            // Guarda de segurança: Não faz nada se o player não estiver pronto
+            if (!isPlayerReady) {
+                console.warn('updatePlayerMode: Player ainda não está pronto. Ignorando.');
+                return;
+            }
 
-    // --- LÓGICA SIMPLIFICADA ---
-    // O player agora nasce com 'controls: 1' (Modo Solo, por causa do Passo 1)
-    
-    if (onlineUserCount <= 1) {
-        // --- MODO SOLO ---
-        // O player já está correto (controls: 1).
-        
-        console.log('updatePlayerMode: Modo Solo ATIVADO.');
-        
-        if (videoQueue.length === 0) {
-            // Fila vazia: Apenas ajustamos os botões e garantimos que a máscara está desligada.
-            console.log('... fila vazia, apenas ajustando botões.');
-            document.querySelector('.clear-queue-button').style.display = 'inline-block';
-            document.querySelector('.skip-video-button').style.display = 'inline-block';
-            document.getElementById('skipVoteBtnText').textContent = 'Pular (Modo Solo)';
-            document.getElementById('voteCounterWrapper').style.display = 'none';
-            
-            // Garante que o player inicial (controls: 1) esteja visível
-            document.getElementById('player-mask').style.display = 'none';
-            const overlay = document.querySelector('.player-overlay-controls');
-            if (overlay) overlay.style.display = 'none';
-        } else {
-            // Fila tem itens: chama a função completa para garantir que 
-            // o player foi recriado (caso ele estivesse vindo do Modo Festa).
-            console.log('... fila com itens, chamando enableSoloPlayerControls.');
-            if (typeof enableSoloPlayerControls === 'function') {
-                 enableSoloPlayerControls(); //
+            // Se o Admin estiver logado, ele ignora o Modo Solo.
+            if (isAdminLoggedIn) {
+                console.log('updatePlayerMode: Admin está logado. Modo Solo ignorado.');
+                return;
+            }
+
+            // --- LÓGICA SIMPLIFICADA ---
+            // O player agora nasce com 'controls: 1' (Modo Solo, por causa do Passo 1)
+
+            if (onlineUserCount <= 1) {
+                // --- MODO SOLO ---
+                // O player já está correto (controls: 1).
+
+                console.log('updatePlayerMode: Modo Solo ATIVADO.');
+
+                if (videoQueue.length === 0) {
+                    // Fila vazia: Apenas ajustamos os botões e garantimos que a máscara está desligada.
+                    console.log('... fila vazia, apenas ajustando botões.');
+                    document.querySelector('.clear-queue-button').style.display = 'inline-block';
+                    document.querySelector('.skip-video-button').style.display = 'inline-block';
+                    document.getElementById('skipVoteBtnText').textContent = 'Pular (Modo Solo)';
+                    document.getElementById('voteCounterWrapper').style.display = 'none';
+
+                    // Garante que o player inicial (controls: 1) esteja visível
+                    document.getElementById('player-mask').style.display = 'none';
+                    const overlay = document.querySelector('.player-overlay-controls');
+                    if (overlay) overlay.style.display = 'none';
+                } else {
+                    // Fila tem itens: chama a função completa para garantir que 
+                    // o player foi recriado (caso ele estivesse vindo do Modo Festa).
+                    console.log('... fila com itens, chamando enableSoloPlayerControls.');
+                    if (typeof enableSoloPlayerControls === 'function') {
+                        enableSoloPlayerControls(); //
+                    }
+                }
+
+            } else {
+                // --- MODO FESTA ---
+                // Estamos em grupo, PRECISAMOS bloquear o player.
+                // Chamamos a função que recria o player com 'controls: 0'.
+
+                console.log('updatePlayerMode: Modo Festa ATIVADO.');
+                if (typeof disableSoloPlayerControls === 'function') {
+                    disableSoloPlayerControls(); //
+                }
             }
         }
-
-    } else {
-        // --- MODO FESTA ---
-        // Estamos em grupo, PRECISAMOS bloquear o player.
-        // Chamamos a função que recria o player com 'controls: 0'.
-        
-        console.log('updatePlayerMode: Modo Festa ATIVADO.');
-        if (typeof disableSoloPlayerControls === 'function') {
-            disableSoloPlayerControls(); //
-        }
-    }
-}
         let currentSessionUser = null;
 
         function openYTSearchModal() {
@@ -703,25 +703,25 @@ function updatePlayerMode() {
         });
 
         // Agora, vamos ouvir a contagem total de usuários online (DESTA SALA)
-const userCountElement = document.getElementById('userCount');
-presenceRef.on('value', (snap) => {
-    onlineUserCount = snap.numChildren(); // ATUALIZA A VARIÁVEL GLOBAL
+        const userCountElement = document.getElementById('userCount');
+        presenceRef.on('value', (snap) => {
+            onlineUserCount = snap.numChildren(); // ATUALIZA A VARIÁVEL GLOBAL
 
-    // Atualiza o header
-    if (userCountElement) {
-        userCountElement.textContent = onlineUserCount;
-    }
+            // Atualiza o header
+            if (userCountElement) {
+                userCountElement.textContent = onlineUserCount;
+            }
 
-    // ATUALIZA O CHAT
-    const chatOnlineCount = document.getElementById('onlineCount');
-    if (chatOnlineCount) {
-        chatOnlineCount.textContent = onlineUserCount;
-    }
+            // ATUALIZA O CHAT
+            const chatOnlineCount = document.getElementById('onlineCount');
+            if (chatOnlineCount) {
+                chatOnlineCount.textContent = onlineUserCount;
+            }
 
-    // CHAMA A "PORTEIRA"
-    // Se o player não estiver pronto, esta função não fará nada.
-    updatePlayerMode();
-});
+            // CHAMA A "PORTEIRA"
+            // Se o player não estiver pronto, esta função não fará nada.
+            updatePlayerMode();
+        });
         // ====================================================================
         // Fim do Sistema de Presença
         // ====================================================================
@@ -1779,32 +1779,32 @@ presenceRef.on('value', (snap) => {
          * Inicializa o player e carrega a fila de vídeos.
          */
         function onYouTubeIframeAPIReady() {
-    player = new YT.Player('videoPlayer', {
-        height: '100%',
-        width: '100%',
-        playerVars: {
-            'autoplay': 1,
-            'controls': 1,
-            'modestbranding': 1,
-            'rel': 0,
-            'disablekb': 1
-        },
-        events: {
-            'onReady': (event) => {
-                
-                player.setVolume(50);
-                loadVideoQueue();
-                
-                // --- INÍCIO DA CORREÇÃO ---
-                console.log('Player está PRONTO.');
-                isPlayerReady = true; 
-                updatePlayerMode();   
-                // --- FIM DA CORREÇÃO ---
-            },
-            'onStateChange': onPlayerStateChange
+            player = new YT.Player('videoPlayer', {
+                height: '100%',
+                width: '100%',
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 1,
+                    'modestbranding': 1,
+                    'rel': 0,
+                    'disablekb': 1
+                },
+                events: {
+                    'onReady': (event) => {
+
+                        player.setVolume(50);
+                        loadVideoQueue();
+
+                        // --- INÍCIO DA CORREÇÃO ---
+                        console.log('Player está PRONTO.');
+                        isPlayerReady = true;
+                        updatePlayerMode();
+                        // --- FIM DA CORREÇÃO ---
+                    },
+                    'onStateChange': onPlayerStateChange
+                }
+            });
         }
-    });
-}
 
         // ======== Controles do overlay ========
         const overlayPlayBtn = document.getElementById('overlayPlayBtn');
@@ -2841,18 +2841,38 @@ presenceRef.on('value', (snap) => {
             toggleLoading('deleteAllRoomsConfirmBtn', true);
 
             try {
-                // Pega a referência principal 'rooms'
-                const roomsRef = database.ref('rooms');
+                const roomsRef = database.ref('rooms'); //
 
-                // Remove TUDO de 'rooms'
-                await roomsRef.remove();
+                // 1. Busca o ID de todas as salas (Permitido pela regra ".read" de admin)
+                const snapshot = await roomsRef.once('value');
+                const roomsData = snapshot.val();
+
+                if (!roomsData) {
+                    showNotification('Nenhuma sala para deletar.', 'info');
+                    toggleLoading('deleteAllRoomsConfirmBtn', false);
+                    closeDeleteAllRoomsModal();
+                    return;
+                }
+
+                // 2. Cria um array de promessas de exclusão (uma para cada sala)
+                const roomIds = Object.keys(roomsData);
+                const deletePromises = [];
+
+                roomIds.forEach(roomId => {
+                    // Adiciona a promessa de deletar /rooms/ID_DA_SALA
+                    // (Permitido pela regra ".write" de admin em /$roomId)
+                    deletePromises.push(database.ref(`rooms/${roomId}`).remove());
+                });
+
+                // 3. Executa todas as exclusões em paralelo
+                await Promise.all(deletePromises);
 
                 showNotification('Todas as salas foram deletadas com sucesso.', 'success');
 
-                // Atualiza a lista no modal (que agora estará vazia)
-                loadAdminPanelRooms(); //
+                loadAdminPanelRooms(); // Atualiza a lista na UI
 
             } catch (error) {
+                //
                 console.error('Erro ao deletar todas as salas:', error);
                 showNotification('Erro ao deletar salas.', 'error');
             } finally {
