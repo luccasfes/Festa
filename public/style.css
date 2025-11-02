@@ -2283,31 +2283,42 @@ body:not(.non-admin) .player-overlay-controls {
     font-style: italic;
     color: var(--text-secondary);
     font-size: 0.75rem;
-    opacity: 0.7;
+    opacity: 0.8;
+    margin-left: 6px;
 }
 
 /* O contêiner da caixa de edição */
 .chat-edit-container {
-    margin-top: 5px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: fadeIn 0.2s ease-out;
 }
 
 /* O textarea de edição */
 .chat-edit-input {
     width: 100%;
-    padding: 8px 10px;
-    background: var(--dark-1);
-    border: 1px solid var(--dark-3);
-    border-radius: 6px;
+    max-width: 100%;
+    min-height: 60px;
+    padding: 10px 12px;
+    background: var(--dark-2);
+    border: 1px solid var(--dark-4);
+    border-radius: 8px;
     color: var(--text-primary);
     font-family: 'Poppins', sans-serif;
     font-size: 0.9rem;
     resize: vertical;
-    min-height: 40px;
+    box-sizing: border-box;
+    line-height: 1.4;
+    transition: all 0.15s ease;
 }
+
 .chat-edit-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    background: var(--dark-1);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
 /* Botões de Salvar/Cancelar */
@@ -2315,5 +2326,55 @@ body:not(.non-admin) .player-overlay-controls {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    margin-top: 8px;
+}
+
+.chat-edit-actions .btn {
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    min-width: 70px;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* Botão Cancelar - VERMELHO */
+.chat-edit-actions .btn.danger {
+    background-color: var(--error-color);
+    border: 1px solid var(--error-color);
+    color: white;
+}
+
+.chat-edit-actions .btn.danger:hover {
+    background-color: var(--error-color-dark);
+    border-color: var(--error-color-dark);
+}
+
+/* Botão Salvar */
+.chat-edit-actions .btn.primary {
+    background-color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    color: white;
+}
+
+.chat-edit-actions .btn.primary:hover {
+    background-color: var(--primary-color-dark);
+    border-color: var(--primary-color-dark);
+}
+
+/* Animação suave */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chat-edit-actions .btn.danger:hover {
+    background-color: #dc2626; /* Vermelho mais escuro */
+    border-color: #dc2626;
 }

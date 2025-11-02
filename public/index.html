@@ -2544,13 +2544,63 @@ async function saveEdit(messageKey) {
 
         <div class="chat-text" id="text-${messageKey}">${safeText}</div>
 
-        <div class="chat-edit-container" id="edit-container-${messageKey}" style="display: none;">
-            <textarea class="chat-edit-input"></textarea> 
-            <div class="chat-edit-actions">
-                <button class="btn small secondary" onclick="cancelEdit('${messageKey}')">Cancelar</button>
-                <button class="btn small primary" onclick="saveEdit('${messageKey}')">Salvar</button>
-            </div>
-        </div>
+       <div class="chat-edit-container" id="edit-container-${messageKey}" style="display: none; margin-top: 10px;">
+    
+    <textarea class="chat-edit-input" style="
+        width: 100%;
+        min-height: 60px;
+        padding: 10px 12px;
+        background: var(--dark-2);
+        border: 1px solid var(--dark-4);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.9rem;
+        resize: vertical;
+        outline: none;
+        line-height: 1.4;
+    " onfocus="this.style.borderColor='var(--primary-color)'; this.style.background='var(--dark-1)'" 
+    onblur="this.style.borderColor='var(--dark-4)'; this.style.background='var(--dark-2)'"></textarea>
+    
+    <div class="chat-edit-actions" style="
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 8px;
+    ">
+        
+        <button class="btn small danger" onclick="cancelEdit('${messageKey}')" style="
+            background: var(--danger-color); /* <-- CORRIGIDO: era --error-color */
+            border: 1px solid var(--danger-color); /* <-- CORRIGIDO: era --error-color */
+            color: white;
+            padding: 6px 16px; /* <-- CORRIGIDO: era 12px */
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        " onmouseover="this.style.background='#b71c1c'" 
+        onmouseout="this.style.background='var(--danger-color)'">
+            Cancelar
+        </button>
+        
+        <button class="btn small primary" onclick="saveEdit('${messageKey}')" style="
+            background: transparent; /* <-- MUDADO */
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color); /* <-- MUDADO */
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        " onmouseover="this.style.background='var(--primary-color)'; this.style.color='white'" 
+        onmouseout="this.style.background='transparent'; this.style.color='var(--primary-color)'">
+            Salvar
+        </button>
+
+    </div>
+</div>
 
         <div class="chat-time">
             ${timeString}
