@@ -2378,3 +2378,31 @@ body:not(.non-admin) .player-overlay-controls {
     background-color: #dc2626; /* Vermelho mais escuro */
     border-color: #dc2626;
 }
+
+/* Corrige centralização e UX do modal */
+#roomDetailsModal.active,
+#confirmModal.active {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+#roomDetailsModal .modal,
+#confirmModal .modal {
+  display: block !important;
+  margin: 0 auto;
+  transform: translateY(0);
+  animation: modalFadeIn 0.3s ease;
+}
+
+/* Animação suave de entrada */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

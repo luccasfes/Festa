@@ -5,15 +5,15 @@
     <link rel="icon" type="image/x-icon" href="assets/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - FlowLink</title>
+    <title>Admin Dashboard - FlowLink</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    
+
     <link rel="stylesheet" href="style.css">
     <style>
         /* Estilos específicos para o admin */
@@ -22,47 +22,594 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         }
+
+        
         .admin-container {
-            max-width: 900px;
+            max-width: 1400px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        #loginView,
+        #dashboardView {
             width: 100%;
         }
-        #loginView, #dashboardView {
-            width: 100%;
+
+        /* Login Styles */
+        .login-card {
+            max-width: 450px;
+            margin: 0 auto;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
+        /* Dashboard Styles */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        .stat-change.positive {
+            color: #4CAF50;
+        }
+
+        .stat-change.negative {
+            color: #F44336;
+        }
+
+        .controls-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
         .room-list {
             list-style: none;
             max-height: 60vh;
             overflow-y: auto;
             padding-right: 10px;
-            /* Estilos da barra de rolagem (copiados do style.css) */
             scrollbar-width: thin;
             scrollbar-color: var(--accent-color) #2a2a2a;
         }
-        .room-list::-webkit-scrollbar { width: 8px; }
-        .room-list::-webkit-scrollbar-track { background: #2a2a2a; border-radius: 10px; }
-        .room-list::-webkit-scrollbar-thumb { background: linear-gradient(135deg, var(--accent-color), var(--primary-color)); border-radius: 10px; }
-        
+
+        .room-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .room-list::-webkit-scrollbar-track {
+            background: #2a2a2a;
+            border-radius: 10px;
+        }
+
+        .room-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+            border-radius: 10px;
+        }
+
         .room-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px;
-            margin-bottom: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 12px;
             border: 1px solid var(--glass-border);
             transition: var(--transition);
+            position: relative;
         }
+
         .room-item:hover {
             background: rgba(0, 0, 0, 0.5);
             border-color: var(--accent-color);
+            transform: translateY(-2px);
         }
-        .room-info { flex: 1; }
-        .room-info h4 { color: var(--text-primary); margin-bottom: 5px; }
-        .room-info p { color: var(--text-secondary); font-size: 0.85rem; }
-        .room-actions { display: flex; gap: 10px; }
-        .room-actions .btn { width: auto; } /* Botões não ocupam 100% */
+
+        .room-item.active {
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .room-item.inactive {
+            opacity: 0.7;
+        }
+
+        .room-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: 4px 0 0 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .room-item:hover::before {
+            opacity: 1;
+        }
+
+        .room-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .room-info h4 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .room-info p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .room-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+            flex-wrap: wrap;
+        }
+
+        .room-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .room-stats {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .room-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+        }
+
+        .room-stat i {
+            font-size: 0.7rem;
+            color: var(--accent-color);
+        }
+
+        .room-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .room-actions .btn {
+            width: auto;
+            padding: 8px 15px;
+            font-size: 0.85rem;
+        }
+
+        /* Activity indicators */
+        .activity-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .activity-high {
+            background: #4CAF50;
+            box-shadow: 0 0 5px #4CAF50;
+        }
+
+        .activity-medium {
+            background: #FF9800;
+            box-shadow: 0 0 5px #FF9800;
+        }
+
+        .activity-low {
+            background: #F44336;
+            box-shadow: 0 0 5px #F44336;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .room-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .room-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .controls-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                min-width: 100%;
+            }
+
+            .filter-controls {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            max-width: 350px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            background: var(--success-color);
+        }
+
+        .toast.error {
+            background: var(--danger-color);
+        }
+
+        .toast.info {
+            background: var(--primary-color);
+        }
+
+        .toast.warning {
+            background: #FF9800;
+        }
+
+        .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    padding: 20px;
+}
+
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.modal {
+    background: #1e1e2e;
+    border-radius: 12px;
+    padding: 25px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    position: relative; /* MUDADO: adicionado */
+    margin: 0 auto; /* MUDADO: centraliza horizontalmente */
+}
+
+/* Remove as animações de transform que podem causar deslocamento */
+.modal-overlay.active .modal {
+    transform: none;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-body {
+    margin-bottom: 25px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Remove as regras de centralização específicas que podem estar causando conflito */
+#roomDetailsModal.active,
+#confirmModal.active {
+    display: flex !important;
+}
+
+/* Responsividade para modais */
+@media (max-width: 768px) {
+    .modal-overlay {
+        padding: 10px;
+    }
+    
+    .modal {
+        width: 95%;
+        padding: 20px;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+        /* Room Details Modal */
+        .room-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .detail-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Loading States */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            z-index: 10;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        /* Admin Header */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .admin-header h1 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+        }
+
+        .admin-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .admin-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
     </style>
 </head>
 
@@ -74,22 +621,23 @@
         </header>
 
         <main id="loginView">
-            <section class="card" style="text-align: center;">
-                <h2><i class="fas fa-lock"></i> Acesso Restrito</h2>
-                <p style="color: var(--text-primary); margin: 20px 0;">
-                    Por favor, faça login com sua conta de administrador.
+            <section class="login-card">
+                <h2><i class="fas fa-lock"></i> Acesso Administrativo</h2>
+                <p style="color: var(--text-secondary); margin: 20px 0;">
+                    Esta área é restrita a administradores autorizados.
                 </p>
-                
+
                 <div class="input-group" style="text-align: left;">
                     <label for="adminEmail">E-mail do Admin:</label>
-                    <input type="email" id="adminEmail" placeholder="seu-email@admin.com">
+                    <input type="email" id="adminEmail" placeholder="seu-email@admin.com" autocomplete="username">
                 </div>
                 <div class="input-group" style="text-align: left;">
                     <label for="adminPassword">Senha:</label>
-                    <input type="password" id="adminPassword">
+                    <input type="password" id="adminPassword" autocomplete="current-password">
                 </div>
 
-                <button class="btn primary" onclick="adminLogin()" id="adminLoginBtn">
+                <button class="btn primary" onclick="adminLogin()" id="adminLoginBtn"
+                    style="width: 100%; margin-top: 10px;">
                     <span id="adminLoginBtnText">Entrar</span>
                     <span id="adminLoginBtnLoader" class="loading" style="display: none;"></span>
                 </button>
@@ -97,23 +645,181 @@
         </main>
 
         <main id="dashboardView" style="display: none;">
-            <section class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2><i class="fas fa-server"></i> Salas Ativas</h2>
+            <div class="admin-header">
+                <h1><i class="fas fa-tachometer-alt"></i> Dashboard Admin</h1>
+                <div class="admin-user-info">
+                    <div class="admin-avatar" id="adminAvatar">A</div>
+                    <span id="adminEmailDisplay">admin@example.com</span>
                     <button class="btn secondary small" onclick="adminLogout()">
                         <i class="fas fa-sign-out-alt"></i> Sair
                     </button>
                 </div>
-                <ul id="roomList" class="room-list">
-                    <li class="empty-queue" id="loadingRooms">Carregando salas...</li>
-                </ul>
+            </div>
+
+            <!-- Estatísticas -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <i class="fas fa-door-open" style="font-size: 1.5rem; color: var(--accent-color);"></i>
+                    <div class="stat-value" id="totalRooms">0</div>
+                    <div class="stat-label">Salas Ativas</div>
+                    <div class="stat-change" id="roomsChange"></div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-users" style="font-size: 1.5rem; color: var(--accent-color);"></i>
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-label">Usuários Ativos</div>
+                    <div class="stat-change" id="usersChange"></div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-film" style="font-size: 1.5rem; color: var(--accent-color);"></i>
+                    <div class="stat-value" id="totalVideos">0</div>
+                    <div class="stat-label">Vídeos na Fila</div>
+                    <div class="stat-change" id="videosChange"></div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-comments" style="font-size: 1.5rem; color: var(--accent-color);"></i>
+                    <div class="stat-value" id="totalChats">0</div>
+                    <div class="stat-label">Mensagens no Chat</div>
+                    <div class="stat-change" id="chatsChange"></div>
+                </div>
+            </div>
+
+            <section class="card">
+                <!-- Controles -->
+                <div class="controls-container">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar salas por nome, ID ou criador...">
+                    </div>
+                    <div class="filter-controls">
+                        <select class="filter-select" id="activityFilter">
+                            <option value="all">Todas as salas</option>
+                            <option value="active">Ativas (com usuários)</option>
+                            <option value="inactive">Inativas (sem usuários)</option>
+                        </select>
+                        <select class="filter-select" id="sortFilter">
+                            <option value="newest">Mais recentes</option>
+                            <option value="oldest">Mais antigas</option>
+                            <option value="mostUsers">Mais usuários</option>
+                            <option value="mostVideos">Mais vídeos</option>
+                        </select>
+                        <button class="btn secondary small" onclick="refreshRooms()">
+                            <i class="fas fa-sync-alt"></i> Atualizar
+                        </button>
+                        <button class="btn danger small" onclick="confirmDeleteAllRooms()" id="deleteAllBtn">
+                            <i class="fas fa-trash-alt"></i> Limpar Tudo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lista de Salas -->
+                <div style="position: relative;">
+                    <div class="loading-overlay" id="roomsLoading" style="display: none;">
+                        <div class="spinner"></div>
+                    </div>
+                    <ul id="roomList" class="room-list">
+                        <li class="empty-queue" id="loadingRooms">Carregando salas...</li>
+                    </ul>
+                </div>
             </section>
         </main>
     </div>
 
+    <!-- Modal de Confirmação -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle"><i class="fas fa-exclamation-triangle"></i> Confirmar Ação</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                Tem certeza que deseja realizar esta ação?
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" onclick="closeModal()">Cancelar</button>
+                <button class="btn danger" id="modalConfirmBtn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes da Sala -->
+    <div class="modal-overlay" id="roomDetailsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="roomDetailsTitle"><i class="fas fa-info-circle"></i> Detalhes da Sala</h3>
+                <button class="modal-close" onclick="closeRoomDetailsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="room-details-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Nome da Sala:</span>
+                        <span class="detail-value" id="detailRoomName">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">ID da Sala:</span>
+                        <span class="detail-value" id="detailRoomId">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Criada por:</span>
+                        <span class="detail-value" id="detailCreator">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Data de Criação:</span>
+                        <span class="detail-value" id="detailCreatedAt">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Usuários Online:</span>
+                        <span class="detail-value" id="detailUsers">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Vídeos na Fila:</span>
+                        <span class="detail-value" id="detailVideos">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Mensagens no Chat:</span>
+                        <span class="detail-value" id="detailChats">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Status:</span>
+                        <span class="detail-value" id="detailStatus">-</span>
+                    </div>
+                </div>
+
+                <h4 style="margin: 20px 0 10px 0; color: var(--text-primary);">Usuários Online</h4>
+                <div id="detailUsersList" class="user-list" style="max-height: 150px; overflow-y: auto;">
+                    <div class="empty-state" style="padding: 10px;">
+                        <i class="fas fa-users"></i>
+                        <p>Nenhum usuário online</p>
+                    </div>
+                </div>
+
+                <h4 style="margin: 20px 0 10px 0; color: var(--text-primary);">Próximos Vídeos</h4>
+                <div id="detailVideosList" class="video-list" style="max-height: 150px; overflow-y: auto;">
+                    <div class="empty-state" style="padding: 10px;">
+                        <i class="fas fa-film"></i>
+                        <p>Nenhum vídeo na fila</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" onclick="closeRoomDetailsModal()">Fechar</button>
+                <a href="#" target="_blank" class="btn primary" id="detailJoinLink">
+                    <i class="fas fa-external-link-alt"></i> Entrar na Sala
+                </a>
+                <button class="btn danger" onclick="deleteRoomFromDetails()">
+                    <i class="fas fa-trash"></i> Deletar Sala
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ====================================================================
-        // Configuração do Firebase (COPIE A MESMA DO SEU INDEX.HTML)
+        // Configuração do Firebase
         // ====================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyCDlr4XHXuwWQ9Zj9dd2yoctLhFz1vbbyM",
@@ -132,7 +838,7 @@
         const roomsRef = database.ref('rooms');
 
         // ====================================================================
-        // IDs dos Administradores (Copie os UIDs do Firebase)
+        // IDs dos Administradores
         // ====================================================================
         const ADMIN_UIDS = [
             'PTkwuSLcpaRvtVWOzJH79NrwReA2',
@@ -141,38 +847,74 @@
         ];
 
         // ====================================================================
-        // Funções de UI (Login/Dashboard)
+        // Variáveis Globais
         // ====================================================================
         const loginView = document.getElementById('loginView');
         const dashboardView = document.getElementById('dashboardView');
         const roomListEl = document.getElementById('roomList');
         const loadingRoomsEl = document.getElementById('loadingRooms');
+        const roomsLoadingEl = document.getElementById('roomsLoading');
+        const searchInput = document.getElementById('searchInput');
+        const activityFilter = document.getElementById('activityFilter');
+        const sortFilter = document.getElementById('sortFilter');
+        const confirmModal = document.getElementById('confirmModal');
+        const roomDetailsModal = document.getElementById('roomDetailsModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
 
+        // Estatísticas
+        const totalRoomsEl = document.getElementById('totalRooms');
+        const totalUsersEl = document.getElementById('totalUsers');
+        const totalVideosEl = document.getElementById('totalVideos');
+        const totalChatsEl = document.getElementById('totalChats');
+        const roomsChangeEl = document.getElementById('roomsChange');
+        const usersChangeEl = document.getElementById('usersChange');
+        const videosChangeEl = document.getElementById('videosChange');
+        const chatsChangeEl = document.getElementById('chatsChange');
+        const adminEmailDisplay = document.getElementById('adminEmailDisplay');
+        const adminAvatar = document.getElementById('adminAvatar');
+
+        let roomsData = {};
+        let currentAction = null;
+        let currentRoomId = null;
+        let previousStats = {
+            rooms: 0,
+            users: 0,
+            videos: 0,
+            chats: 0
+        };
+
+        // ====================================================================
+        // Funções de UI (Login/Dashboard)
+        // ====================================================================
         function showLoginView() {
             loginView.style.display = 'block';
             dashboardView.style.display = 'none';
         }
-        
+
         function showDashboardView() {
             loginView.style.display = 'none';
             dashboardView.style.display = 'block';
-            loadActiveRooms(); // Carrega as salas QUANDO o admin estiver logado
+            loadActiveRooms();
         }
 
         // ====================================================================
         // Lógica de Autenticação
         // ====================================================================
-        
+
         // Monitora o estado do login
         auth.onAuthStateChanged(user => {
             if (user && ADMIN_UIDS.includes(user.uid)) {
                 // Usuário está logado E é um admin
                 console.log('Admin autenticado:', user.email);
+                adminEmailDisplay.textContent = user.email;
+                adminAvatar.textContent = user.email.charAt(0).toUpperCase();
                 showDashboardView();
             } else if (user) {
                 // Usuário está logado, MAS NÃO é admin
                 console.warn('Usuário não-admin tentou acessar:', user.email);
-                alert('Acesso negado. Esta conta não é administradora.');
+                showToast('Acesso negado. Esta conta não é administradora.', 'error');
                 adminLogout();
             } else {
                 // Ninguém logado
@@ -184,9 +926,9 @@
         async function adminLogin() {
             const email = document.getElementById('adminEmail').value;
             const password = document.getElementById('adminPassword').value;
-            
+
             if (!email || !password) {
-                alert('Preencha e-mail e senha.');
+                showToast('Preencha e-mail e senha.', 'error');
                 return;
             }
 
@@ -196,7 +938,7 @@
                 // O 'onAuthStateChanged' vai detectar o login e mudar a tela.
             } catch (error) {
                 console.error('Erro no login:', error);
-                alert('Falha no login: ' + error.message);
+                showToast('Falha no login: ' + error.message, 'error');
             } finally {
                 toggleLoading('adminLoginBtn', false);
             }
@@ -204,6 +946,7 @@
 
         function adminLogout() {
             auth.signOut();
+            showToast('Logout realizado com sucesso.', 'info');
         }
 
         // ====================================================================
@@ -211,36 +954,129 @@
         // ====================================================================
 
         function loadActiveRooms() {
+            roomsLoadingEl.style.display = 'flex';
             loadingRoomsEl.style.display = 'block';
 
             roomsRef.on('value', snapshot => {
+                roomsLoadingEl.style.display = 'none';
                 roomListEl.innerHTML = ''; // Limpa a lista
-                
+                roomsData = {};
+
                 if (!snapshot.exists()) {
-                    roomListEl.innerHTML = '<li class="empty-queue">Nenhuma sala ativa encontrada.</li>';
+                    roomListEl.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-door-closed"></i>
+                            <h3>Nenhuma sala ativa</h3>
+                            <p>Não há salas criadas no momento.</p>
+                        </div>
+                    `;
+                    updateStats();
                     return;
                 }
+
+                let totalUsers = 0;
+                let totalVideos = 0;
+                let totalChats = 0;
+                const roomsArray = [];
 
                 snapshot.forEach(roomSnap => {
                     const roomId = roomSnap.key;
                     const roomData = roomSnap.val();
-                    
-                    const roomName = roomData.roomName || 'Sala sem nome';
-                    const createdAt = new Date(roomData.createdAt).toLocaleString('pt-BR');
 
+                    roomsData[roomId] = roomData;
+
+                    const roomName = roomData.roomName || 'Sala sem nome';
+                    const creatorName = roomData.creatorName || 'Desconhecido';
+                    const createdAt = new Date(roomData.createdAt).toLocaleString('pt-BR');
+                    const userCount = roomData.presence ? Object.keys(roomData.presence).length : 0;
+                    const videoCount = roomData.videoQueue ? Object.keys(roomData.videoQueue).length : 0;
+                    const chatCount = roomData.chat && roomData.chat.messages ? Object.keys(roomData.chat.messages).length : 0;
+
+                    totalUsers += userCount;
+                    totalVideos += videoCount;
+                    totalChats += chatCount;
+
+                    // Determina nível de atividade
+                    let activityLevel = 'low';
+                    let activityClass = 'activity-low';
+                    if (userCount > 5) {
+                        activityLevel = 'high';
+                        activityClass = 'activity-high';
+                    } else if (userCount > 1) {
+                        activityLevel = 'medium';
+                        activityClass = 'activity-medium';
+                    }
+
+                    roomsArray.push({
+                        id: roomId,
+                        name: roomName,
+                        creator: creatorName,
+                        createdAt: roomData.createdAt,
+                        userCount,
+                        videoCount,
+                        chatCount,
+                        activityLevel,
+                        activityClass,
+                        data: roomData
+                    });
+                });
+
+                // Aplica filtros
+                let filteredRooms = applyFilters(roomsArray);
+
+                // Atualiza estatísticas
+                updateStats(filteredRooms.length, totalUsers, totalVideos, totalChats);
+
+                // Renderiza salas
+                if (filteredRooms.length === 0) {
+                    roomListEl.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <h3>Nenhuma sala encontrada</h3>
+                            <p>Tente ajustar os filtros de busca.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                filteredRooms.forEach(room => {
                     const li = document.createElement('li');
-                    li.className = 'room-item';
+                    li.className = `room-item ${room.userCount === 0 ? 'inactive' : 'active'}`;
+                    li.setAttribute('data-room-id', room.id);
+                    li.setAttribute('data-room-name', room.name);
+                    li.setAttribute('data-activity', room.activityLevel);
                     li.innerHTML = `
                         <div class="room-info">
-                            <h4>${roomName}</h4>
-                            <p><strong>Criada em:</strong> ${createdAt}</p>
-                            <p><strong>ID:</strong> ${roomId}</p>
+                            <h4>
+                                <span class="activity-indicator ${room.activityClass}"></span>
+                                ${room.name}
+                                ${room.userCount === 0 ? '<span style="color: var(--text-secondary); font-size: 0.8rem;"> (Inativa)</span>' : ''}
+                            </h4>
+                            <div class="room-meta">
+                                <span><i class="fas fa-crown"></i> ${room.creator}</span>
+                                <span><i class="fas fa-calendar"></i> ${new Date(room.createdAt).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                            <div class="room-stats">
+                                <div class="room-stat">
+                                    <i class="fas fa-users"></i> ${room.userCount} online
+                                </div>
+                                <div class="room-stat">
+                                    <i class="fas fa-film"></i> ${room.videoCount} vídeos
+                                </div>
+                                <div class="room-stat">
+                                    <i class="fas fa-comments"></i> ${room.chatCount} mensagens
+                                </div>
+                            </div>
+                            <p><strong>ID:</strong> ${room.id}</p>
                         </div>
                         <div class="room-actions">
-                            <a href="index.html?room=${roomId}" target="_blank" class="btn secondary small">
+                            <button class="btn secondary small" onclick="showRoomDetails('${room.id}')">
+                                <i class="fas fa-info-circle"></i> Detalhes
+                            </button>
+                            <a href="index.html?room=${room.id}" target="_blank" class="btn secondary small">
                                 <i class="fas fa-eye"></i> Ver
                             </a>
-                            <button class="btn danger small" onclick="confirmDeleteRoom('${roomId}', '${roomName}')">
+                            <button class="btn danger small" onclick="confirmDeleteRoom('${room.id}', '${room.name}')">
                                 <i class="fas fa-trash"></i> Deletar
                             </button>
                         </div>
@@ -250,43 +1086,469 @@
             }, error => {
                 // Isso vai acontecer se o usuário NÃO for admin, graças às nossas Regras!
                 console.error('Erro ao ler salas (Verifique as Regras do Firebase):', error);
-                roomListEl.innerHTML = '<li class="empty-queue" style="color: var(--danger-color);">Erro: Você não tem permissão para ver as salas.</li>';
+                roomListEl.innerHTML = `
+                    <div class="empty-state" style="color: var(--danger-color);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Erro de Permissão</h3>
+                        <p>Você não tem permissão para ver as salas.</p>
+                    </div>
+                `;
                 adminLogout(); // Força o logout
             });
         }
 
-        function confirmDeleteRoom(roomId, roomName) {
-            if (confirm(`Tem certeza que deseja DELETAR a sala "${roomName}" (${roomId})?\n\nEsta ação é irreversível e vai apagar o chat, a fila e tudo que há nela.`)) {
-                deleteRoom(roomId);
+        function applyFilters(rooms) {
+            let filtered = [...rooms];
+
+            // Filtro de atividade
+            const activityValue = activityFilter.value;
+            if (activityValue === 'active') {
+                filtered = filtered.filter(room => room.userCount > 0);
+            } else if (activityValue === 'inactive') {
+                filtered = filtered.filter(room => room.userCount === 0);
             }
+
+            // Filtro de busca
+            const searchTerm = searchInput.value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(room =>
+                    room.name.toLowerCase().includes(searchTerm) ||
+                    room.id.toLowerCase().includes(searchTerm) ||
+                    room.creator.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // Ordenação
+            const sortValue = sortFilter.value;
+            switch (sortValue) {
+                case 'newest':
+                    filtered.sort((a, b) => b.createdAt - a.createdAt);
+                    break;
+                case 'oldest':
+                    filtered.sort((a, b) => a.createdAt - b.createdAt);
+                    break;
+                case 'mostUsers':
+                    filtered.sort((a, b) => b.userCount - a.userCount);
+                    break;
+                case 'mostVideos':
+                    filtered.sort((a, b) => b.videoCount - a.videoCount);
+                    break;
+            }
+
+            return filtered;
+        }
+
+        function updateStats(totalRooms = 0, totalUsers = 0, totalVideos = 0, totalChats = 0) {
+            // Atualiza valores
+            totalRoomsEl.textContent = totalRooms;
+            totalUsersEl.textContent = totalUsers;
+            totalVideosEl.textContent = totalVideos;
+            totalChatsEl.textContent = totalChats;
+
+            // Calcula mudanças
+            updateStatChange(roomsChangeEl, previousStats.rooms, totalRooms, 'salas');
+            updateStatChange(usersChangeEl, previousStats.users, totalUsers, 'usuários');
+            updateStatChange(videosChangeEl, previousStats.videos, totalVideos, 'vídeos');
+            updateStatChange(chatsChangeEl, previousStats.chats, totalChats, 'mensagens');
+
+            // Atualiza estatísticas anteriores
+            previousStats = {
+                rooms: totalRooms,
+                users: totalUsers,
+                videos: totalVideos,
+                chats: totalChats
+            };
+        }
+
+        function updateStatChange(element, previous, current, label) {
+            if (previous === 0) {
+                element.textContent = '';
+                element.className = 'stat-change';
+                return;
+            }
+
+            const change = current - previous;
+            if (change > 0) {
+                element.textContent = `+${change} ${label}`;
+                element.className = 'stat-change positive';
+            } else if (change < 0) {
+                element.textContent = `${change} ${label}`;
+                element.className = 'stat-change negative';
+            } else {
+                element.textContent = 'Sem mudança';
+                element.className = 'stat-change';
+            }
+        }
+
+        function confirmDeleteRoom(roomId, roomName) {
+            currentAction = 'deleteRoom';
+            currentRoomId = roomId;
+            modalTitle.innerHTML = '<i class="fas fa-trash"></i> Confirmar Exclusão';
+            modalBody.innerHTML = `
+                Tem certeza que deseja <strong>DELETAR</strong> a sala "<strong>${roomName}</strong>" (${roomId})?<br><br>
+                Esta ação é <strong>irreversível</strong> e vai apagar:
+                <ul style="text-align: left; margin: 10px 0;">
+                    <li>Todos os vídeos da fila</li>
+                    <li>Todo o histórico do chat</li>
+                    <li>Dados de presença dos usuários</li>
+                </ul>
+            `;
+            modalConfirmBtn.innerHTML = '<i class="fas fa-trash"></i> Deletar Sala';
+            modalConfirmBtn.className = 'btn danger';
+            openModal();
+        }
+
+        function confirmDeleteAllRooms() {
+            if (Object.keys(roomsData).length === 0) {
+                showToast('Não há salas para deletar.', 'info');
+                return;
+            }
+
+            currentAction = 'deleteAllRooms';
+            modalTitle.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Confirmar Limpeza Total';
+            modalBody.innerHTML = `
+                Tem certeza que deseja <strong>DELETAR TODAS</strong> as ${Object.keys(roomsData).length} salas?<br><br>
+                Esta ação é <strong>irreversível</strong> e vai apagar:
+                <ul style="text-align: left; margin: 10px 0;">
+                    <li>Todas as salas ativas</li>
+                    <li>Todas as filas de vídeo</li>
+                    <li>Todo o histórico de chat</li>
+                    <li>Todos os dados de usuários</li>
+                </ul>
+                <strong style="color: var(--danger-color);">Esta ação não pode ser desfeita!</strong>
+            `;
+            modalConfirmBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Deletar Tudo';
+            modalConfirmBtn.className = 'btn danger';
+            openModal();
+        }
+
+        async function executeAction() {
+            closeModal();
+
+            if (currentAction === 'deleteRoom') {
+                await deleteRoom(currentRoomId);
+            } else if (currentAction === 'deleteAllRooms') {
+                await deleteAllRooms();
+            }
+
+            currentAction = null;
+            currentRoomId = null;
         }
 
         async function deleteRoom(roomId) {
             try {
+                toggleLoading('deleteAllBtn', true);
                 await database.ref('rooms/' + roomId).remove();
                 console.log(`Sala ${roomId} deletada com sucesso.`);
+                showToast('Sala deletada com sucesso!', 'success');
                 // O listener 'on("value")' vai atualizar a lista automaticamente.
             } catch (error) {
                 console.error('Erro ao deletar sala:', error);
-                alert('Erro ao deletar sala.');
+                showToast('Erro ao deletar sala: ' + error.message, 'error');
+            } finally {
+                toggleLoading('deleteAllBtn', false);
             }
         }
 
-        // Função utilitária de Loading (copiada do create.html)
-        function toggleLoading(buttonId, isLoading) {
-            const btn = document.getElementById(buttonId);
-            const btnText = btn.querySelector(`#${buttonId}Text`);
-            const btnLoader = btn.querySelector(`#${buttonId}Loader`);
-            if (isLoading) {
-                btn.disabled = true;
-                btnText.style.display = 'none';
-                btnLoader.style.display = 'inline-block';
-            } else {
-                btn.disabled = false;
-                btnText.style.display = 'inline';
-                btnLoader.style.display = 'none';
+        async function deleteAllRooms() {
+            try {
+                toggleLoading('deleteAllBtn', true);
+                await database.ref('rooms').remove();
+                console.log('Todas as salas foram deletadas com sucesso.');
+                showToast('Todas as salas foram deletadas com sucesso!', 'success');
+            } catch (error) {
+                console.error('Erro ao deletar todas as salas:', error);
+                showToast('Erro ao deletar salas: ' + error.message, 'error');
+            } finally {
+                toggleLoading('deleteAllBtn', false);
             }
         }
+
+        function refreshRooms() {
+            loadActiveRooms();
+            showToast('Lista de salas atualizada!', 'info');
+        }
+
+        // ====================================================================
+        // Detalhes da Sala
+        // ====================================================================
+
+        function showRoomDetails(roomId) {
+    console.log('Mostrando detalhes da sala:', roomId);
+    
+    const roomData = roomsData[roomId];
+    if (!roomData) {
+        showToast('Dados da sala não encontrados.', 'error');
+        return;
+    }
+    
+    try {
+        // Preenche os detalhes BÁSICOS primeiro (teste rápido)
+        document.getElementById('detailRoomName').textContent = roomData.roomName || 'Sala sem nome';
+        document.getElementById('detailRoomId').textContent = roomId;
+        document.getElementById('detailCreator').textContent = roomData.creatorName || 'Desconhecido';
+        
+        // Tenta formatar a data com tratamento de erro
+        let createdAtText = 'Data desconhecida';
+        if (roomData.createdAt) {
+            try {
+                createdAtText = new Date(roomData.createdAt).toLocaleString('pt-BR');
+            } catch (e) {
+                console.warn('Erro ao formatar data:', e);
+            }
+        }
+        document.getElementById('detailCreatedAt').textContent = createdAtText;
+        
+        // Contagens
+        const userCount = roomData.presence ? Object.keys(roomData.presence).length : 0;
+        const videoCount = roomData.videoQueue ? Object.keys(roomData.videoQueue).length : 0;
+        const chatCount = roomData.chat && roomData.chat.messages ? Object.keys(roomData.chat.messages).length : 0;
+        
+        document.getElementById('detailUsers').textContent = userCount;
+        document.getElementById('detailVideos').textContent = videoCount;
+        document.getElementById('detailChats').textContent = chatCount;
+        
+        const statusText = userCount > 0 ? 'Ativa' : 'Inativa';
+        document.getElementById('detailStatus').textContent = statusText;
+        document.getElementById('detailStatus').style.color = userCount > 0 ? 'var(--success-color)' : 'var(--text-secondary)';
+        
+        // Link para entrar na sala
+        document.getElementById('detailJoinLink').href = `index.html?room=${roomId}`;
+        
+        // Lista de usuários online (SIMPLIFICADA)
+        const usersList = document.getElementById('detailUsersList');
+        usersList.innerHTML = '';
+        
+        if (roomData.presence && Object.keys(roomData.presence).length > 0) {
+            Object.values(roomData.presence).forEach(user => {
+                const userEl = document.createElement('div');
+                userEl.className = 'user-item';
+                userEl.style.padding = '8px';
+                userEl.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+                userEl.style.display = 'flex';
+                userEl.style.alignItems = 'center';
+                userEl.style.gap = '10px';
+                
+                userEl.innerHTML = `
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--success-color);"></div>
+                    <span>${user.name || 'Usuário'}</span>
+                `;
+                usersList.appendChild(userEl);
+            });
+        } else {
+            usersList.innerHTML = `
+                <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
+                    <i class="fas fa-users"></i>
+                    <p>Nenhum usuário online</p>
+                </div>
+            `;
+        }
+        
+        // Lista de vídeos (SIMPLIFICADA)
+        const videosList = document.getElementById('detailVideosList');
+        videosList.innerHTML = '';
+        
+        if (roomData.videoQueue && Object.keys(roomData.videoQueue).length > 0) {
+            Object.values(roomData.videoQueue).slice(0, 3).forEach(video => {
+                const videoEl = document.createElement('div');
+                videoEl.className = 'video-item';
+                videoEl.style.padding = '8px';
+                videoEl.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+                
+                videoEl.innerHTML = `
+                    <div style="font-weight: 500;">${video.phone || 'Anônimo'}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        ${video.videoUrl ? 'Vídeo adicionado' : 'Sem URL'}
+                    </div>
+                `;
+                videosList.appendChild(videoEl);
+            });
+        } else {
+            videosList.innerHTML = `
+                <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
+                    <i class="fas fa-film"></i>
+                    <p>Nenhum vídeo na fila</p>
+                </div>
+            `;
+        }
+        
+        currentRoomId = roomId;
+        openRoomDetailsModal();
+        console.log('Modal de detalhes aberto com sucesso!');
+        
+    } catch (error) {
+        console.error('Erro ao mostrar detalhes da sala:', error);
+        showToast('Erro ao carregar detalhes da sala.', 'error');
+    }
+}
+
+        function deleteRoomFromDetails() {
+            const roomName = document.getElementById('detailRoomName').textContent;
+            closeRoomDetailsModal();
+            confirmDeleteRoom(currentRoomId, roomName);
+        }
+
+        // ====================================================================
+        // Funcionalidades de UI
+        // ====================================================================
+
+        // Sistema de busca e filtros
+        searchInput.addEventListener('input', function () {
+            loadActiveRooms();
+        });
+
+        activityFilter.addEventListener('change', function () {
+            loadActiveRooms();
+        });
+
+        sortFilter.addEventListener('change', function () {
+            loadActiveRooms();
+        });
+
+        // Modal functions
+        function openModal() {
+    console.log('Abrindo modal de confirmação...');
+    confirmModal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Impede scroll do body
+}
+
+function closeModal() {
+    console.log('Fechando modal de confirmação...');
+    confirmModal.classList.remove('active');
+    document.body.style.overflow = ''; // Restaura scroll
+}
+
+function openRoomDetailsModal() {
+    console.log('Abrindo modal de detalhes da sala...');
+    roomDetailsModal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Impede scroll do body
+}
+
+function closeRoomDetailsModal() {
+    console.log('Fechando modal de detalhes da sala...');
+    roomDetailsModal.classList.remove('active');
+    document.body.style.overflow = ''; // Restaura scroll
+    currentRoomId = null;
+}
+
+// Event listeners CORRIGIDOS para fechar modais
+confirmModal.addEventListener('click', function(e) {
+    if (e.target === this) {
+        console.log('Clicou fora do modal de confirmação - fechando');
+        closeModal();
+    }
+});
+
+roomDetailsModal.addEventListener('click', function(e) {
+    if (e.target === this) {
+        console.log('Clicou fora do modal de detalhes - fechando');
+        closeRoomDetailsModal();
+    }
+});
+
+// Fechar com ESC - VERSÃO CORRIGIDA
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        if (confirmModal.classList.contains('active')) {
+            closeModal();
+        }
+        if (roomDetailsModal.classList.contains('active')) {
+            closeRoomDetailsModal();
+        }
+    }
+});
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-${getToastIcon(type)}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 4000);
+        }
+
+        function getToastIcon(type) {
+            switch (type) {
+                case 'success': return 'check-circle';
+                case 'error': return 'exclamation-circle';
+                case 'warning': return 'exclamation-triangle';
+                default: return 'info-circle';
+            }
+        }
+
+        // Event listeners
+        modalConfirmBtn.addEventListener('click', executeAction);
+
+        // Fechar modal ao clicar fora
+        confirmModal.addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        roomDetailsModal.addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeRoomDetailsModal();
+            }
+        });
+
+        // ====================================================================
+        // Funções Utilitárias
+        // ====================================================================
+        function toggleLoading(buttonId, isLoading) {
+            const btn = document.getElementById(buttonId);
+            if (!btn) return;
+
+            const btnText = btn.querySelector(`#${buttonId}Text`);
+            const btnLoader = btn.querySelector(`#${buttonId}Loader`);
+
+            if (isLoading) {
+                btn.disabled = true;
+                if (btnText) btnText.style.display = 'none';
+                if (btnLoader) btnLoader.style.display = 'inline-block';
+            } else {
+                btn.disabled = false;
+                if (btnText) btnText.style.display = 'inline';
+                if (btnLoader) btnLoader.style.display = 'none';
+            }
+        }
+
+        function extractVideoId(url) {
+            const regExp = /(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=|embed\/|v\/|)([\w-]{11})(?:\S+)?/i;
+            const match = url.match(regExp);
+            return (match && match[1]) ? match[1] : null;
+        }
+
+        // Código de DEBUG - remova depois que funcionar
+console.log('=== DEBUG MODAL ===');
+console.log('Confirm Modal:', confirmModal);
+console.log('Room Details Modal:', roomDetailsModal);
+console.log('=== FIM DEBUG ===');
+
+// Teste manual - adicione um botão de teste temporário
+function testModal() {
+    console.log('Testando abertura de modal...');
+    openRoomDetailsModal();
+}
+
+// Adicione este botão temporariamente no HTML para testar:
+// 
     </script>
 </body>
+
 </html>
