@@ -1253,9 +1253,35 @@
         async function deleteAllRooms() {
             try {
                 toggleLoading('deleteAllBtn', true);
-                await database.ref('rooms').remove();
+                
+                // 1. Pega a referência e os dados (como no index.html)
+                const roomsRef = database.ref('rooms');
+                const snapshot = await roomsRef.once('value'); // Busca os dados UMA VEZ
+                const roomsData = snapshot.val();
+
+                if (!roomsData) {
+                    showToast('Nenhuma sala para deletar.', 'info');
+                    toggleLoading('deleteAllBtn', false); // Libera o botão
+                    return; // Para a execução
+                }
+
+                // 2. Cria as promessas de exclusão para cada sala individual
+                const roomIds = Object.keys(roomsData);
+                const deletePromises = [];
+
+                roomIds.forEach(roomId => {
+                    // Adiciona a promessa de deletar /rooms/ID_DA_SALA
+                    deletePromises.push(database.ref('rooms/' + roomId).remove());
+                });
+
+                // 3. Executa todas as exclusões em paralelo
+                await Promise.all(deletePromises);
+                
                 console.log('Todas as salas foram deletadas com sucesso.');
                 showToast('Todas as salas foram deletadas com sucesso!', 'success');
+                // O listener principal (roomsRef.on('value', ...))
+                // já vai detectar as mudanças e atualizar a tela automaticamente.
+
             } catch (error) {
                 console.error('Erro ao deletar todas as salas:', error);
                 showToast('Erro ao deletar salas: ' + error.message, 'error');
