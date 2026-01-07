@@ -593,10 +593,7 @@
 
         // ====================================================================
         // Funções para o modal de busca no YouTube
-        function openYTSearchModal() {
-            document.getElementById('ytSearchModal').style.display = 'flex';
-            document.getElementById('ytSearchQuery').focus();
-        }
+        
 
         function closeYTSearchModal() {
             document.getElementById('ytSearchModal').style.display = 'none';
@@ -767,6 +764,7 @@
         // 4. Substitua suas definições de const originais por estas:
         const videoQueueRef = roomRef.child('videoQueue');
 
+        const playerStateRef = roomRef.child('playerState');
         // ====================================================================
         // NOVO: Sistema de Presença em Tempo Real (MODIFICADO)
         // ====================================================================
@@ -833,7 +831,17 @@
         presenceRef.on('value', (snap) => {
             onlineUserCount = snap.numChildren(); 
 
-            // --- Lógica de Classes CSS (Mantenha isso) ---
+            // --- CORREÇÃO DE LIDERANÇA ---
+            // Se estou sozinho, assumo a liderança (Broadcaster).
+            // IMPORTANTE: Se entrar gente depois, eu CONTINUO sendo true.
+            // Se eu sair e sobrar 1 pessoa, ela vira true.
+            if (onlineUserCount <= 1) {
+                isBroadcaster = true;
+                console.log('Você é o Líder da Sincronização (Broadcaster).');
+            }
+            // -----------------------------
+
+            // Lógica de Classes CSS (Mantenha igual)
             if (onlineUserCount > 1) {
                 document.body.classList.add('festa-mode');
                 document.body.classList.remove('solo-mode');
@@ -841,27 +849,23 @@
                 document.body.classList.add('solo-mode');
                 document.body.classList.remove('festa-mode');
             }
-
-            // --- NOVO: FORÇAR VISUALMENTE (Garantia anti-cache) ---
-            // Isso esconde/mostra os botões "X" na marra, via JS
-            const shouldHide = (onlineUserCount > 1) && !isAdminLoggedIn;
+            
+            // ... (o resto do código mantém igual: botões, contadores, updatePlayerMode) ...
+             const shouldHide = (onlineUserCount > 1) && !isAdminLoggedIn;
             const removeButtons = document.querySelectorAll('.remove-button, .bulk-delete-controls');
             
             removeButtons.forEach(el => {
                 if (shouldHide) {
                     el.style.setProperty('display', 'none', 'important');
                 } else {
-                    el.style.removeProperty('display'); // Volta ao padrão do CSS
+                    el.style.removeProperty('display'); 
                 }
             });
-            // ------------------------------------------------------
 
-            // Atualiza textos - Chat
             if (userCountElement) userCountElement.textContent = onlineUserCount;
             const chatOnlineCount = document.getElementById('onlineCount');
             if (chatOnlineCount) chatOnlineCount.textContent = onlineUserCount;
 
-            // Atualiza o player
             updatePlayerMode();
         });
         // ====================================================================
@@ -1225,6 +1229,27 @@
         let isAdminLoggedIn = false; // NOVO: Estado de login do Admin
         let videoIdsForBulkRemove = [];
         let notificationTimer = null;
+        let isBroadcaster = false;
+
+        // Variável GLOBAL para o intervalo de sincronização
+        let syncInterval = null;
+
+        function startSyncHeartbeat() {
+            if (syncInterval) clearInterval(syncInterval);
+            console.log("Iniciando batimento cardíaco de sincronização...");
+            
+            syncInterval = setInterval(() => {
+                // CORREÇÃO: Usa 'isBroadcaster' em vez de contagem de usuários
+                if ((isAdminLoggedIn || isBroadcaster) && player && typeof player.getPlayerState === 'function') {
+                    if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                        playerStateRef.update({
+                            timestamp: firebase.database.ServerValue.TIMESTAMP,
+                            videoTime: player.getCurrentTime()
+                        });
+                    }
+                }
+            }, 5000); 
+        }
         /**
  * Exibe uma notificação temporária na tela.
  * (Versão corrigida para evitar bugs de 'race condition')
@@ -1556,43 +1581,68 @@
 
 
         function onPlayerStateChange(event) {
-            // 1. ATIVA O MONITORAMENTO QUANDO TOCA
+            // 1. ATIVA O MONITORAMENTO (Anti-adiantamento)
             if (event.data === YT.PlayerState.PLAYING) {
-                startProgressMonitor(); // <--- Faltava isso!
+                startProgressMonitor();
             } else {
-                // Para o monitor se pausar ou terminar para economizar processamento
                 if (typeof timeCheckInterval !== 'undefined' && timeCheckInterval) {
                     clearInterval(timeCheckInterval);
                 }
             }
 
+            // =================================================================
+            // NOVA LÓGICA DE SINCRONIZAÇÃO (O "CÉREBRO")
+            // =================================================================
+            // Apenas quem tem "controle" deve atualizar o Firebase.
+            // Regra: Se for Admin OU se estiver sozinho (Solo) -> Atualiza o banco.
+            // Se estiver no Modo Festa sem admin -> O vídeo toca automático, então quem carregou primeiro manda.
+            // Para simplificar: Vamos deixar o Admin ou o Modo Solo mandarem.
+            
+            if (isAdminLoggedIn || isBroadcaster) {
+                 const currentTime = player.getCurrentTime();
+                 
+                 if (event.data === YT.PlayerState.PLAYING) {
+                     playerStateRef.set({
+                         status: 'playing',
+                         videoId: player.getVideoData().video_id,
+                         timestamp: firebase.database.ServerValue.TIMESTAMP, // Hora exata do servidor
+                         videoTime: currentTime // Onde o vídeo estava
+                     });
+                 } 
+                 else if (event.data === YT.PlayerState.PAUSED) {
+                     playerStateRef.set({
+                         status: 'paused',
+                         videoId: player.getVideoData().video_id,
+                         timestamp: firebase.database.ServerValue.TIMESTAMP,
+                         videoTime: currentTime
+                     });
+                 }
+            }
+            // =================================================================
+
             // 2. Lógica de Fim de Vídeo (Seu código original)
             if (event.data === YT.PlayerState.ENDED) {
-                const currentTime = player.getCurrentTime();
-                const duration = player.getDuration();
-                const naturalEndTolerance = 2.0; // Aumentei um pouco a tolerância para garantir
+                // ... (seu código de remover vídeo mantém igual) ...
+                 const currentTime = player.getCurrentTime();
+                 const duration = player.getDuration();
+                 const naturalEndTolerance = 2.0;
 
-                if (duration - currentTime <= naturalEndTolerance) {
+                 if (duration - currentTime <= naturalEndTolerance) {
                     console.log('Vídeo terminou naturalmente. Avançando...');
                     if (videoQueue.length > 0) {
                         const firstVideoInQueue = videoQueue[0];
-                        // Verifica se o vídeo que acabou é realmente o que estava na fila
-                        // (Evita bugs se a fila mudou rápido demais)
                         const currentId = player.getVideoData().video_id;
                         const queueId = extractVideoId(firstVideoInQueue.videoUrl);
-
                         if (currentId === queueId) {
                             videoQueueRef.child(firstVideoInQueue.id).remove();
                         }
                     }
-                } else {
-                    console.log('Vídeo pulado antes do fim. Não removendo automaticamente.');
-                    if (player && typeof player.stopVideo === 'function') {
-                        player.stopVideo();
-                    }
-                }
+                 } else {
+                     player.stopVideo();
+                 }
             }
         }
+        
 
         // Função para atualizar a exibição do nome do admin
         function updateAdminDisplay() {
@@ -1937,6 +1987,8 @@
                         // --- INÍCIO DA CORREÇÃO ---
                         console.log('Player está PRONTO.');
                         isPlayerReady = true;
+                    
+        startSyncHeartbeat();
                         updatePlayerMode();
                         // --- FIM DA CORREÇÃO ---
                     },
@@ -2237,6 +2289,59 @@
                 closeBulkRemoveConfirmModal();
                 closePanelModal();
                 closeDeleteAllRoomsModal();
+            }
+        });
+
+        // =================================================================
+        // SINCRONIZAÇÃO DE RECEBIMENTO (CLIENTES)
+        // =================================================================
+        
+        let isSeeking = false; // Para evitar loop infinito de updates
+
+        // Ouve mudanças no estado do player
+        playerStateRef.on('value', (snapshot) => {
+            // Se eu sou Admin ou estou sozinho, EU sou a fonte da verdade. Ignoro atualizações.
+            if (isAdminLoggedIn || isBroadcaster) return;
+            
+            // Se o player não estiver pronto, não faz nada
+            if (!player || typeof player.seekTo !== 'function') return;
+
+            const state = snapshot.val();
+            if (!state) return;
+
+            // Calcula o tempo real atual
+            // Fórmula: TempoDoVideoOriginal + (HoraAtual - HoraDaAtualização)
+            // Ex: Estava em 10s quando atualizou há 5s atrás -> Agora deve estar em 15s.
+            const now = Date.now();
+            // Precisamos estimar o offset do servidor (approximado) ou usar o tempo local se o skew for pequeno.
+            // Para simplificar, assumimos clocks sincronizados ou usamos a diferença direta se o update for recente.
+            
+            // Se estiver tocando, compensamos o lag
+            let targetTime = state.videoTime;
+            if (state.status === 'playing') {
+                 // Convertendo timestamp do firebase (aprox) para local
+                 // Nota: Firebase timestamp é ms. VideoTime é segundos.
+                 const timePassedSeconds = (now - state.timestamp) / 1000; 
+                 targetTime += timePassedSeconds;
+            }
+
+            // Verifica se meu player está muito desincronizado (> 2 segundos)
+            const myTime = player.getCurrentTime();
+            const diff = Math.abs(myTime - targetTime);
+
+            if (diff > 2 && !isSeeking) {
+                console.log(`Sincronizando: Meu tempo ${myTime.toFixed(1)} -> Alvo ${targetTime.toFixed(1)}`);
+                isSeeking = true;
+                player.seekTo(targetTime, true);
+                setTimeout(() => { isSeeking = false; }, 1000); // Trava breve
+            }
+
+            // Sincroniza Play/Pause
+            const myState = player.getPlayerState();
+            if (state.status === 'playing' && myState !== YT.PlayerState.PLAYING) {
+                player.playVideo();
+            } else if (state.status === 'paused' && myState !== YT.PlayerState.PAUSED) {
+                player.pauseVideo();
             }
         });
 
