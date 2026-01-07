@@ -828,24 +828,40 @@
 
 
 
-        // Agora, vamos ouvir a contagem total de usuários online (DESTA SALA)
+       // Monitora usuários online
         const userCountElement = document.getElementById('userCount');
         presenceRef.on('value', (snap) => {
-            onlineUserCount = snap.numChildren(); // ATUALIZA A VARIÁVEL GLOBAL
+            onlineUserCount = snap.numChildren(); 
 
-            // Atualiza o header
-            if (userCountElement) {
-                userCountElement.textContent = onlineUserCount;
+            // --- Lógica de Classes CSS (Mantenha isso) ---
+            if (onlineUserCount > 1) {
+                document.body.classList.add('festa-mode');
+                document.body.classList.remove('solo-mode');
+            } else {
+                document.body.classList.add('solo-mode');
+                document.body.classList.remove('festa-mode');
             }
 
-            // ATUALIZA O CHAT
+            // --- NOVO: FORÇAR VISUALMENTE (Garantia anti-cache) ---
+            // Isso esconde/mostra os botões "X" na marra, via JS
+            const shouldHide = (onlineUserCount > 1) && !isAdminLoggedIn;
+            const removeButtons = document.querySelectorAll('.remove-button, .bulk-delete-controls');
+            
+            removeButtons.forEach(el => {
+                if (shouldHide) {
+                    el.style.setProperty('display', 'none', 'important');
+                } else {
+                    el.style.removeProperty('display'); // Volta ao padrão do CSS
+                }
+            });
+            // ------------------------------------------------------
+
+            // Atualiza textos - Chat
+            if (userCountElement) userCountElement.textContent = onlineUserCount;
             const chatOnlineCount = document.getElementById('onlineCount');
-            if (chatOnlineCount) {
-                chatOnlineCount.textContent = onlineUserCount;
-            }
+            if (chatOnlineCount) chatOnlineCount.textContent = onlineUserCount;
 
-            // CHAMA A "PORTEIRA"
-            // Se o player não estiver pronto, esta função não fará nada.
+            // Atualiza o player
             updatePlayerMode();
         });
         // ====================================================================
@@ -931,57 +947,7 @@
             }
         }
 
-        function disableAdminPlayerControls() {
-            if (!player || typeof YT === 'undefined') return;
 
-            // --- INÍCIO DA CORREÇÃO ---
-            let videoData;
-            try {
-                videoData = player.getVideoData();
-            } catch (e) {
-                console.warn('Player não está pronto, não é possível desativar controles de admin.');
-                return; // Sai se o player não estiver pronto
-            }
-
-            const currentVideoId = videoData ? videoData.video_id : null;
-
-            // Se não houver vídeo (fila vazia), apenas saia.
-            if (!currentVideoId) {
-                console.log('Nenhum vídeo tocando. Controles de admin desativados (sem recriar player).');
-                // Mostra a máscara mesmo se não houver vídeo
-                document.getElementById('player-mask').style.display = 'block';
-                return;
-            }
-            // --- FIM DA CORREÇÃO ---
-
-            const currentTime = player.getCurrentTime();
-
-            player.destroy();
-
-            // recria o player bloqueado (sem controles nativos)
-            player = new YT.Player('videoPlayer', {
-                height: '100%',
-                width: '100%',
-                videoId: currentVideoId,
-                playerVars: {
-                    autoplay: 1,
-                    controls: 0, // <-- remove os botões nativos
-                    modestbranding: 1,
-                    rel: 0,
-                    disablekb: 1
-                },
-                events: {
-                    onReady: (event) => {
-                        event.target.seekTo(currentTime);
-                        event.target.playVideo();
-
-                        // mostra a máscara novamente
-                        document.getElementById('player-mask').style.display = 'block';
-                    },
-                    onStateChange: onPlayerStateChange
-                }
-            });
-        }
         function disableAdminPlayerControls() {
             console.log('Desativando Modo Admin...');
             // Quando o admin sai, a lógica de solo/festa assume.
@@ -1050,22 +1016,32 @@
             const currentTime = player ? player.getCurrentTime() : 0;
             let currentVideoId = null;
 
-            // LÓGICA CORRIGIDA: Pega o vídeo da fila, não do player antigo.
             if (videoQueue.length > 0) {
                 currentVideoId = extractVideoId(videoQueue[0].videoUrl);
             }
 
+            // Se o player já existe e já é SOLO, apenas reaproveita (Otimização do Solo)
+            if (player && currentPlayerMode === 'SOLO' && typeof player.loadVideoById === 'function') {
+                if (currentVideoId) {
+                    player.loadVideoById(currentVideoId);
+                }
+                return;
+            }
+
+            // Se não era SOLO ou não existia, recria
             if (player) {
                 player.destroy();
             }
 
+            currentPlayerMode = 'SOLO'; // <--- MARCA COMO SOLO
+
             player = new YT.Player('videoPlayer', {
                 height: '100%',
                 width: '100%',
-                videoId: currentVideoId, // Usa o ID pego da fila
+                videoId: currentVideoId,
                 playerVars: {
                     autoplay: 1,
-                    controls: 1,
+                    controls: 1, // TEM CONTROLES
                     modestbranding: 1,
                     rel: 0
                 },
@@ -1089,52 +1065,105 @@
         }
 
         /**
-         * NOVO: Desabilita os controles do player quando mais alguém entra.
+         * Desabilita os controles do player quando mais alguém entra.
          * (Volta ao modo "festa" padrão)
          */
-        function disableSoloPlayerControls() {
-            console.log('Desativando Modo Solo (Modo Festa)...');
-            const currentTime = player ? player.getCurrentTime() : 0;
-            let currentVideoId = null;
+       function disableSoloPlayerControls() {
+    console.log('Ativando Modo Festa (Otimizado + Sem Reinício)...');
 
-            // LÓGICA CORRIGIDA: Pega o vídeo da fila.
-            if (videoQueue.length > 0) {
-                currentVideoId = extractVideoId(videoQueue[0].videoUrl);
-            }
+    // 1. SALVA O TEMPO ATUAL (Para a música não voltar ao início)
+    let savedTime = 0;
+    try {
+        if (player && typeof player.getCurrentTime === 'function') {
+            savedTime = player.getCurrentTime();
+        }
+    } catch (e) { console.warn('Erro ao salvar tempo:', e); }
 
-            if (player) {
-                player.destroy();
-            }
+    // Pega o vídeo da fila
+    let currentVideoId = null;
+    if (typeof videoQueue !== 'undefined' && videoQueue.length > 0) {
+        currentVideoId = extractVideoId(videoQueue[0].videoUrl);
+    }
 
+    // 2. Se não estiver no modo FESTA, destrói o player (para tirar controles)
+    if (player && currentPlayerMode !== 'FESTA') {
+        console.log(`Mudança de modo detectada. Recriando player mantendo o tempo: ${savedTime}s`);
+        try { player.destroy(); } catch (e) {}
+        player = null; 
+    }
+
+    // 3. Se o player sobreviveu (já era FESTA), apenas garante o vídeo certo
+    if (player && typeof player.loadVideoById === 'function') {
+        // Verifica se o vídeo que está tocando é o mesmo da fila
+        let playingId = null;
+        try { playingId = player.getVideoData().video_id; } catch(e){}
+
+        if (currentVideoId && playingId !== currentVideoId) {
+            player.loadVideoById(currentVideoId); // Só carrega se mudou a música
+        }
+        
+        // Garante máscara
+        const mask = document.getElementById('player-mask');
+        if (mask) mask.style.display = 'block';
+    } 
+    // 4. Se precisa criar um novo player (sem barra)
+    else {
+        // Limpeza final de segurança
+        if (player) { try { player.destroy(); } catch (e) {} }
+
+        currentPlayerMode = 'FESTA';
+
+        if (currentVideoId) {
             player = new YT.Player('videoPlayer', {
                 height: '100%',
                 width: '100%',
                 videoId: currentVideoId,
                 playerVars: {
-                    autoplay: 1,
-                    controls: 0,
-                    modestbranding: 1,
-                    rel: 0,
-                    disablekb: 1
+                    'autoplay': 1,
+                    'controls': 0, // SEM BARRA
+                    'modestbranding': 1,
+                    'rel': 0,
+                    'disablekb': 1,
+                    'iv_load_policy': 3,
+                    'fs': 0,
+                    'start': Math.floor(savedTime) // Tenta iniciar no tempo certo via parametro
                 },
                 events: {
-                    onReady: (event) => {
-                        if (currentVideoId) event.target.seekTo(currentTime);
+                    'onReady': (event) => {
+                        // GARANTIA EXTRA: Pula para o tempo salvo assim que carregar
+                        if (savedTime > 0) {
+                            event.target.seekTo(savedTime, true);
+                        }
                         event.target.playVideo();
-                        document.getElementById('player-mask').style.display = 'block';
+                        const mask = document.getElementById('player-mask');
+                        if (mask) mask.style.display = 'block';
                     },
-                    onStateChange: onPlayerStateChange
+                    'onStateChange': onPlayerStateChange
                 }
             });
-
-            const overlay = document.querySelector('.player-overlay-controls');
-            if (overlay) overlay.style.display = 'flex';
-
-            document.querySelector('.clear-queue-button').style.display = 'none';
-            document.querySelector('.skip-video-button').style.display = 'inline-block';
-            document.getElementById('skipVoteBtnText').textContent = 'Votar para Pular';
-            document.getElementById('voteCounterWrapper').style.display = 'inline';
+        } else {
+            console.log('Fila vazia no Modo Festa.');
+            const container = document.getElementById('videoPlayer');
+            if (container) container.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; color:white;">Aguardando músicas...</div>';
         }
+    }
+
+    // Atualiza Botões da Interface
+    const overlay = document.querySelector('.player-overlay-controls');
+    if (overlay) overlay.style.display = 'flex'; // Overlay customizado aparece
+
+    const clearBtn = document.querySelector('.clear-queue-button');
+    if (clearBtn) clearBtn.style.display = 'none'; // Botão de limpar fila some
+
+    const skipBtn = document.querySelector('.skip-video-button');
+    if (skipBtn) skipBtn.style.display = 'inline-block';
+
+    const skipText = document.getElementById('skipVoteBtnText');
+    if (skipText) skipText.textContent = 'Votar para Pular';
+
+    const voteWrapper = document.getElementById('voteCounterWrapper');
+    if (voteWrapper) voteWrapper.style.display = 'inline';
+}
 
         function logoutAdminSession() {
 
@@ -1191,6 +1220,7 @@
         let isPlayerReady = false; // "Guarda" que diz se o player está pronto
         let videoQueue = []; // Array local para espelhar a fila do Firebase
         let player; // Variável para o player do YouTube
+        let currentPlayerMode = null;
         let videoToRemoveId = null; // ID do vídeo a ser removido (usado no modal de remoção)
         let isAdminLoggedIn = false; // NOVO: Estado de login do Admin
         let videoIdsForBulkRemove = [];
@@ -1385,6 +1415,11 @@
                 <i class="fas fa-times"></i>
             </button>
         `;
+        // Verifica se deve esconder o botão logo ao criar
+        if (onlineUserCount > 1 && !isAdminLoggedIn) {
+                    const btns = listItem.querySelectorAll('.remove-button, .bulk-delete-controls');
+                    btns.forEach(b => b.style.setProperty('display', 'none', 'important'));
+                }
                     videoList.appendChild(listItem);
                 }
 
@@ -1521,50 +1556,37 @@
 
 
         function onPlayerStateChange(event) {
+            // 1. ATIVA O MONITORAMENTO QUANDO TOCA
+            if (event.data === YT.PlayerState.PLAYING) {
+                startProgressMonitor(); // <--- Faltava isso!
+            } else {
+                // Para o monitor se pausar ou terminar para economizar processamento
+                if (typeof timeCheckInterval !== 'undefined' && timeCheckInterval) {
+                    clearInterval(timeCheckInterval);
+                }
+            }
+
+            // 2. Lógica de Fim de Vídeo (Seu código original)
             if (event.data === YT.PlayerState.ENDED) {
                 const currentTime = player.getCurrentTime();
                 const duration = player.getDuration();
-                // Definimos uma tolerância. Se o vídeo terminou dentro, digamos,
-                // dos últimos 1.5 segundos da duração total, consideramos que foi um fim natural.
-                const naturalEndTolerance = 0.5; // Se você quer que o vídeo só pule se realmente chegar ao fim exato // Ajuste este valor se necessário (0.5 a 2 segundos é um bom ponto de partida)
+                const naturalEndTolerance = 2.0; // Aumentei um pouco a tolerância para garantir
 
-                // Se o tempo atual estiver muito próximo da duração total, consideramos um fim natural.
                 if (duration - currentTime <= naturalEndTolerance) {
-                    console.log('Vídeo terminou naturalmente. Avançando para o próximo...');
-                    // Lógica para avanço automático (fim natural)
+                    console.log('Vídeo terminou naturalmente. Avançando...');
                     if (videoQueue.length > 0) {
                         const firstVideoInQueue = videoQueue[0];
-                        const currentPlayingVideoIdInPlayer = player.getVideoData().video_id;
-                        const expectedVideoIdInQueue = extractVideoId(firstVideoInQueue.videoUrl);
+                        // Verifica se o vídeo que acabou é realmente o que estava na fila
+                        // (Evita bugs se a fila mudou rápido demais)
+                        const currentId = player.getVideoData().video_id;
+                        const queueId = extractVideoId(firstVideoInQueue.videoUrl);
 
-                        // Garante que o vídeo que terminou é o primeiro da fila antes de remover
-                        if (currentPlayingVideoIdInPlayer === expectedVideoIdInQueue) {
-                            videoQueueRef.child(firstVideoInQueue.id).remove()
-                                .then(() => {
-                                    console.log('Vídeo atual removido da fila automaticamente (fim natural).');
-                                    // O listener do Firebase (loadVideoQueue) cuidará de carregar o próximo
-                                })
-                                .catch(error => {
-                                    console.error('Erro ao remover vídeo automaticamente do Firebase:', error);
-                                    showNotification('Erro ao avançar o vídeo automaticamente. Tente novamente.', 'error');
-                                });
-                        } else {
-                            console.warn('O vídeo que terminou não é o primeiro da fila esperada. Nenhuma remoção automática.');
-                        }
-                    } else {
-                        console.log('Fila vazia, não há vídeos para remover automaticamente.');
-                        // Opcional: Pare o player se a fila estiver vazia
-                        if (player && typeof player.stopVideo === 'function') {
-                            player.stopVideo();
+                        if (currentId === queueId) {
+                            videoQueueRef.child(firstVideoInQueue.id).remove();
                         }
                     }
                 } else {
-                    // Este bloco será executado se o vídeo atingiu o estado ENDED,
-                    // mas o tempo atual estava significativamente longe do final (ou seja, foi adiantado).
-                    console.log('Vídeo foi adiantado/pulado para o fim. NÃO avançando automaticamente. Tempo atual:', currentTime, 'Duração:', duration);
-                    showNotification('O vídeo atual foi adiantado. Por favor, use o botão "Próximo Vídeo" e as credenciais de administrador para avançar a fila.', 'info');
-
-                    // É uma boa prática parar o player para que ele não tente reiniciar ou loop se autoplay estiver ativado
+                    console.log('Vídeo pulado antes do fim. Não removendo automaticamente.');
                     if (player && typeof player.stopVideo === 'function') {
                         player.stopVideo();
                     }

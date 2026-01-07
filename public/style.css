@@ -462,6 +462,17 @@ body::before {
     border: none;
     border-radius: 12px;
 }
+#videoPlayer, iframe {
+    /* Força a placa de vídeo a renderizar o player, liberando o processador */
+    transform: translateZ(0); 
+    will-change: transform;
+}
+
+    /* Esconde o botão de remover (X) quando estiver em Modo Festa e não for Admin */
+    body.festa-mode.non-admin .remove-button,
+    body.festa-mode.non-admin .bulk-delete-controls {
+        display: none !important;
+    }
 
 #currentVideoInfo {
     text-align: center;
