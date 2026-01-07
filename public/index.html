@@ -1411,7 +1411,7 @@
                     </a>
                 </div>
             </div>
-            <button class="remove-button" onclick="openRemoveModalWithId('${video.id}')" title="Remover vídeo">
+           <button class="remove-button" onclick="handleRemoveVideo('${video.id}')" title="Remover vídeo">
                 <i class="fas fa-times"></i>
             </button>
         `;
@@ -1862,29 +1862,24 @@
         // ====================================================================
         // Esta função agora APENAS abre o modal de confirmação
         function removeSelectedVideos() {
-            // Apenas admins logados podem usar
-            if (!isAdminLoggedIn) {
-                showNotification('Você precisa estar no Modo Admin para fazer isso.', 'error');
+            // PERMITE se for Admin OU se estiver Sozinho
+            if (!isAdminLoggedIn && onlineUserCount > 1) {
+                showNotification('Você precisa estar no Modo Admin para fazer isso em grupo.', 'error');
                 return;
             }
 
+            // ... (o resto da função continua igual) ...
             // 1. Encontra todos os checkboxes marcados
             const selectedCheckboxes = document.querySelectorAll('.video-select-checkbox:checked');
-
+            
             if (selectedCheckboxes.length === 0) {
-                showNotification('Nenhum vídeo selecionado para remoção.', 'info');
+                showNotification('Nenhum vídeo selecionado.', 'info');
                 return;
             }
 
-            // 2. Pega os IDs de cada um e salva na variável global
-            // (Substitui a const videoIdsToRemove)
+            // ... lógica de abrir modal de confirmação ...
             videoIdsForBulkRemove = Array.from(selectedCheckboxes).map(cb => cb.dataset.videoid);
-
-            // 3. Prepara e abre o modal de confirmação (Substitui o 'confirm()')
-            // (Isto assume que seu modal tem um <p> com id="bulkRemoveMessage")
-            document.getElementById('bulkRemoveMessage').textContent = `Tem certeza que deseja remover ${videoIdsForBulkRemove.length} vídeos da fila? Esta ação não pode ser desfeita.`;
-
-            // (Isto assume que seu modal de confirmação tem id="bulkRemoveConfirmModal")
+            document.getElementById('bulkRemoveMessage').textContent = `Remover ${videoIdsForBulkRemove.length} vídeos?`;
             document.getElementById('bulkRemoveConfirmModal').style.display = 'flex';
         }
 
@@ -2027,16 +2022,17 @@
 
 
         function handleClearQueue() {
-            // NOVO: Verifica a contagem de usuários diretamente
-            const userCount = parseInt(document.getElementById('userCount').textContent, 10) || 0;
-
-            // Se for admin OU se estiver sozinho na sala, limpa direto
-            if (isAdminLoggedIn || userCount === 1) {
-                console.log('Admin ou Modo Solo. Limpando fila...');
-                executeClearQueue();
+            // (Se é Admin OU se tem 1 ou 0 pessoas na sala)
+            if (isAdminLoggedIn || onlineUserCount <= 1) {
+                console.log('Modo Solo/Admin: Limpando fila direto...');
+                
+                // Pergunta de segurança simples (sem senha)
+                if (confirm('Tem certeza que deseja limpar toda a fila?')) {
+                    executeClearQueue();
+                }
             } else {
-                // Admin não está logado E está em grupo: abre o modal para pedir credenciais
-                console.log('Admin não logado em grupo. Abrindo modal de autenticação...');
+                // Se tiver mais gente e não for admin, pede senha
+                console.log('Modo Festa: Pedindo senha...');
                 openModal();
             }
         }
@@ -2087,11 +2083,10 @@
             try {
                 await videoQueueRef.remove();
                 showNotification('Fila limpa com sucesso!', 'success');
-                return true;
+                closeModal(); 
             } catch (error) {
                 console.error('Erro ao limpar fila:', error);
-                showNotification('Erro ao limpar a fila. Verifique a conexão.', 'error');
-                return false;
+                showNotification('Erro ao limpar a fila.', 'error');
             }
         }
 
@@ -2172,6 +2167,30 @@
                 }
             } finally {
                 toggleLoading('removeVideoBtn', false);
+            }
+        }
+
+        function handleRemoveVideo(id) {
+            // Usa a variável global que já temos
+            if (isAdminLoggedIn || onlineUserCount <= 1) {
+                // Modo Solo ou Admin: Remove sem perguntar
+                executeRemoveVideo(id);
+            } else {
+                // Modo Festa: Abre o modal de senha
+                openRemoveModalWithId(id);
+            }
+        }
+
+        /**
+         * NOVO: Executa a remoção direta (sem modal).
+         */
+        async function executeRemoveVideo(id) {
+            try {
+                await videoQueueRef.child(id).remove();
+                showNotification('Vídeo removido!', 'success');
+            } catch (error) {
+                console.error('Erro ao remover vídeo:', error);
+                showNotification('Erro ao remover vídeo.', 'error');
             }
         }
 
