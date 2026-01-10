@@ -114,6 +114,10 @@
                         style="display: none;">
                         <i class="fas fa-eraser"></i> Remover Selecionados
                     </button>
+
+                    <button id="btn-auto-sugestao" class="btn-sugestao" onclick="openSugestaoModal()">
+  <i class="fas fa-magic"></i> Sugerir Música
+</button>
                 </h2>
                 <ul id="videoList" class="video-queue-list"></ul>
             </section>
@@ -249,6 +253,107 @@
         </div>
     </div>
 
+     <div id="sugestaoModal" class="modal sugestao-modal">
+  <div class="modal-content">
+    <span class="close-button" onclick="closeSugestaoModal()">×</span>
+    <h3><i class="fas fa-magic"></i> Sugestão Inteligente</h3>
+    
+    <div class="sugestao-tabs">
+      <button class="sugestao-tab active" onclick="switchTab('genero')">
+        <i class="fas fa-music"></i> Por Gênero
+      </button>
+      <button class="sugestao-tab" onclick="switchTab('similar')">
+        <i class="fas fa-random"></i> Similares
+      </button>
+      <button class="sugestao-tab" onclick="switchTab('tendencia')">
+        <i class="fas fa-chart-line"></i> Tendências
+      </button>
+    </div>
+
+    <div id="generoContent" class="tab-content active">
+      <div class="generos-container">
+        <button class="genero-btn" onclick="selectGenero('sertanejo')" data-genero="sertanejo">
+          <i class="fas fa-guitar genero-icon"></i>
+          <span>Sertanejo</span>
+        </button>
+        <button class="genero-btn" onclick="selectGenero('funk')" data-genero="funk">
+          <i class="fas fa-fire genero-icon"></i>
+          <span>Funk</span>
+        </button>
+        <button class="genero-btn" onclick="selectGenero('pop')" data-genero="pop">
+          <i class="fas fa-star genero-icon"></i>
+          <span>Pop</span>
+        </button>
+        <button class="genero-btn" onclick="selectGenero('rock')" data-genero="rock">
+          <i class="fas fa-guitar-electric genero-icon"></i>
+          <span>Rock</span>
+        </button>
+        <button class="genero-btn" onclick="selectGenero('eletronica')" data-genero="eletronica">
+          <i class="fas fa-synth genero-icon"></i>
+          <span>Eletrônica</span>
+        </button>
+        <button class="genero-btn" onclick="selectGenero('rap')" data-genero="rap">
+          <i class="fas fa-microphone-alt genero-icon"></i>
+          <span>Rap/Hip-Hop</span>
+        </button>
+        <button class="genero-btn" onclick="selectGenero('reggaeton')" data-genero="reggaeton">
+          <i class="fas fa-drum genero-icon"></i>
+          <span>Reggaeton</span>
+        </button>
+        <button class="genero-btn" onclick="selectGenero('pagode')" data-genero="pagode">
+          <i class="fas fa-drum genero-icon"></i>
+          <span>Pagode/Samba</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="similarContent" class="tab-content" style="display: none;">
+      <div style="text-align: center; padding: 30px 0;">
+        <i class="fas fa-random" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 15px;"></i>
+        <p>Vamos sugerir músicas similares à que está tocando agora!</p>
+        <p class="text-muted" style="font-size: 0.9rem;">Baseado no artista e estilo atual.</p>
+      </div>
+    </div>
+
+    <div id="tendenciaContent" class="tab-content" style="display: none;">
+      <div style="text-align: center; padding: 30px 0;">
+        <i class="fas fa-chart-line" style="font-size: 3rem; color: var(--success-color); margin-bottom: 15px;"></i>
+        <p>Vamos sugerir as músicas mais populares no momento!</p>
+        <p class="text-muted" style="font-size: 0.9rem;">Baseado nas tendências atuais do YouTube.</p>
+      </div>
+    </div>
+
+   <div class="autoplay-controls">
+  <h4><i class="fas fa-robot"></i> Reprodução Automática</h4>
+  
+  <div class="autoplay-option">
+    <span>Adicionar automaticamente quando a fila estiver acabando</span>
+    <label class="switch">
+      <input type="checkbox" id="autoAddToggle" onchange="ativarAutoSugestao()">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="autoplay-option">
+    <span>Quantidade de músicas na fila:</span>
+    <div class="autoplay-count">
+      <button class="count-btn" onclick="changeAutoCount(-1)">-</button>
+      <span class="count-display" id="autoCount">3</span>
+      <button class="count-btn" onclick="changeAutoCount(1)">+</button>
+    </div>
+  </div>
+</div>
+
+<div class="sugestao-actions">
+  <button class="btn btn-now" onclick="sugerirAgora()">
+    <i class="fas fa-plus-circle"></i> Adicionar Agora
+  </button>
+  <button class="btn btn-auto" onclick="toggleAutoDjBtn()">
+    <i class="fas fa-play-circle"></i> Auto (Ligar/Desligar)
+  </button>
+</div>
+</div> 
+</div> 
     <div id="notification" class="notification">
         <span id="notificationMessage"></span>
     </div>
@@ -1563,14 +1668,18 @@
                     if (jumped && !nearEnd) {
                         console.log('Detectado adiantamento no vídeo.');
                     } else if (jumped && nearEnd) {
-                        // ← ADIANTAMENTO PARA PERTO DO FINAL DETECTADO
-                        console.log('Detectado adiantamento para o final do vídeo.');
-
-                        player.pauseVideo();
-                        player.seekTo(lastKnownTime + 1, true);
-                        showNotification('Você não pode adiantar o vídeo até o final.', 'error');
-
-                        return; // ← NÃO ATUALIZA lastKnownTime!
+                       if (isAdminLoggedIn || onlineUserCount <= 1) {
+                            console.log('Adiantamento para o final permitido (Admin/Solo).');
+                            // Não faz nada, deixa o código continuar e atualizar o tempo.
+                        } 
+                        else {
+                            // Se for Visitante EM GRUPO, aí sim BLOQUEIA.
+                            console.log('Bloqueando adiantamento para o final (Visitante).');
+                            player.pauseVideo();
+                            player.seekTo(lastKnownTime + 1, true);
+                            showNotification('Você não pode adiantar o vídeo até o final.', 'error');
+                            return; // ← Sai da função para não validar a trapaça
+                        }
                     }
 
                     // Só atualiza se não houver adiantamento suspeito
@@ -3417,6 +3526,302 @@
         }
 
     </script>
+
+  <script>
+/* ================================
+   ESTADO
+================================ */
+let sugestaoGeneroSelecionado = 'pop';
+let sugestaoTipoSelecionado = 'genero';
+let autoSugestaoAtiva = false;
+let autoSugestaoInterval = null;
+let autoSugestaoCount = 3;
+
+/* ================================
+   UI & MODAL
+================================ */
+function openSugestaoModal() {
+  const modal = document.getElementById('sugestaoModal');
+  modal.style.display = 'flex';
+  switchTab('genero');
+  detectarGeneroAtual();
+}
+
+function closeSugestaoModal() {
+  document.getElementById('sugestaoModal').style.display = 'none';
+}
+
+function switchTab(tabName) {
+  document.querySelectorAll('.sugestao-tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.style.display = 'none';
+  });
+
+  const tabBtn = document.querySelector(`.sugestao-tab[onclick="switchTab('${tabName}')"]`);
+  const tabContent = document.getElementById(`${tabName}Content`);
+
+  if (tabBtn) tabBtn.classList.add('active');
+  if (tabContent) tabContent.style.display = 'block';
+
+  sugestaoTipoSelecionado = tabName;
+}
+
+function selectGenero(genero) {
+  document.querySelectorAll('.genero-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+
+  const btn = document.querySelector(`.genero-btn[data-genero="${genero}"]`);
+  if (btn) btn.classList.add('active');
+
+  sugestaoGeneroSelecionado = genero;
+}
+
+function changeAutoCount(change) {
+  const el = document.getElementById('autoCount');
+  let v = parseInt(el.textContent) + change;
+  v = Math.max(1, Math.min(10, v)); // Mínimo 1, Máximo 10
+  el.textContent = v;
+  autoSugestaoCount = v;
+}
+
+/* ================================
+   LÓGICA AUXILIAR
+================================ */
+function detectarGeneroAtual() {
+  if (typeof player === 'undefined' || !player || !player.getVideoData) return;
+  try {
+    const title = (player.getVideoData().title || '').toLowerCase();
+    const generosMap = {
+      sertanejo: ['sertanejo','modão','marilia','gusttavo'],
+      funk: ['funk','trap','dj','mandelão'],
+      pop: ['pop','hit','taylor','bruno mars'],
+      rock: ['rock','metal','punk'],
+      eletronica: ['edm','house','techno','alok'],
+      rap: ['rap','hip hop','mc','matue'],
+      reggaeton: ['reggaeton','bad bunny','anitta'],
+      pagode: ['pagode','samba','ferrugem','thiaguinho']
+    };
+    for (const genero in generosMap) {
+      if (generosMap[genero].some(k => title.includes(k))) {
+        selectGenero(genero);
+        break;
+      }
+    }
+  } catch {}
+}
+
+function gerarQueryAtual() {
+  let query = 'top hits 2026';
+  
+  if (sugestaoTipoSelecionado === 'genero') {
+    const map = {
+      sertanejo: 'sertanejo 2026 as mais tocadas',
+      funk: 'funk hits 2026',
+      pop: 'pop internacional 2026 hits',
+      rock: 'rock playlist 2026',
+      eletronica: 'summer eletrohits 2026',
+      rap: 'rap trap brasil 2026',
+      reggaeton: 'reggaeton 2026 éxitos',
+      pagode: 'pagode churrasco 2026'
+    };
+    query = map[sugestaoGeneroSelecionado] || query;
+  }
+  
+  if (sugestaoTipoSelecionado === 'tendencia') {
+    const arr = ['top 50 brasil', 'viral hits global', 'tiktok music 2026', 'billboard hot 100'];
+    query = arr[Math.floor(Math.random() * arr.length)];
+  }
+  
+  if (sugestaoTipoSelecionado === 'similar' && player?.getVideoData) {
+    try {
+        const t = player.getVideoData().title;
+        if (t) query = t.split(' ').slice(0, 3).join(' ') + ' mix';
+    } catch(e) {}
+  }
+  
+  return query;
+}
+
+/* ================================
+   FUNÇÃO ÚNICA: Adicionar Agora
+================================ */
+async function sugerirAgora() {
+  const btn = document.querySelector('.btn-now');
+  const original = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+  btn.disabled = true;
+
+  try {
+    const query = gerarQueryAtual();
+    const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}&maxResults=10`);
+    const json = await res.json();
+
+    if (json.items && json.items.length) {
+      // Filtro rigoroso: Só aceita vídeos
+      const validos = json.items.filter(v => v.id.kind === 'youtube#video');
+      
+      if (validos.length > 0) {
+        const escolhido = validos[Math.floor(Math.random() * validos.length)];
+        const url = `https://www.youtube.com/watch?v=${escolhido.id.videoId}`;
+        const user = sessionStorage.getItem('ytSessionUser') || '🤖 DJ';
+        
+        await videoQueueRef.push({ phone: user, videoUrl: url });
+        showNotification(`Adicionado: ${escolhido.snippet.title}`, 'success');
+        setTimeout(closeSugestaoModal, 500);
+      } else {
+        showNotification('Nenhum vídeo válido encontrado.', 'info');
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    showNotification('Erro ao buscar sugestão.', 'error');
+  } finally {
+    btn.innerHTML = original;
+    btn.disabled = false;
+  }
+}
+
+/* ================================
+   LÓGICA PRINCIPAL DO AUTO DJ
+================================ */
+async function rodarCicloAutoDJ() {
+    if (!autoSugestaoAtiva) return;
+
+    // 1. Verifica quantas músicas tem na fila
+    const snap = await videoQueueRef.once('value');
+    const data = snap.val();
+    const len = data ? Object.keys(data).length : 0;
+
+    // Se já temos músicas suficientes, não faz nada
+    if (len >= autoSugestaoCount) return;
+
+    const faltam = autoSugestaoCount - len;
+    console.log(`AutoDJ: Fila tem ${len}. Meta é ${autoSugestaoCount}. Adicionando ${faltam}...`);
+
+    // 2. Busca músicas em lote (pede 50 para garantir variedade e validade)
+    const query = gerarQueryAtual();
+    try {
+        const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}&maxResults=50`);
+        const json = await res.json();
+
+        if (!json.items || !json.items.length) return;
+
+        // 3. FILTRO RIGOROSO (Evita erros de "undefined id")
+        let candidatos = json.items.filter(v => {
+            const isVideo = v.id.kind === 'youtube#video'; // TEM que ser video
+            const t = v.snippet.title.toLowerCase();
+            const isClean = !t.includes('live') && !t.includes('ao vivo') && !t.includes('short');
+            return isVideo && isClean;
+        });
+
+        if (candidatos.length === 0) return;
+
+        // 4. Embaralha
+        candidatos.sort(() => Math.random() - 0.5);
+
+        // 5. Adiciona a quantidade necessária
+        let adicionados = 0;
+        
+        // Loop seguro: tenta adicionar até atingir a meta
+        for (const video of candidatos) {
+            // Se já atingiu a meta, para
+            if (adicionados >= faltam) break;
+
+            try {
+                const url = `https://www.youtube.com/watch?v=${video.id.videoId}`;
+                
+                // Adiciona ao Firebase
+                await videoQueueRef.push({
+                    phone: '🤖 DJ Auto',
+                    videoUrl: url
+                });
+                
+                adicionados++;
+                
+                // Pequeno delay para garantir ordem no banco
+                await new Promise(r => setTimeout(r, 200));
+
+            } catch (errInner) {
+                // Se der erro em UMA música, loga e continua para a próxima (NÃO QUEBRA O LOOP)
+                console.warn("Erro ao adicionar música específica no AutoDJ:", errInner);
+            }
+        }
+        
+        if (adicionados > 0) {
+            console.log(`AutoDJ finalizou ciclo. Adicionou ${adicionados} músicas.`);
+        }
+
+    } catch (err) {
+        console.error('Erro crítico no AutoDJ:', err);
+    }
+}
+
+/* ================================
+   CONTROLE DO AUTO DJ (CORRIGIDO)
+================================ */
+
+// Função chamada pelo BOTÃO "Auto"
+function toggleAutoDjBtn() {
+  const toggle = document.getElementById('autoAddToggle');
+  // Inverte o estado visual da caixinha
+  toggle.checked = !toggle.checked;
+  // Chama a lógica principal baseada no novo estado
+  ativarAutoSugestao();
+}
+
+// Função chamada pelo CHECKBOX (onchange) e pelo BOTÃO
+function ativarAutoSugestao() {
+  const toggle = document.getElementById('autoAddToggle');
+
+  // Verifica se a caixinha está marcada
+  if (toggle.checked) {
+    // LIGAR
+    if (!autoSugestaoAtiva) {
+      autoSugestaoAtiva = true;
+      showNotification('Auto-sugestão ligada 🤖', 'success');
+      // Inicia imediatamente
+      iniciarAutoSugestao();
+    }
+  } else {
+    // DESLIGAR
+    autoSugestaoAtiva = false;
+    if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
+    showNotification('Auto-sugestão desligada.', 'info');
+  }
+}
+
+function iniciarAutoSugestao() {
+  if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
+  
+  // Roda IMEDIATAMENTE a primeira vez (não espera 15s)
+  rodarCicloAutoDJ();
+
+  // Configura o intervalo para rodar a cada 15 segundos
+  autoSugestaoInterval = setInterval(rodarCicloAutoDJ, 15000);
+}
+
+/* ================================
+   INIT
+================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  selectGenero('pop');
+  switchTab('genero');
+
+  const modal = document.getElementById('sugestaoModal');
+  if (modal) {
+      modal.addEventListener('click', e => {
+        if (e.target === modal) closeSugestaoModal();
+      });
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeSugestaoModal();
+  });
+});
+</script>
 
     <script src="https://www.youtube.com/iframe_api"></script>
     </div>
