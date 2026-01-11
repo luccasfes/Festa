@@ -34,6 +34,9 @@
                 <button class="btn small" id="panelBtn" onclick="FuncaoParaAbrirPainel()">
                     <i class="fas fa-cog"></i> <span>Painel</span>
                 </button>
+                <button class="btn small secondary" onclick="openThemeModal()" title="Mudar Tema">
+        <i class="fas fa-palette"></i>
+    </button>
             </div>
             <h1><i class="fas fa-music"></i> FlowLink<i class="fas fa-headphones"></i></h1>
             <div class="room-details">
@@ -499,6 +502,35 @@
         </div>
     </div>
 
+    <div id="themeModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <span class="close-button" onclick="closeThemeModal()">×</span>
+        <h3><i class="fas fa-palette"></i> Escolha um Tema</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">Personalize as cores do FlowLink.</p>
+
+        <div class="theme-grid">
+            <div class="theme-btn" onclick="setTheme('default')" id="theme-btn-default">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #4e54c8, #1a1a2e);"></div>
+                <span>Padrão</span>
+            </div>
+
+            <div class="theme-btn" onclick="setTheme('pink')" id="theme-btn-pink">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #ff007f, #2d0a1e);"></div>
+                <span>Pink</span>
+            </div>
+
+            <div class="theme-btn" onclick="setTheme('light')" id="theme-btn-light">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #ffffff, #f0f2f5);"></div>
+                <span>Claro</span>
+            </div>
+
+            <div class="theme-btn" onclick="setTheme('oled')" id="theme-btn-oled">
+                <div class="theme-preview" style="background: #000;"></div>
+                <span>Black</span>
+            </div>
+        </div>
+    </div>
+</div>
     <!-- //sessão -->
     <script>
 
@@ -3993,6 +4025,66 @@ function atualizarVisibilidadeAutoDJ() {
     } else {
         btnAuto.style.setProperty('display', 'none', 'important');
     }
+}
+
+/* ================================
+   SISTEMA DE TEMAS
+================================ */
+
+// 1. Carrega o tema salvo ao abrir a página
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('flowLinkTheme') || 'default';
+    setTheme(savedTheme, false); // false = não abre notificação ao carregar
+});
+
+function openThemeModal() {
+    document.getElementById('themeModal').style.display = 'flex';
+    // Marca o botão ativo visualmente
+    const current = document.body.getAttribute('data-theme') || 'default';
+    highlightActiveTheme(current);
+}
+
+function closeThemeModal() {
+    document.getElementById('themeModal').style.display = 'none';
+}
+
+function setTheme(themeName, showNotify = true) {
+    // 1. Aplica o atributo no Body
+    if (themeName === 'default') {
+        document.body.removeAttribute('data-theme');
+    } else {
+        document.body.setAttribute('data-theme', themeName);
+    }
+
+    // 2. Salva no LocalStorage
+    localStorage.setItem('flowLinkTheme', themeName);
+
+    // 3. Atualiza visual dos botões
+    highlightActiveTheme(themeName);
+
+    // 4. Feedback (opcional)
+    if (showNotify) {
+        // Mapeia nomes bonitos para notificação
+        const names = { 
+            'default': 'Roxo Clássico', 
+            'pink': 'Pink Vibes', 
+            'light': 'Modo Claro', 
+            'oled': 'Preto Absoluto' 
+        };
+        showNotification(`Tema alterado para: ${names[themeName]}`, 'success');
+        
+        // Fecha o modal após um tempinho para ver o efeito
+        setTimeout(closeThemeModal, 300);
+    }
+}
+
+function highlightActiveTheme(themeName) {
+    // Remove 'active' de todos
+    document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+    
+    // Adiciona 'active' no selecionado
+    const activeBtn = document.getElementById(`theme-btn-${themeName}`);
+    if (activeBtn) activeBtn.classList.add('active');
 }
 </script>
 
