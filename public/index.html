@@ -338,7 +338,7 @@
     <span>Quantidade de músicas na fila:</span>
     <div class="autoplay-count">
       <button class="count-btn" onclick="changeAutoCount(-1)">-</button>
-      <span class="count-display" id="autoCount">3</span>
+      <span class="count-display" id="autoCount">1</span>
       <button class="count-btn" onclick="changeAutoCount(1)">+</button>
     </div>
   </div>
@@ -1639,6 +1639,8 @@
             const videoId = extractVideoId(videoUrl);
 
             if (videoId && player && typeof player.loadVideoById === 'function') {
+                playedVideoHistory.add(videoId);
+        console.log("Histórico atualizado. Vídeos ignorados:", playedVideoHistory.size);
                 player.loadVideoById(videoId);
                 document.getElementById('currentUser').textContent = userName;
                 document.getElementById('currentVideoUrl').textContent = videoUrl;
@@ -3550,8 +3552,10 @@ let sugestaoGeneroSelecionado = 'pop';
 let sugestaoTipoSelecionado = 'genero';
 let autoSugestaoAtiva = false;
 let autoSugestaoInterval = null;
-let autoSugestaoCount = 3;
+let autoSugestaoCount = 1;
 
+// --- Histórico para evitar repetições ---
+let playedVideoHistory = new Set();
 /* ================================
    UI & MODAL
 ================================ */
@@ -3719,7 +3723,7 @@ function gerarQueryAtual() {
   if (sugestaoTipoSelecionado === 'similar' && player?.getVideoData) {
     try {
       const t = player.getVideoData().title;
-      if (t) query = t.split(' ').slice(0, 3).join(' ') + ' mix';
+      if (t) query = t.split(' ').slice(0, 1).join(' ') + ' mix';
     } catch(e) {}
   }
   
@@ -3821,7 +3825,7 @@ async function rodarCicloAutoDJ() {
     const faltam = autoSugestaoCount - len;
     console.log(`DJFlow: Fila tem ${len}. Meta é ${autoSugestaoCount}. Adicionando ${faltam}...`);
 
-    // 2. Busca músicas em lote (pede 50 para garantir variedade e validade)
+    // 2. Busca músicas em lote
     const query = gerarQueryAtual();
     try {
         const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}&maxResults=50`);
@@ -3829,15 +3833,32 @@ async function rodarCicloAutoDJ() {
 
         if (!json.items || !json.items.length) return;
 
-        // 3. FILTRO RIGOROSO (Evita erros de "undefined id")
+        // --- PREPARAÇÃO DOS FILTROS ---
+        // Pega IDs da fila atual para não duplicar o que já vai tocar
+        const currentQueueIds = data 
+            ? Object.values(data).map(v => extractVideoId(v.videoUrl)) 
+            : [];
+
+        // 3. FILTRO RIGOROSO (Agora com Histórico!)
         let candidatos = json.items.filter(v => {
-            const isVideo = v.id.kind === 'youtube#video'; // TEM que ser video
+            const vid = v.id.videoId;
+            const isVideo = v.id.kind === 'youtube#video';
             const t = v.snippet.title.toLowerCase();
+            
+            // Regras de limpeza
             const isClean = !t.includes('live') && !t.includes('ao vivo') && !t.includes('short');
-            return isVideo && isClean;
+            
+            // Regras de Repetição
+            const notInQueue = !currentQueueIds.includes(vid);
+            const notPlayed = !playedVideoHistory.has(vid); // Verifica se já tocou
+
+            return isVideo && isClean && notInQueue && notPlayed;
         });
 
-        if (candidatos.length === 0) return;
+        if (candidatos.length === 0) {
+            console.log("DJFlow: Todos os vídeos retornados já foram tocados ou estão na fila. Tentando próxima query...");
+            return;
+        }
 
         // 4. Embaralha
         candidatos.sort(() => Math.random() - 0.5);
@@ -3845,13 +3866,12 @@ async function rodarCicloAutoDJ() {
         // 5. Adiciona a quantidade necessária
         let adicionados = 0;
         
-        // Loop seguro: tenta adicionar até atingir a meta
         for (const video of candidatos) {
-            // Se já atingiu a meta, para
             if (adicionados >= faltam) break;
 
             try {
-                const url = `https://www.youtube.com/watch?v=${video.id.videoId}`;
+                const vidId = video.id.videoId;
+                const url = `https://www.youtube.com/watch?v=${vidId}`;
                 
                 // Adiciona ao Firebase
                 await videoQueueRef.push({
@@ -3859,13 +3879,13 @@ async function rodarCicloAutoDJ() {
                     videoUrl: url
                 });
                 
-                adicionados++;
+                // Já adiciona ao histórico preventivamente para não duplicar no mesmo loop
+                playedVideoHistory.add(vidId);
                 
-                // Pequeno delay para garantir ordem no banco
+                adicionados++;
                 await new Promise(r => setTimeout(r, 200));
 
             } catch (errInner) {
-                // Se der erro em UMA música, loga e continua para a próxima (NÃO QUEBRA O LOOP)
                 console.warn("Erro ao adicionar música específica no AutoDJ:", errInner);
             }
         }
