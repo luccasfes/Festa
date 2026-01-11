@@ -2656,3 +2656,55 @@ body:not(.non-admin) .player-overlay-controls {
     font-size: 0.8rem;
   }
 }
+
+/* --- Estado ATIVO do botão principal (na tela inicial) --- */
+.btn-sugestao.active-dj {
+    background-color: #00c853; /* Verde Sucesso */
+    color: white;
+    border-color: #00c853;
+    box-shadow: 0 0 15px rgba(0, 200, 83, 0.6); /* Brilho verde */
+    transition: all 0.3s ease;
+}
+
+/* Animação suave no ícone para indicar funcionamento */
+.btn-sugestao.active-dj i {
+    animation: pulse-icon 2s infinite;
+}
+
+@keyframes pulse-icon {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* --- Estado ATIVO do botão dentro do modal --- */
+.btn-auto.active {
+    background-color: #00c853 !important;
+    border-color: #00c853 !important;
+    color: white !important;
+}
+
+/* --- Css para fazer com que o botão de auto sugestão fale que o DJ está ativo --- */
+/* Estado normal */
+.btn-sugestao {
+  transition: all 0.3s ease;
+}
+
+/* Quando Auto DJ está ligado */
+.btn-sugestao.auto-dj-on {
+  background: linear-gradient(135deg, #00e676, #00c853) !important;
+  color: #000 !important;
+  font-weight: 800;
+  box-shadow: 0 0 15px rgba(0, 255, 150, 0.6);
+}
+
+/* Efeito pulsando */
+.btn-sugestao.auto-dj-on {
+  animation: pulseAutoDJ 1.5s infinite;
+}
+
+@keyframes pulseAutoDJ {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}

@@ -553,6 +553,7 @@
                     disableSoloPlayerControls(); //
                 }
             }
+            atualizarVisibilidadeAutoDJ();
         }
         let currentSessionUser = null;
 
@@ -972,6 +973,7 @@
             if (chatOnlineCount) chatOnlineCount.textContent = onlineUserCount;
 
             updatePlayerMode();
+            atualizarVisibilidadeAutoDJ();
         });
         // ====================================================================
         // Fim do Sistema de Presença
@@ -1455,147 +1457,151 @@
          * Esta função usa um listener 'value' que é acionado sempre que os dados na referência mudam.
          */
         function loadVideoQueue() {
-            videoQueueRef.on('value', async (snapshot) => {
-                const data = snapshot.val();
-                let fetchedQueue = [];
+    videoQueueRef.on('value', async (snapshot) => {
+        const data = snapshot.val();
+        let fetchedQueue = [];
 
-                if (data) {
-                    fetchedQueue = Object.keys(data).map(key => ({
-                        id: key,
-                        ...data[key]
-                    }));
-                }
-
-                videoQueue = fetchedQueue;
-                const videoList = document.getElementById('videoList');
-                videoList.innerHTML = '';
-                // NOVO: Aplica a classe de admin se estiver logado
-                if (isAdminLoggedIn) {
-                    videoList.classList.add('admin-mode');
-                } else {
-                    videoList.classList.remove('admin-mode');
-                }
-
-
-
-                if (videoQueue.length === 0) {
-                    videoList.innerHTML = '<li class="empty-queue">A fila de vídeos está vazia. Adicione um vídeo!</li>';
-                    document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
-                    document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
-                    if (player && typeof player.stopVideo === 'function') {
-                        player.stopVideo();
-                    }
-                    return;
-                }
-
-                async function getFormattedVideoTitle(url) {
-                    try {
-                        // Tenta pegar do cache primeiro
-                        const videoId = extractVideoId(url);
-                        const cachedTitle = sessionStorage.getItem(`videoTitle_${videoId}`);
-
-                        if (cachedTitle) {
-                            return cachedTitle;
-                        }
-
-                        // CÓDIGO NOVO (SEGURO)
-                        // Chama o seu servidor em vez do YouTube direto
-                        const response = await fetch(`/api/video-info?id=${videoId}`);
-
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (data.items && data.items[0]) {
-                                const title = data.items[0].snippet.title;
-                                // Armazena no cache para próximas vezes
-                                sessionStorage.setItem(`videoTitle_${videoId}`, title);
-                                return title;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Erro ao buscar título:', error);
-                    }
-
-                    // Fallback: Mostra "Música (ID do vídeo)" se não conseguir o título
-                    const videoId = extractVideoId(url);
-                    return videoId ? `Música (ID: ${videoId})` : 'Vídeo do YouTube';
-                }
-                // Preenche a lista na UI com títulos melhorados
-                for (const video of videoQueue) {
-                    const listItem = document.createElement('li');
-                    listItem.classList.add('video-item');
-
-                    // Obtém o título formatado
-                    const videoTitle = await getFormattedVideoTitle(video.videoUrl);
-
-                    listItem.innerHTML = `
-            <div class="bulk-delete-controls">
-                <input type="checkbox" class="video-select-checkbox" data-videoid="${video.id}" title="Selecionar para remover">
-            </div>
-
-            <div class="video-info">
-                <span class="video-title">${videoTitle}</span>
-                <div class="video-meta">
-                    <span class="video-added-by">Adicionado por: ${video.phone}</span>
-                    <a href="${video.videoUrl}" target="_blank" class="video-link">
-                        <i class="fab fa-youtube"></i> Assistir
-                    </a>
-                </div>
-            </div>
-           <button class="remove-button" onclick="handleRemoveVideo('${video.id}')" title="Remover vídeo">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        // Verifica se deve esconder o botão logo ao criar
-        if (onlineUserCount > 1 && !isAdminLoggedIn) {
-                    const btns = listItem.querySelectorAll('.remove-button, .bulk-delete-controls');
-                    btns.forEach(b => b.style.setProperty('display', 'none', 'important'));
-                }
-                    videoList.appendChild(listItem);
-                }
-
-                // Mantém a lógica do player
-                let currentlyPlayingVideoIdInPlayer = null;
-                if (player && typeof player.getVideoData === 'function') {
-                    try {
-                        currentlyPlayingVideoIdInPlayer = player.getVideoData().video_id;
-                    } catch (e) {
-                        console.warn("Player.getVideoData() falhou:", e);
-                    }
-                }
-
-                const firstVideoInQueue = videoQueue[0];
-                const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
-
-                if (player && typeof player.loadVideoById === 'function') {
-                    const firstVideoInQueue = videoQueue[0];
-                    const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
-
-                    // Obter o ID do vídeo atualmente carregado no player, se houver
-                    let currentlyLoadedVideoId = null;
-                    if (player.getVideoData && typeof player.getVideoData === 'function') {
-                        try {
-                            currentlyLoadedVideoId = player.getVideoData().video_id;
-                        } catch (e) {
-                            console.warn("Player.getVideoData() falhou ou player não está pronto para obter dados do vídeo:", e);
-                        }
-                    }
-
-                    // Apenas carregue um novo vídeo se:
-                    // 1. Não houver nenhum vídeo carregado no player (início).
-                    // 2. O ID do primeiro vídeo na fila for diferente do vídeo atualmente carregado.
-                    // 3. (Opcional, mas recomendado) O player não estiver no estado de "playing" E o vídeo que deveria tocar for o primeiro da fila
-                    //    Isso serve para garantir que ele reinicie se o vídeo atual for o certo, mas ele parou por algum motivo (erro, etc.)
-                    if (currentlyLoadedVideoId === null ||
-                        currentlyLoadedVideoId !== firstVideoInQueueId ||
-                        (player.getPlayerState() !== YT.PlayerState.PLAYING && currentlyLoadedVideoId === firstVideoInQueueId)
-                    ) {
-                        updateVideoPlayer(firstVideoInQueue.videoUrl, firstVideoInQueue.phone);
-                    }
-                } else {
-                    console.warn('Player do YouTube não está pronto para carregar o vídeo.');
-                }
-            });
+        // 1. Converte Firebase Object -> Array
+        if (data) {
+            fetchedQueue = Object.keys(data).map(key => ({
+                id: key,
+                ...data[key]
+            }));
         }
+
+        // ============================================================
+        // LÓGICA INTELIGENTE DE ORDENAÇÃO
+        // ============================================================
+        const BOT_NAME = '🤖 DJ Flow';
+
+        // Função que define quem tem prioridade (Humanos primeiro)
+        function sortFunction(a, b) {
+            const isBotA = a.phone === BOT_NAME;
+            const isBotB = b.phone === BOT_NAME;
+            if (!isBotA && isBotB) return -1; // Humano fura fila
+            if (isBotA && !isBotB) return 1;  // Bot vai pro fim
+            return 0; // Se forem iguais, mantém ordem de chegada
+        }
+
+        // Descobre qual vídeo estava tocando antes dessa atualização
+        // (Usa a variável global videoQueue se ela já tiver dados)
+        const currentPlayingId = (videoQueue && videoQueue.length > 0) ? videoQueue[0].id : null;
+
+        // Verifica se esse vídeo AINDA existe na nova lista vinda do Firebase
+        const currentVideoStillExists = fetchedQueue.find(v => v.id === currentPlayingId);
+
+        if (currentVideoStillExists) {
+            // CENÁRIO 1: A música atual AINDA está tocando (alguém só adicionou outra na fila)
+            // -> Mantemos a atual fixa no topo [0] e ordenamos só o resto.
+            const waitingList = fetchedQueue.filter(v => v.id !== currentPlayingId);
+            waitingList.sort(sortFunction);
+            videoQueue = [currentVideoStillExists, ...waitingList];
+        } else {
+            // CENÁRIO 2: A música atual ACABOU e foi removida
+            // -> Ordenamos a lista INTEIRA. Assim, o humano mais antigo vira o novo topo [0].
+            videoQueue = fetchedQueue.sort(sortFunction);
+        }
+        // ============================================================
+
+
+        // --- DAQUI PRA BAIXO É A RENDERIZAÇÃO (IGUAL AO SEU CÓDIGO) ---
+        const videoList = document.getElementById('videoList');
+        videoList.innerHTML = '';
+        
+        if (isAdminLoggedIn) {
+            videoList.classList.add('admin-mode');
+        } else {
+            videoList.classList.remove('admin-mode');
+        }
+
+        if (videoQueue.length === 0) {
+            videoList.innerHTML = '<li class="empty-queue">A fila de vídeos está vazia. Adicione um vídeo!</li>';
+            document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
+            document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
+            if (player && typeof player.stopVideo === 'function') {
+                player.stopVideo();
+            }
+            return;
+        }
+
+        // Helper para pegar título (mantido do seu código)
+        async function getFormattedVideoTitle(url) {
+            try {
+                const videoId = extractVideoId(url);
+                const cachedTitle = sessionStorage.getItem(`videoTitle_${videoId}`);
+                if (cachedTitle) return cachedTitle;
+
+                const response = await fetch(`/api/video-info?id=${videoId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.items && data.items[0]) {
+                        const title = data.items[0].snippet.title;
+                        sessionStorage.setItem(`videoTitle_${videoId}`, title);
+                        return title;
+                    }
+                }
+            } catch (error) { console.error('Erro ao buscar título:', error); }
+            const videoId = extractVideoId(url);
+            return videoId ? `Música (ID: ${videoId})` : 'Vídeo do YouTube';
+        }
+
+        // Renderiza a lista visual
+        for (const video of videoQueue) {
+            const listItem = document.createElement('li');
+            listItem.classList.add('video-item');
+
+            // Marca visual para o Bot
+            if (video.phone === BOT_NAME) {
+                listItem.style.opacity = '0.8';
+                listItem.style.borderLeft = '3px solid #777';
+            }
+
+            const videoTitle = await getFormattedVideoTitle(video.videoUrl);
+
+            listItem.innerHTML = `
+                <div class="bulk-delete-controls">
+                    <input type="checkbox" class="video-select-checkbox" data-videoid="${video.id}" title="Selecionar para remover">
+                </div>
+                <div class="video-info">
+                    <span class="video-title">${videoTitle}</span>
+                    <div class="video-meta">
+                        <span class="video-added-by">Adicionado por: ${video.phone}</span>
+                        <a href="${video.videoUrl}" target="_blank" class="video-link">
+                            <i class="fab fa-youtube"></i> Assistir
+                        </a>
+                    </div>
+                </div>
+                <button class="remove-button" onclick="handleRemoveVideo('${video.id}')" title="Remover vídeo">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            if (onlineUserCount > 1 && !isAdminLoggedIn) {
+                const btns = listItem.querySelectorAll('.remove-button, .bulk-delete-controls');
+                btns.forEach(b => b.style.setProperty('display', 'none', 'important'));
+            }
+            videoList.appendChild(listItem);
+        }
+
+        // --- Gerenciamento do Player ---
+        if (player && typeof player.loadVideoById === 'function') {
+            const firstVideoInQueue = videoQueue[0];
+            const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
+            let currentlyLoadedVideoId = null;
+
+            if (player.getVideoData && typeof player.getVideoData === 'function') {
+                try { currentlyLoadedVideoId = player.getVideoData().video_id; } catch (e) {}
+            }
+
+            if (currentlyLoadedVideoId === null ||
+                currentlyLoadedVideoId !== firstVideoInQueueId ||
+                (player.getPlayerState() !== YT.PlayerState.PLAYING && currentlyLoadedVideoId === firstVideoInQueueId)
+            ) {
+                updateVideoPlayer(firstVideoInQueue.videoUrl, firstVideoInQueue.phone);
+            }
+        }
+    });
+}
 
         /**
          * Extrai o ID do vídeo de uma URL do YouTube.
@@ -1812,6 +1818,7 @@
                 // Atualiza a exibição do nome no botão
                 updateAdminDisplay();
                 closeAdminUnlockModal();
+                atualizarVisibilidadeAutoDJ();
 
                 // Mostra os controles GERAIS de admin (painel, remoção em lote, etc.)
                 document.getElementById('videoList').classList.add('admin-mode');
@@ -1847,6 +1854,7 @@
 
             // Atualiza a exibição
             updateAdminDisplay();
+            atualizarVisibilidadeAutoDJ();
 
             showNotification('Modo Admin DESATIVADO.', 'info');
 
@@ -2382,6 +2390,7 @@
                 closeBulkRemoveConfirmModal();
                 closePanelModal();
                 closeDeleteAllRoomsModal();
+                
 
             }
         });
@@ -3541,10 +3550,24 @@ let autoSugestaoCount = 3;
    UI & MODAL
 ================================ */
 function openSugestaoModal() {
-  const modal = document.getElementById('sugestaoModal');
-  modal.style.display = 'flex';
-  switchTab('genero');
-  detectarGeneroAtual();
+    const modal = document.getElementById('sugestaoModal');
+    if (!modal) return;
+    
+    // Abre o modal primeiro (garante que funciona visualmente)
+    modal.style.display = 'flex';
+    
+    // Tenta configurar as abas e detectar gênero
+    try {
+        switchTab('genero');
+        
+        // Verifica se o player existe antes de tentar detectar
+        if (player && typeof player.getVideoData === 'function') {
+            detectarGeneroAtual();
+        }
+    } catch (e) {
+        console.warn("Aviso: Não foi possível detectar o gênero atual (Player carregando?)", e);
+        // Não faz nada, apenas deixa o modal aberto com o padrão
+    }
 }
 
 function closeSugestaoModal() {
@@ -3589,62 +3612,114 @@ function changeAutoCount(change) {
 }
 
 /* ================================
-   LÓGICA AUXILIAR
+   Detectar estilos músicais
 ================================ */
 function detectarGeneroAtual() {
-  if (typeof player === 'undefined' || !player || !player.getVideoData) return;
+  if (!player || !player.getVideoData) return;
+
   try {
     const title = (player.getVideoData().title || '').toLowerCase();
+
     const generosMap = {
-      sertanejo: ['sertanejo','modão','marilia','gusttavo'],
-      funk: ['funk','trap','dj','mandelão'],
-      pop: ['pop','hit','taylor','bruno mars'],
-      rock: ['rock','metal','punk'],
-      eletronica: ['edm','house','techno','alok'],
-      rap: ['rap','hip hop','mc','matue'],
-      reggaeton: ['reggaeton','bad bunny','anitta'],
-      pagode: ['pagode','samba','ferrugem','thiaguinho']
+      sertanejo: [
+        'sertanejo', 'modão', 'arrocha', 'universitário'
+      ],
+      funk: [
+        'funk', 'mandelão', '150 bpm', 'dj', 'baile', 'proibidão'
+      ],
+      pop: [
+        'pop', 'official video', 'lyrics', 'hit', 'single'
+      ],
+      rock: [
+        'rock', 'metal', 'punk', 'grunge', 'hard rock', 'heavy metal'
+      ],
+      eletronica: [
+        'edm', 'house', 'techno', 'trance', 'deep house', 'remix', 'dj set'
+      ],
+      rap: [
+        'rap', 'trap', 'hip hop', 'hip-hop', 'freestyle', 'cypher'
+      ],
+      reggaeton: [
+        'reggaeton', 'latin', 'latino', 'perreo'
+      ],
+      pagode: [
+        'pagode', 'samba', 'partido alto', 'roda de samba'
+      ]
     };
+
+    let melhorGenero = null;
+    let melhorScore = 0;
+
     for (const genero in generosMap) {
-      if (generosMap[genero].some(k => title.includes(k))) {
-        selectGenero(genero);
-        break;
+      let score = 0;
+
+      for (const palavra of generosMap[genero]) {
+        if (title.includes(palavra)) {
+          score++;
+        }
+      }
+
+      // Guarda o gênero com mais matches
+      if (score > melhorScore) {
+        melhorScore = score;
+        melhorGenero = genero;
       }
     }
-  } catch {}
+
+    // Só muda se tiver alguma confiança
+    if (melhorGenero && melhorScore > 0) {
+      selectGenero(melhorGenero);
+      console.log("🎧 Gênero detectado:", melhorGenero, "Score:", melhorScore);
+    }
+
+  } catch (e) {
+    console.warn("Erro ao detectar gênero:", e);
+  }
+}
+
+// para pegar o ano atual no sugestão de música 
+function getAnoAtual() {
+  return new Date().getFullYear();
 }
 
 function gerarQueryAtual() {
-  let query = 'top hits 2026';
+  const ano = new Date().getFullYear();
+  let query = `top hits ${ano}`;
   
   if (sugestaoTipoSelecionado === 'genero') {
     const map = {
-      sertanejo: 'sertanejo 2026 as mais tocadas',
-      funk: 'funk hits 2026',
-      pop: 'pop internacional 2026 hits',
-      rock: 'rock playlist 2026',
-      eletronica: 'summer eletrohits 2026',
-      rap: 'rap trap brasil 2026',
-      reggaeton: 'reggaeton 2026 éxitos',
-      pagode: 'pagode churrasco 2026'
+      sertanejo: `sertanejo ${ano} as mais tocadas`,
+      funk: `funk hits ${ano}`,
+      pop: `pop internacional ${ano} hits`,
+      rock: `rock playlist ${ano}`,
+      eletronica: `summer eletrohits ${ano}`,
+      rap: `rap trap brasil ${ano}`,
+      reggaeton: `reggaeton ${ano} éxitos`,
+      pagode: `pagode churrasco ${ano}`
     };
     query = map[sugestaoGeneroSelecionado] || query;
   }
   
   if (sugestaoTipoSelecionado === 'tendencia') {
-    const arr = ['top 50 brasil', 'viral hits global', 'tiktok music 2026', 'billboard hot 100'];
+    const arr = [
+      'top 50 brasil',
+      'viral hits global',
+      `tiktok music ${ano}`,
+      'billboard hot 100'
+    ];
     query = arr[Math.floor(Math.random() * arr.length)];
   }
   
   if (sugestaoTipoSelecionado === 'similar' && player?.getVideoData) {
     try {
-        const t = player.getVideoData().title;
-        if (t) query = t.split(' ').slice(0, 3).join(' ') + ' mix';
+      const t = player.getVideoData().title;
+      if (t) query = t.split(' ').slice(0, 3).join(' ') + ' mix';
     } catch(e) {}
   }
   
   return query;
 }
+
 
 /* ================================
    FUNÇÃO ÚNICA: Adicionar Agora
@@ -3657,25 +3732,62 @@ async function sugerirAgora() {
 
   try {
     const query = gerarQueryAtual();
-    const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}&maxResults=10`);
+
+    // Pede muitos para poder escolher vários válidos
+    const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}&maxResults=50`);
     const json = await res.json();
 
-    if (json.items && json.items.length) {
-      // Filtro rigoroso: Só aceita vídeos
-      const validos = json.items.filter(v => v.id.kind === 'youtube#video');
-      
-      if (validos.length > 0) {
-        const escolhido = validos[Math.floor(Math.random() * validos.length)];
-        const url = `https://www.youtube.com/watch?v=${escolhido.id.videoId}`;
-        const user = sessionStorage.getItem('ytSessionUser') || '🤖 DJ';
-        
-        await videoQueueRef.push({ phone: user, videoUrl: url });
-        showNotification(`Adicionado: ${escolhido.snippet.title}`, 'success');
-        setTimeout(closeSugestaoModal, 500);
-      } else {
-        showNotification('Nenhum vídeo válido encontrado.', 'info');
+    if (!json.items || !json.items.length) {
+      showNotification('Nenhum resultado encontrado.', 'info');
+      return;
+    }
+
+    // Filtro rigoroso
+    let candidatos = json.items.filter(v => {
+      const isVideo = v.id.kind === 'youtube#video';
+      const t = v.snippet.title.toLowerCase();
+      const isClean = !t.includes('live') && !t.includes('ao vivo') && !t.includes('short');
+      return isVideo && isClean;
+    });
+
+    if (candidatos.length === 0) {
+      showNotification('Nenhum vídeo válido encontrado.', 'info');
+      return;
+    }
+
+    // Embaralha
+    candidatos.sort(() => Math.random() - 0.5);
+
+    const user = sessionStorage.getItem('ytSessionUser') || '🤖 DJ Flow';
+
+    let adicionados = 0;
+
+    for (const video of candidatos) {
+      if (adicionados >= autoSugestaoCount) break;
+
+      try {
+        const url = `https://www.youtube.com/watch?v=${video.id.videoId}`;
+
+        await videoQueueRef.push({
+          phone: user,
+          videoUrl: url
+        });
+
+        adicionados++;
+        await new Promise(r => setTimeout(r, 200)); // pequeno delay
+
+      } catch (errInner) {
+        console.warn("Erro ao adicionar vídeo individual:", errInner);
       }
     }
+
+    if (adicionados > 0) {
+      showNotification(`Adicionados ${adicionados} vídeos à fila 🎵`, 'success');
+      setTimeout(closeSugestaoModal, 500);
+    } else {
+      showNotification('Não foi possível adicionar vídeos.', 'error');
+    }
+
   } catch (e) {
     console.error(e);
     showNotification('Erro ao buscar sugestão.', 'error');
@@ -3684,6 +3796,7 @@ async function sugerirAgora() {
     btn.disabled = false;
   }
 }
+
 
 /* ================================
    LÓGICA PRINCIPAL DO AUTO DJ
@@ -3700,7 +3813,7 @@ async function rodarCicloAutoDJ() {
     if (len >= autoSugestaoCount) return;
 
     const faltam = autoSugestaoCount - len;
-    console.log(`AutoDJ: Fila tem ${len}. Meta é ${autoSugestaoCount}. Adicionando ${faltam}...`);
+    console.log(`DJFlow: Fila tem ${len}. Meta é ${autoSugestaoCount}. Adicionando ${faltam}...`);
 
     // 2. Busca músicas em lote (pede 50 para garantir variedade e validade)
     const query = gerarQueryAtual();
@@ -3736,7 +3849,7 @@ async function rodarCicloAutoDJ() {
                 
                 // Adiciona ao Firebase
                 await videoQueueRef.push({
-                    phone: '🤖 DJ Auto',
+                    phone: '🤖 DJ Flow',
                     videoUrl: url
                 });
                 
@@ -3777,22 +3890,36 @@ function toggleAutoDjBtn() {
 function ativarAutoSugestao() {
   const toggle = document.getElementById('autoAddToggle');
 
-  // Verifica se a caixinha está marcada
   if (toggle.checked) {
-    // LIGAR
     if (!autoSugestaoAtiva) {
       autoSugestaoAtiva = true;
       showNotification('Auto-sugestão ligada 🤖', 'success');
-      // Inicia imediatamente
       iniciarAutoSugestao();
     }
   } else {
-    // DESLIGAR
     autoSugestaoAtiva = false;
     if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
     showNotification('Auto-sugestão desligada.', 'info');
   }
+
+  // 🔥 ATUALIZA O BOTÃO
+  atualizarUIAutoDJ();
 }
+
+function atualizarUIAutoDJ() {
+  const btn = document.getElementById("btn-auto-sugestao");
+
+  if (!btn) return;
+
+  if (autoSugestaoAtiva) {
+    btn.classList.add("auto-dj-on");
+    btn.innerHTML = '<i class="fas fa-robot"></i> Auto DJ Ligado';
+  } else {
+    btn.classList.remove("auto-dj-on");
+    btn.innerHTML = '<i class="fas fa-magic"></i> Sugerir Música';
+  }
+}
+
 
 function iniciarAutoSugestao() {
   if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
@@ -3821,10 +3948,35 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') closeSugestaoModal();
   });
 });
+
+/**
+ * Controla se o botão do Auto DJ aparece ou não.
+ * Regra: Só aparece se for Admin OU se estiver sozinho na sala.
+ */
+function atualizarVisibilidadeAutoDJ() {
+    const btnAuto = document.getElementById("btn-auto-sugestao");
+    
+    if (!btnAuto) return;
+
+    // Use o contador global atualizado
+    const userCount = parseInt(document.getElementById('userCount').textContent, 10) || onlineUserCount || 1;
+
+    // FORÇA o display com !important para garantir que suma
+    if (isAdminLoggedIn || userCount <= 1) {
+        btnAuto.style.setProperty('display', 'inline-flex', 'important');
+    } else {
+        btnAuto.style.setProperty('display', 'none', 'important');
+    }
+}
 </script>
+
+<div id="autoDjStatus" class="auto-dj-status">
+  🤖 Auto DJ LIGADO
+</div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
     </div>
+
 
 
 </body>

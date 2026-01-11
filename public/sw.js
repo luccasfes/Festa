@@ -1,5 +1,5 @@
-const CACHE_NAME = 'flowlink-cache-v1';
-// Lista de arquivos principais para salvar em cache
+const CACHE_NAME = 'flowlink-cache-v2'; // 👈 troque a versão sempre que mudar algo grande
+
 const FILES_TO_CACHE = [
   '/',
   '/index.html',
@@ -8,36 +8,53 @@ const FILES_TO_CACHE = [
   '/style.css',
   '/assets/favicon.png',
   '/assets/icon-192.png',
-  '/assets/icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js',
-  'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js'
+  '/assets/icon-512.png'
 ];
 
-// Evento 'install': Salva os arquivos no cache
+// INSTALA
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // força atualizar
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Service Worker: Cache aberto, adicionando arquivos...');
-        return cache.addAll(FILES_TO_CACHE);
-      })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE))
   );
 });
 
-// Evento 'fetch': Intercepta requisições
+// ATIVA
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key); // apaga cache antigo
+          }
+        })
+      )
+    )
+  );
+});
+
+// FETCH
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Se o arquivo estiver no cache, retorna ele.
-        if (response) {
+
+  // 👉 Para HTML: sempre tenta a rede primeiro
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
           return response;
-        }
-        // Se não, busca na rede.
-        return fetch(event.request);
-      })
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // 👉 Para os outros arquivos: cache first
+  event.respondWith(
+    caches.match(event.request).then(cached => {
+      return cached || fetch(event.request);
+    })
   );
 });

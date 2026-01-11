@@ -6,821 +6,460 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - FlowLink</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
-    <link rel="stylesheet" href="style.css">
     <style>
-        /* Estilos específicos para o admin */
+        :root {
+            --primary-color: #4e54c8;
+            --secondary-color: #8f94fb;
+            --accent-color: #00d2ff;
+            --dark-bg: #1a1a2e;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --success-color: #00b894;
+            --danger-color: #ff7675;
+            --warning-color: #fdcb6e;
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
         body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
             min-height: 100vh;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            overflow-x: hidden;
         }
 
-        
-        .admin-container {
-            max-width: 1400px;
+        /* Animated Background */
+        .background-blobs {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        }
+
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 10s infinite alternate;
+        }
+
+        .blob-1 { top: 10%; left: 10%; width: 300px; height: 300px; background: var(--primary-color); animation-delay: 0s; }
+        .blob-2 { bottom: 20%; right: 10%; width: 250px; height: 250px; background: var(--accent-color); animation-delay: -2s; }
+        .blob-3 { bottom: 10%; left: 30%; width: 200px; height: 200px; background: #ff0055; animation-delay: -4s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(30px, 50px); }
+        }
+
+        /* Scrollbar Customization */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a2e; }
+        ::-webkit-scrollbar-thumb { background: #4e54c8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00d2ff; }
+
+        /* Layout & Containers */
+        .container {
+            width: 100%;
+            max-width: 1200px;
             padding: 20px;
+            position: relative;
+            z-index: 1;
         }
 
-        #loginView,
-        #dashboardView {
-            width: 100%;
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 0.9rem;
         }
 
-        /* Login Styles */
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn.primary { background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); }
+        .btn.primary:hover { box-shadow: 0 0 15px rgba(78, 84, 200, 0.5); transform: translateY(-2px); }
+        .btn.secondary { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--glass-border); }
+        .btn.secondary:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn.danger { background: rgba(220, 53, 69, 0.2); border: 1px solid rgba(220, 53, 69, 0.3); color: #ff6b6b; }
+        .btn.danger:hover { background: rgba(220, 53, 69, 0.4); }
+        .btn.small { padding: 6px 12px; font-size: 0.8rem; }
+
+        /* Login View */
         .login-card {
-            max-width: 450px;
-            margin: 0 auto;
+            max-width: 400px;
+            margin: 10vh auto;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
             text-align: center;
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
-        /* Dashboard Styles */
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-secondary); }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            outline: none;
+            transition: var(--transition);
+        }
+        .input-group input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.1); }
+
+        /* Dashboard Stats */
         .stats-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 20px;
-            margin-bottom: 30px;
+            margin: 30px 0;
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
             transition: var(--transition);
             position: relative;
             overflow: hidden;
         }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
+        .stat-card:hover { transform: translateY(-5px); border-color: var(--accent-color); }
+        .stat-value { font-size: 2.5rem; font-weight: 700; color: white; margin: 10px 0; }
+        .stat-label { color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
 
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--accent-color);
-            margin: 10px 0;
-        }
-
-        .stat-label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .stat-change {
-            font-size: 0.8rem;
-            margin-top: 5px;
-        }
-
-        .stat-change.positive {
-            color: #4CAF50;
-        }
-
-        .stat-change.negative {
-            color: #F44336;
-        }
-
+        /* Controls & Room List */
         .controls-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
             margin-bottom: 20px;
+            display: flex;
             flex-wrap: wrap;
             gap: 15px;
+            align-items: center;
+            border: 1px solid var(--glass-border);
         }
 
-        .search-box {
-            flex: 1;
-            min-width: 250px;
-            position: relative;
-        }
-
+        .search-box { flex: 1; min-width: 250px; position: relative; }
         .search-box input {
             width: 100%;
-            padding: 12px 15px 12px 45px;
+            padding: 10px 15px 10px 40px;
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
-            font-size: 0.95rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            color: white;
         }
-
-        .search-box i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-        }
-
-        .filter-controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
 
         .filter-select {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px;
             border-radius: 8px;
-            padding: 10px 15px;
-            color: var(--text-primary);
-            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            color: white;
             cursor: pointer;
         }
 
-        .room-list {
-            list-style: none;
-            max-height: 60vh;
-            overflow-y: auto;
-            padding-right: 10px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent-color) #2a2a2a;
-        }
-
-        .room-list::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .room-list::-webkit-scrollbar-track {
-            background: #2a2a2a;
-            border-radius: 10px;
-        }
-
-        .room-list::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
-            border-radius: 10px;
-        }
-
+        .room-list { list-style: none; }
         .room-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            margin-bottom: 15px;
+            border-radius: 12px;
+            padding: 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 20px;
-            margin-bottom: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            border: 1px solid var(--glass-border);
             transition: var(--transition);
-            position: relative;
         }
 
-        .room-item:hover {
-            background: rgba(0, 0, 0, 0.5);
-            border-color: var(--accent-color);
-            transform: translateY(-2px);
+        .room-item:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); }
+        
+        .room-info h4 { font-size: 1.1rem; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+        .room-meta { display: flex; gap: 15px; font-size: 0.85rem; color: var(--text-secondary); margin: 5px 0 10px 0; }
+        
+        .room-stats-badges { display: flex; gap: 8px; }
+        .badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
         }
+        .badge i { margin-right: 4px; color: var(--accent-color); }
 
-        .room-item.active {
-            border-left: 4px solid var(--accent-color);
-        }
+        .room-actions { display: flex; gap: 8px; }
 
-        .room-item.inactive {
-            opacity: 0.7;
-        }
+        .activity-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .dot-high { background: var(--success-color); box-shadow: 0 0 8px var(--success-color); }
+        .dot-med { background: var(--warning-color); }
+        .dot-low { background: var(--danger-color); }
 
-        .room-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--accent-color);
-            border-radius: 4px 0 0 4px;
+        /* Modals */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
             opacity: 0;
+            pointer-events: none;
             transition: opacity 0.3s ease;
         }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
 
-        .room-item:hover::before {
-            opacity: 1;
-        }
-
-        .room-info {
-            flex: 1;
+        .modal {
+            background: #1e1e2e;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            max-height: 85vh;
             display: flex;
             flex-direction: column;
-            gap: 8px;
         }
+        .modal-overlay.active .modal { transform: translateY(0); }
 
-        .room-info h4 {
-            color: var(--text-primary);
-            margin: 0;
-            font-size: 1.1rem;
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--glass-border);
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 8px;
         }
+        .modal-body { padding: 20px; overflow-y: auto; }
+        .modal-footer { padding: 20px; border-top: 1px solid var(--glass-border); display: flex; justify-content: flex-end; gap: 10px; }
 
-        .room-info p {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin: 0;
-        }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .detail-row { display: flex; flex-direction: column; }
+        .detail-label { font-size: 0.8rem; color: var(--text-secondary); }
+        .detail-val { font-size: 1rem; color: white; font-weight: 500; }
 
-        .room-meta {
-            display: flex;
-            gap: 15px;
-            margin-top: 5px;
-            flex-wrap: wrap;
+        /* Toast */
+        .toast {
+            position: fixed; top: 20px; right: 20px;
+            padding: 15px 20px;
+            background: #333;
+            color: white;
+            border-radius: 8px;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 2000;
         }
-
-        .room-meta span {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        .room-stats {
-            display: flex;
-            gap: 10px;
-            margin-top: 8px;
-        }
-
-        .room-stat {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-        }
-
-        .room-stat i {
-            font-size: 0.7rem;
-            color: var(--accent-color);
-        }
-
-        .room-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .room-actions .btn {
-            width: auto;
-            padding: 8px 15px;
-            font-size: 0.85rem;
-        }
-
-        /* Activity indicators */
-        .activity-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-
-        .activity-high {
-            background: #4CAF50;
-            box-shadow: 0 0 5px #4CAF50;
-        }
-
-        .activity-medium {
-            background: #FF9800;
-            box-shadow: 0 0 5px #FF9800;
-        }
-
-        .activity-low {
-            background: #F44336;
-            box-shadow: 0 0 5px #F44336;
-        }
+        .toast.show { transform: translateX(0); }
+        .toast.success { background: var(--success-color); }
+        .toast.error { background: var(--danger-color); }
+        .toast.info { background: var(--primary-color); }
 
         /* Responsividade */
         @media (max-width: 768px) {
-            .room-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-
-            .room-actions {
-                width: 100%;
-                justify-content: flex-end;
-            }
-
-            .controls-container {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .search-box {
-                min-width: 100%;
-            }
-
-            .filter-controls {
-                width: 100%;
-                justify-content: center;
-            }
+            .room-item { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .room-actions { width: 100%; justify-content: flex-end; }
+            .controls-container { flex-direction: column; align-items: stretch; }
+            .stat-value { font-size: 2rem; }
         }
 
-        /* Toast Notifications */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            z-index: 1000;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            transform: translateX(150%);
-            transition: transform 0.3s ease;
-            max-width: 350px;
-        }
-
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast.success {
-            background: var(--success-color);
-        }
-
-        .toast.error {
-            background: var(--danger-color);
-        }
-
-        .toast.info {
-            background: var(--primary-color);
-        }
-
-        .toast.warning {
-            background: #FF9800;
-        }
-
-        .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    padding: 20px;
-}
-
-.modal-overlay.active {
-    display: flex;
-    opacity: 1;
-}
-
-.modal {
-    background: #1e1e2e;
-    border-radius: 12px;
-    padding: 25px;
-    max-width: 600px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    position: relative; /* MUDADO: adicionado */
-    margin: 0 auto; /* MUDADO: centraliza horizontalmente */
-}
-
-/* Remove as animações de transform que podem causar deslocamento */
-.modal-overlay.active .modal {
-    transform: none;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 15px;
-}
-
-.modal-header h3 {
-    margin: 0;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.modal-close {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: color 0.2s ease;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-}
-
-.modal-close:hover {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.modal-body {
-    margin-bottom: 25px;
-    color: var(--text-secondary);
-    line-height: 1.5;
-}
-
-.modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-/* Remove as regras de centralização específicas que podem estar causando conflito */
-#roomDetailsModal.active,
-#confirmModal.active {
-    display: flex !important;
-}
-
-/* Responsividade para modais */
-@media (max-width: 768px) {
-    .modal-overlay {
-        padding: 10px;
-    }
-    
-    .modal {
-        width: 95%;
-        padding: 20px;
-    }
-    
-    .modal-footer {
-        flex-direction: column;
-    }
-    
-    .modal-footer .btn {
-        width: 100%;
-    }
-}
-
-        /* Room Details Modal */
-        .room-details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .detail-item {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .detail-label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        .detail-value {
-            font-size: 1rem;
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-
-        /* Loading States */
-        .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            z-index: 10;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-left: 4px solid var(--accent-color);
+        .loading-spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--accent-color);
             border-radius: 50%;
+            width: 20px;
+            height: 20px;
             animation: spin 1s linear infinite;
+            display: inline-block;
         }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-secondary);
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-
-        .empty-state h3 {
-            color: var(--text-secondary);
-            margin-bottom: 10px;
-        }
-
-        /* Admin Header */
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .admin-header h1 {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 0;
-        }
-
-        .admin-user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .admin-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--accent-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 
 <body>
-    <div id="particles"></div>
-    <div class="container admin-container">
-        <header class="app-header">
-            <h1><i class="fas fa-user-shield"></i> Painel Admin - FlowLink</h1>
-        </header>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
 
+    <div id="toast" class="toast"></div>
+
+    <div class="container">
         <main id="loginView">
-            <section class="login-card">
-                <h2><i class="fas fa-lock"></i> Acesso Administrativo</h2>
-                <p style="color: var(--text-secondary); margin: 20px 0;">
-                    Esta área é restrita a administradores autorizados.
-                </p>
+            <div class="login-card">
+                <i class="fas fa-shield-alt" style="font-size: 3rem; color: var(--accent-color); margin-bottom: 20px;"></i>
+                <h2>Admin FlowLink</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 30px;">Acesso restrito a gerenciadores.</p>
 
-                <div class="input-group" style="text-align: left;">
-                    <label for="adminEmail">E-mail do Admin:</label>
-                    <input type="email" id="adminEmail" placeholder="seu-email@admin.com" autocomplete="username">
+                <div class="input-group">
+                    <label>E-mail</label>
+                    <input type="email" id="adminEmail" placeholder="admin@flowlink.com">
                 </div>
-                <div class="input-group" style="text-align: left;">
-                    <label for="adminPassword">Senha:</label>
-                    <input type="password" id="adminPassword" autocomplete="current-password">
+                <div class="input-group">
+                    <label>Senha</label>
+                    <input type="password" id="adminPassword" placeholder="••••••••">
                 </div>
 
-                <button class="btn primary" onclick="adminLogin()" id="adminLoginBtn"
-                    style="width: 100%; margin-top: 10px;">
-                    <span id="adminLoginBtnText">Entrar</span>
-                    <span id="adminLoginBtnLoader" class="loading" style="display: none;"></span>
+                <button class="btn primary" style="width: 100%; justify-content: center;" onclick="adminLogin()" id="btnLogin">
+                    <span>Entrar</span>
                 </button>
-            </section>
+            </div>
         </main>
 
         <main id="dashboardView" style="display: none;">
-            <div class="admin-header">
-                <h1><i class="fas fa-tachometer-alt"></i> Dashboard Admin</h1>
-                <div class="admin-user-info">
-                    <div class="admin-avatar" id="adminAvatar">A</div>
-                    <span id="adminEmailDisplay">admin@example.com</span>
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <div>
+                    <h1 style="font-weight: 600;"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Gerenciamento em tempo real</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span id="adminEmailDisplay" style="color: var(--text-secondary); font-size: 0.9rem;"></span>
                     <button class="btn secondary small" onclick="adminLogout()">
                         <i class="fas fa-sign-out-alt"></i> Sair
                     </button>
                 </div>
-            </div>
+            </header>
 
-            <!-- Estatísticas -->
             <div class="stats-container">
                 <div class="stat-card">
-                    <i class="fas fa-door-open" style="font-size: 1.5rem; color: var(--accent-color);"></i>
+                    <i class="fas fa-door-open" style="color: var(--accent-color); font-size: 1.5rem; margin-bottom: 10px;"></i>
                     <div class="stat-value" id="totalRooms">0</div>
                     <div class="stat-label">Salas Ativas</div>
-                    <div class="stat-change" id="roomsChange"></div>
                 </div>
                 <div class="stat-card">
-                    <i class="fas fa-users" style="font-size: 1.5rem; color: var(--accent-color);"></i>
+                    <i class="fas fa-users" style="color: var(--success-color); font-size: 1.5rem; margin-bottom: 10px;"></i>
                     <div class="stat-value" id="totalUsers">0</div>
-                    <div class="stat-label">Usuários Ativos</div>
-                    <div class="stat-change" id="usersChange"></div>
+                    <div class="stat-label">Usuários Online</div>
                 </div>
                 <div class="stat-card">
-                    <i class="fas fa-film" style="font-size: 1.5rem; color: var(--accent-color);"></i>
+                    <i class="fas fa-film" style="color: #ff7675; font-size: 1.5rem; margin-bottom: 10px;"></i>
                     <div class="stat-value" id="totalVideos">0</div>
                     <div class="stat-label">Vídeos na Fila</div>
-                    <div class="stat-change" id="videosChange"></div>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-comments" style="font-size: 1.5rem; color: var(--accent-color);"></i>
-                    <div class="stat-value" id="totalChats">0</div>
-                    <div class="stat-label">Mensagens no Chat</div>
-                    <div class="stat-change" id="chatsChange"></div>
                 </div>
             </div>
 
-            <section class="card">
-                <!-- Controles -->
-                <div class="controls-container">
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="searchInput" placeholder="Buscar salas por nome, ID ou criador...">
-                    </div>
-                    <div class="filter-controls">
-                        <select class="filter-select" id="activityFilter">
-                            <option value="all">Todas as salas</option>
-                            <option value="active">Ativas (com usuários)</option>
-                            <option value="inactive">Inativas (sem usuários)</option>
-                        </select>
-                        <select class="filter-select" id="sortFilter">
-                            <option value="newest">Mais recentes</option>
-                            <option value="oldest">Mais antigas</option>
-                            <option value="mostUsers">Mais usuários</option>
-                            <option value="mostVideos">Mais vídeos</option>
-                        </select>
-                        <button class="btn secondary small" onclick="refreshRooms()">
-                            <i class="fas fa-sync-alt"></i> Atualizar
-                        </button>
-                        <button class="btn danger small" onclick="confirmDeleteAllRooms()" id="deleteAllBtn">
-                            <i class="fas fa-trash-alt"></i> Limpar Tudo
-                        </button>
-                    </div>
+            <div class="controls-container">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar por ID, nome ou criador...">
                 </div>
+                <select class="filter-select" id="sortFilter">
+                    <option value="newest">Mais Recentes</option>
+                    <option value="oldest">Mais Antigas</option>
+                    <option value="mostUsers">Mais Usuários</option>
+                </select>
+                <button class="btn secondary" onclick="loadActiveRooms()">
+                    <i class="fas fa-sync-alt"></i> Atualizar
+                </button>
+                <button class="btn danger" onclick="confirmDeleteAllRooms()">
+                    <i class="fas fa-trash-alt"></i> Limpar Tudo
+                </button>
+            </div>
 
-                <!-- Lista de Salas -->
-                <div style="position: relative;">
-                    <div class="loading-overlay" id="roomsLoading" style="display: none;">
-                        <div class="spinner"></div>
-                    </div>
-                    <ul id="roomList" class="room-list">
-                        <li class="empty-queue" id="loadingRooms">Carregando salas...</li>
-                    </ul>
-                </div>
-            </section>
+            <ul id="roomList" class="room-list">
+                <li style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                    <div class="loading-spinner"></div> Carregando salas...
+                </li>
+            </ul>
         </main>
     </div>
 
-    <!-- Modal de Confirmação -->
     <div class="modal-overlay" id="confirmModal">
-        <div class="modal">
+        <div class="modal" style="max-width: 450px;">
             <div class="modal-header">
-                <h3 id="modalTitle"><i class="fas fa-exclamation-triangle"></i> Confirmar Ação</h3>
-                <button class="modal-close" onclick="closeModal()">
-                    <i class="fas fa-times"></i>
-                </button>
+                <h3><i class="fas fa-exclamation-triangle" style="color: var(--warning-color);"></i> Confirmação</h3>
+                <button class="btn secondary small" onclick="closeModal('confirmModal')"><i class="fas fa-times"></i></button>
             </div>
-            <div class="modal-body" id="modalBody">
-                Tem certeza que deseja realizar esta ação?
+            <div class="modal-body" id="confirmBody">
+                Tem certeza?
             </div>
             <div class="modal-footer">
-                <button class="btn secondary" onclick="closeModal()">Cancelar</button>
-                <button class="btn danger" id="modalConfirmBtn">Confirmar</button>
+                <button class="btn secondary" onclick="closeModal('confirmModal')">Cancelar</button>
+                <button class="btn danger" id="btnConfirmAction">Confirmar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Detalhes da Sala -->
-    <div class="modal-overlay" id="roomDetailsModal">
+    <div class="modal-overlay" id="detailsModal">
         <div class="modal">
             <div class="modal-header">
-                <h3 id="roomDetailsTitle"><i class="fas fa-info-circle"></i> Detalhes da Sala</h3>
-                <button class="modal-close" onclick="closeRoomDetailsModal()">
-                    <i class="fas fa-times"></i>
-                </button>
+                <h3><i class="fas fa-info-circle"></i> Detalhes da Sala</h3>
+                <button class="btn secondary small" onclick="closeModal('detailsModal')"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <div class="room-details-grid">
-                    <div class="detail-item">
-                        <span class="detail-label">Nome da Sala:</span>
-                        <span class="detail-value" id="detailRoomName">-</span>
+                <div class="detail-grid">
+                    <div class="detail-row">
+                        <span class="detail-label">Nome</span>
+                        <span class="detail-val" id="detName">-</span>
                     </div>
-                    <div class="detail-item">
-                        <span class="detail-label">ID da Sala:</span>
-                        <span class="detail-value" id="detailRoomId">-</span>
+                    <div class="detail-row">
+                        <span class="detail-label">ID (Clique para copiar)</span>
+                        <span class="detail-val" id="detId" style="cursor: pointer; color: var(--accent-color);" onclick="copyToClipboard(this.innerText)">-</span>
                     </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Criada por:</span>
-                        <span class="detail-value" id="detailCreator">-</span>
+                    <div class="detail-row">
+                        <span class="detail-label">Criador</span>
+                        <span class="detail-val" id="detCreator">-</span>
                     </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Data de Criação:</span>
-                        <span class="detail-value" id="detailCreatedAt">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Usuários Online:</span>
-                        <span class="detail-value" id="detailUsers">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Vídeos na Fila:</span>
-                        <span class="detail-value" id="detailVideos">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Mensagens no Chat:</span>
-                        <span class="detail-value" id="detailChats">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Status:</span>
-                        <span class="detail-value" id="detailStatus">-</span>
+                    <div class="detail-row">
+                        <span class="detail-label">Criada em</span>
+                        <span class="detail-val" id="detCreated">-</span>
                     </div>
                 </div>
+                
+                <h4 style="margin: 20px 0 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">Usuários</h4>
+                <div id="detUsersList" style="margin-bottom: 20px;"></div>
 
-                <h4 style="margin: 20px 0 10px 0; color: var(--text-primary);">Usuários Online</h4>
-                <div id="detailUsersList" class="user-list" style="max-height: 150px; overflow-y: auto;">
-                    <div class="empty-state" style="padding: 10px;">
-                        <i class="fas fa-users"></i>
-                        <p>Nenhum usuário online</p>
-                    </div>
-                </div>
-
-                <h4 style="margin: 20px 0 10px 0; color: var(--text-primary);">Próximos Vídeos</h4>
-                <div id="detailVideosList" class="video-list" style="max-height: 150px; overflow-y: auto;">
-                    <div class="empty-state" style="padding: 10px;">
-                        <i class="fas fa-film"></i>
-                        <p>Nenhum vídeo na fila</p>
-                    </div>
-                </div>
+                <h4 style="margin: 20px 0 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">Fila de Vídeos</h4>
+                <div id="detVideoList"></div>
             </div>
             <div class="modal-footer">
-                <button class="btn secondary" onclick="closeRoomDetailsModal()">Fechar</button>
-                <a href="#" target="_blank" class="btn primary" id="detailJoinLink">
-                    <i class="fas fa-external-link-alt"></i> Entrar na Sala
-                </a>
-                <button class="btn danger" onclick="deleteRoomFromDetails()">
-                    <i class="fas fa-trash"></i> Deletar Sala
-                </button>
+                <a href="#" target="_blank" id="detLinkBtn" class="btn primary"><i class="fas fa-external-link-alt"></i> Entrar</a>
+                <button class="btn danger" id="detDeleteBtn"><i class="fas fa-trash"></i> Deletar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ====================================================================
-        // Configuração do Firebase
-        // ====================================================================
+        // CONFIGURAÇÃO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCDlr4XHXuwWQ9Zj9dd2yoctLhFz1vbbyM",
             authDomain: "flowlink-7fd57.firebaseapp.com",
@@ -837,744 +476,340 @@
         const auth = firebase.auth();
         const roomsRef = database.ref('rooms');
 
-        // ====================================================================
-        // IDs dos Administradores
-        // ====================================================================
+        // ATENÇÃO: Verificação Client-Side é insegura. Use Firebase Security Rules para proteção real.
         const ADMIN_UIDS = [
             'PTkwuSLcpaRvtVWOzJH79NrwReA2',
             'liOoyPGRKHgYX1Q81irll97kBSD3',
             'QwUYZ2Ls20fDtlUFDXs5lKjouN12'
         ];
 
-        // ====================================================================
-        // Variáveis Globais
-        // ====================================================================
-        const loginView = document.getElementById('loginView');
-        const dashboardView = document.getElementById('dashboardView');
-        const roomListEl = document.getElementById('roomList');
-        const loadingRoomsEl = document.getElementById('loadingRooms');
-        const roomsLoadingEl = document.getElementById('roomsLoading');
-        const searchInput = document.getElementById('searchInput');
-        const activityFilter = document.getElementById('activityFilter');
-        const sortFilter = document.getElementById('sortFilter');
-        const confirmModal = document.getElementById('confirmModal');
-        const roomDetailsModal = document.getElementById('roomDetailsModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalBody = document.getElementById('modalBody');
-        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
-
-        // Estatísticas
-        const totalRoomsEl = document.getElementById('totalRooms');
-        const totalUsersEl = document.getElementById('totalUsers');
-        const totalVideosEl = document.getElementById('totalVideos');
-        const totalChatsEl = document.getElementById('totalChats');
-        const roomsChangeEl = document.getElementById('roomsChange');
-        const usersChangeEl = document.getElementById('usersChange');
-        const videosChangeEl = document.getElementById('videosChange');
-        const chatsChangeEl = document.getElementById('chatsChange');
-        const adminEmailDisplay = document.getElementById('adminEmailDisplay');
-        const adminAvatar = document.getElementById('adminAvatar');
-
+        // Estado Global
         let roomsData = {};
         let currentAction = null;
-        let currentRoomId = null;
-        let previousStats = {
-            rooms: 0,
-            users: 0,
-            videos: 0,
-            chats: 0
+
+        // Elementos DOM
+        const els = {
+            loginView: document.getElementById('loginView'),
+            dashboardView: document.getElementById('dashboardView'),
+            roomList: document.getElementById('roomList'),
+            searchInput: document.getElementById('searchInput'),
+            sortFilter: document.getElementById('sortFilter'),
+            stats: {
+                rooms: document.getElementById('totalRooms'),
+                users: document.getElementById('totalUsers'),
+                videos: document.getElementById('totalVideos')
+            }
         };
 
-        // ====================================================================
-        // Funções de UI (Login/Dashboard)
-        // ====================================================================
-        function showLoginView() {
-            loginView.style.display = 'block';
-            dashboardView.style.display = 'none';
-        }
-
-        function showDashboardView() {
-            loginView.style.display = 'none';
-            dashboardView.style.display = 'block';
-            loadActiveRooms();
-        }
-
-        // ====================================================================
-        // Lógica de Autenticação
-        // ====================================================================
-
-        // Monitora o estado do login
+        // --- AUTH ---
         auth.onAuthStateChanged(user => {
             if (user && ADMIN_UIDS.includes(user.uid)) {
-                // Usuário está logado E é um admin
-                console.log('Admin autenticado:', user.email);
-                adminEmailDisplay.textContent = user.email;
-                adminAvatar.textContent = user.email.charAt(0).toUpperCase();
-                showDashboardView();
-            } else if (user) {
-                // Usuário está logado, MAS NÃO é admin
-                console.warn('Usuário não-admin tentou acessar:', user.email);
-                showToast('Acesso negado. Esta conta não é administradora.', 'error');
-                adminLogout();
+                els.loginView.style.display = 'none';
+                els.dashboardView.style.display = 'block';
+                document.getElementById('adminEmailDisplay').textContent = user.email;
+                loadActiveRooms();
             } else {
-                // Ninguém logado
-                console.log('Nenhum usuário logado.');
-                showLoginView();
+                els.loginView.style.display = 'block';
+                els.dashboardView.style.display = 'none';
+                if(user) {
+                    showToast('Acesso negado: Conta não administrativa.', 'error');
+                    auth.signOut();
+                }
             }
         });
 
-        async function adminLogin() {
+        function adminLogin() {
             const email = document.getElementById('adminEmail').value;
-            const password = document.getElementById('adminPassword').value;
+            const pass = document.getElementById('adminPassword').value;
+            const btn = document.getElementById('btnLogin');
 
-            if (!email || !password) {
-                showToast('Preencha e-mail e senha.', 'error');
-                return;
-            }
+            if(!email || !pass) return showToast('Preencha todos os campos', 'info');
 
-            toggleLoading('adminLoginBtn', true);
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                // O 'onAuthStateChanged' vai detectar o login e mudar a tela.
-            } catch (error) {
-                console.error('Erro no login:', error);
-                showToast('Falha no login: ' + error.message, 'error');
-            } finally {
-                toggleLoading('adminLoginBtn', false);
-            }
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner"></div>';
+
+            auth.signInWithEmailAndPassword(email, pass)
+                .catch(err => {
+                    showToast('Erro: ' + err.message, 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Entrar';
+                });
         }
 
         function adminLogout() {
             auth.signOut();
-            showToast('Logout realizado com sucesso.', 'info');
         }
 
-        // ====================================================================
-        // Lógica do Dashboard (Ver e Deletar)
-        // ====================================================================
-
+        // --- CORE FUNCTIONS ---
         function loadActiveRooms() {
-            roomsLoadingEl.style.display = 'flex';
-            loadingRoomsEl.style.display = 'block';
+            // Loading state suave
+            els.roomList.style.opacity = '0.5';
 
-            roomsRef.on('value', snapshot => {
-                roomsLoadingEl.style.display = 'none';
-                roomListEl.innerHTML = ''; // Limpa a lista
-                roomsData = {};
+            roomsRef.once('value', snapshot => {
+                els.roomList.style.opacity = '1';
+                els.roomList.innerHTML = '';
+                roomsData = {}; // Reset
 
                 if (!snapshot.exists()) {
-                    roomListEl.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-door-closed"></i>
-                            <h3>Nenhuma sala ativa</h3>
-                            <p>Não há salas criadas no momento.</p>
-                        </div>
-                    `;
-                    updateStats();
+                    renderEmptyState();
+                    updateStats(0, 0, 0);
                     return;
                 }
 
-                let totalUsers = 0;
-                let totalVideos = 0;
-                let totalChats = 0;
-                const roomsArray = [];
+                let totalUsers = 0, totalVideos = 0;
+                let roomsArray = [];
 
-                snapshot.forEach(roomSnap => {
-                    const roomId = roomSnap.key;
-                    const roomData = roomSnap.val();
+                snapshot.forEach(child => {
+                    const room = child.val();
+                    const id = child.key;
+                    roomsData[id] = room;
 
-                    roomsData[roomId] = roomData;
-
-                    const roomName = roomData.roomName || 'Sala sem nome';
-                    const creatorName = roomData.creatorName || 'Desconhecido';
-                    const createdAt = new Date(roomData.createdAt).toLocaleString('pt-BR');
-                    const userCount = roomData.presence ? Object.keys(roomData.presence).length : 0;
-                    const videoCount = roomData.videoQueue ? Object.keys(roomData.videoQueue).length : 0;
-                    const chatCount = roomData.chat && roomData.chat.messages ? Object.keys(roomData.chat.messages).length : 0;
+                    const userCount = room.presence ? Object.keys(room.presence).length : 0;
+                    const videoCount = room.videoQueue ? Object.keys(room.videoQueue).length : 0;
 
                     totalUsers += userCount;
                     totalVideos += videoCount;
-                    totalChats += chatCount;
-
-                    // Determina nível de atividade
-                    let activityLevel = 'low';
-                    let activityClass = 'activity-low';
-                    if (userCount > 5) {
-                        activityLevel = 'high';
-                        activityClass = 'activity-high';
-                    } else if (userCount > 1) {
-                        activityLevel = 'medium';
-                        activityClass = 'activity-medium';
-                    }
 
                     roomsArray.push({
-                        id: roomId,
-                        name: roomName,
-                        creator: creatorName,
-                        createdAt: roomData.createdAt,
+                        id,
+                        ...room,
                         userCount,
-                        videoCount,
-                        chatCount,
-                        activityLevel,
-                        activityClass,
-                        data: roomData
+                        videoCount
                     });
                 });
 
-                // Aplica filtros
-                let filteredRooms = applyFilters(roomsArray);
-
-                // Atualiza estatísticas
-                updateStats(filteredRooms.length, totalUsers, totalVideos, totalChats);
-
-                // Renderiza salas
-                if (filteredRooms.length === 0) {
-                    roomListEl.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-search"></i>
-                            <h3>Nenhuma sala encontrada</h3>
-                            <p>Tente ajustar os filtros de busca.</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                filteredRooms.forEach(room => {
+                updateStats(roomsArray.length, totalUsers, totalVideos);
+                
+                // Filtragem e Ordenação
+                const filtered = filterAndSortRooms(roomsArray);
+                
+                // Renderização Otimizada com DocumentFragment
+                const fragment = document.createDocumentFragment();
+                
+                filtered.forEach(room => {
                     const li = document.createElement('li');
-                    li.className = `room-item ${room.userCount === 0 ? 'inactive' : 'active'}`;
-                    li.setAttribute('data-room-id', room.id);
-                    li.setAttribute('data-room-name', room.name);
-                    li.setAttribute('data-activity', room.activityLevel);
+                    li.className = 'room-item';
+                    
+                    // Lógica de atividade
+                    let dotClass = 'dot-low';
+                    if (room.userCount > 5) dotClass = 'dot-high';
+                    else if (room.userCount > 0) dotClass = 'dot-med';
+
                     li.innerHTML = `
                         <div class="room-info">
                             <h4>
-                                <span class="activity-indicator ${room.activityClass}"></span>
-                                ${room.name}
-                                ${room.userCount === 0 ? '<span style="color: var(--text-secondary); font-size: 0.8rem;"> (Inativa)</span>' : ''}
+                                <span class="activity-dot ${dotClass}"></span>
+                                ${escapeHtml(room.roomName || 'Sem nome')}
                             </h4>
                             <div class="room-meta">
-                                <span><i class="fas fa-crown"></i> ${room.creator}</span>
-                                <span><i class="fas fa-calendar"></i> ${new Date(room.createdAt).toLocaleDateString('pt-BR')}</span>
+                                <span><i class="fas fa-crown"></i> ${escapeHtml(room.creatorName || '?')}</span>
+                                <span><i class="fas fa-clock"></i> ${formatDate(room.createdAt)}</span>
+                                <span style="cursor:pointer" onclick="copyToClipboard('${room.id}')" title="Copiar ID"><i class="fas fa-fingerprint"></i> ${room.id.substring(0,6)}...</span>
                             </div>
-                            <div class="room-stats">
-                                <div class="room-stat">
-                                    <i class="fas fa-users"></i> ${room.userCount} online
-                                </div>
-                                <div class="room-stat">
-                                    <i class="fas fa-film"></i> ${room.videoCount} vídeos
-                                </div>
-                                <div class="room-stat">
-                                    <i class="fas fa-comments"></i> ${room.chatCount} mensagens
-                                </div>
+                            <div class="room-stats-badges">
+                                <span class="badge"><i class="fas fa-users"></i> ${room.userCount}</span>
+                                <span class="badge"><i class="fas fa-film"></i> ${room.videoCount}</span>
                             </div>
-                            <p><strong>ID:</strong> ${room.id}</p>
                         </div>
                         <div class="room-actions">
-                            <button class="btn secondary small" onclick="showRoomDetails('${room.id}')">
-                                <i class="fas fa-info-circle"></i> Detalhes
-                            </button>
-                            <a href="index.html?room=${room.id}" target="_blank" class="btn secondary small">
-                                <i class="fas fa-eye"></i> Ver
-                            </a>
-                            <button class="btn danger small" onclick="confirmDeleteRoom('${room.id}', '${room.name}')">
-                                <i class="fas fa-trash"></i> Deletar
-                            </button>
+                            <button class="btn secondary small" onclick="openDetails('${room.id}')">Detalhes</button>
+                            <button class="btn danger small" onclick="askDeleteRoom('${room.id}')"><i class="fas fa-trash"></i></button>
                         </div>
                     `;
-                    roomListEl.appendChild(li);
+                    fragment.appendChild(li);
                 });
-            }, error => {
-                // Isso vai acontecer se o usuário NÃO for admin, graças às nossas Regras!
-                console.error('Erro ao ler salas (Verifique as Regras do Firebase):', error);
-                roomListEl.innerHTML = `
-                    <div class="empty-state" style="color: var(--danger-color);">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h3>Erro de Permissão</h3>
-                        <p>Você não tem permissão para ver as salas.</p>
-                    </div>
-                `;
-                adminLogout(); // Força o logout
+
+                if(filtered.length === 0) renderEmptyState("Nenhuma sala encontrada com este filtro.");
+                else els.roomList.appendChild(fragment);
             });
         }
 
-        function applyFilters(rooms) {
-            let filtered = [...rooms];
+        function filterAndSortRooms(rooms) {
+            const term = els.searchInput.value.toLowerCase();
+            const sort = els.sortFilter.value;
 
-            // Filtro de atividade
-            const activityValue = activityFilter.value;
-            if (activityValue === 'active') {
-                filtered = filtered.filter(room => room.userCount > 0);
-            } else if (activityValue === 'inactive') {
-                filtered = filtered.filter(room => room.userCount === 0);
-            }
+            // Filtro
+            let filtered = rooms.filter(r => 
+                (r.roomName && r.roomName.toLowerCase().includes(term)) ||
+                (r.id && r.id.toLowerCase().includes(term)) ||
+                (r.creatorName && r.creatorName.toLowerCase().includes(term))
+            );
 
-            // Filtro de busca
-            const searchTerm = searchInput.value.toLowerCase();
-            if (searchTerm) {
-                filtered = filtered.filter(room =>
-                    room.name.toLowerCase().includes(searchTerm) ||
-                    room.id.toLowerCase().includes(searchTerm) ||
-                    room.creator.toLowerCase().includes(searchTerm)
-                );
-            }
-
-            // Ordenação
-            const sortValue = sortFilter.value;
-            switch (sortValue) {
-                case 'newest':
-                    filtered.sort((a, b) => b.createdAt - a.createdAt);
-                    break;
-                case 'oldest':
-                    filtered.sort((a, b) => a.createdAt - b.createdAt);
-                    break;
-                case 'mostUsers':
-                    filtered.sort((a, b) => b.userCount - a.userCount);
-                    break;
-                case 'mostVideos':
-                    filtered.sort((a, b) => b.videoCount - a.videoCount);
-                    break;
-            }
+            // Sort
+            filtered.sort((a, b) => {
+                if (sort === 'newest') return (b.createdAt || 0) - (a.createdAt || 0);
+                if (sort === 'oldest') return (a.createdAt || 0) - (b.createdAt || 0);
+                if (sort === 'mostUsers') return b.userCount - a.userCount;
+                return 0;
+            });
 
             return filtered;
         }
 
-        function updateStats(totalRooms = 0, totalUsers = 0, totalVideos = 0, totalChats = 0) {
-            // Atualiza valores
-            totalRoomsEl.textContent = totalRooms;
-            totalUsersEl.textContent = totalUsers;
-            totalVideosEl.textContent = totalVideos;
-            totalChatsEl.textContent = totalChats;
+        // --- ACTIONS ---
+        function askDeleteRoom(roomId) {
+    const room = roomsData[roomId];
+    
+    // 🔴 BLOQUEIO: Se tiver gente online, nem abre o modal
+    if (room && room.presence && Object.keys(room.presence).length > 0) {
+        showToast("Proteção: Não é possível deletar sala com usuários online!", "error");
+        return; 
+    }
 
-            // Calcula mudanças
-            updateStatChange(roomsChangeEl, previousStats.rooms, totalRooms, 'salas');
-            updateStatChange(usersChangeEl, previousStats.users, totalUsers, 'usuários');
-            updateStatChange(videosChangeEl, previousStats.videos, totalVideos, 'vídeos');
-            updateStatChange(chatsChangeEl, previousStats.chats, totalChats, 'mensagens');
-
-            // Atualiza estatísticas anteriores
-            previousStats = {
-                rooms: totalRooms,
-                users: totalUsers,
-                videos: totalVideos,
-                chats: totalChats
-            };
-        }
-
-        function updateStatChange(element, previous, current, label) {
-            if (previous === 0) {
-                element.textContent = '';
-                element.className = 'stat-change';
-                return;
-            }
-
-            const change = current - previous;
-            if (change > 0) {
-                element.textContent = `+${change} ${label}`;
-                element.className = 'stat-change positive';
-            } else if (change < 0) {
-                element.textContent = `${change} ${label}`;
-                element.className = 'stat-change negative';
-            } else {
-                element.textContent = 'Sem mudança';
-                element.className = 'stat-change';
-            }
-        }
-
-        function confirmDeleteRoom(roomId, roomName) {
-            currentAction = 'deleteRoom';
-            currentRoomId = roomId;
-            modalTitle.innerHTML = '<i class="fas fa-trash"></i> Confirmar Exclusão';
-            modalBody.innerHTML = `
-                Tem certeza que deseja <strong>DELETAR</strong> a sala "<strong>${roomName}</strong>" (${roomId})?<br><br>
-                Esta ação é <strong>irreversível</strong> e vai apagar:
-                <ul style="text-align: left; margin: 10px 0;">
-                    <li>Todos os vídeos da fila</li>
-                    <li>Todo o histórico do chat</li>
-                    <li>Dados de presença dos usuários</li>
-                </ul>
-            `;
-            modalConfirmBtn.innerHTML = '<i class="fas fa-trash"></i> Deletar Sala';
-            modalConfirmBtn.className = 'btn danger';
-            openModal();
-        }
-
-        function confirmDeleteAllRooms() {
-            if (Object.keys(roomsData).length === 0) {
-                showToast('Não há salas para deletar.', 'info');
-                return;
-            }
-
-            currentAction = 'deleteAllRooms';
-            modalTitle.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Confirmar Limpeza Total';
-            modalBody.innerHTML = `
-                Tem certeza que deseja <strong>DELETAR TODAS</strong> as ${Object.keys(roomsData).length} salas?<br><br>
-                Esta ação é <strong>irreversível</strong> e vai apagar:
-                <ul style="text-align: left; margin: 10px 0;">
-                    <li>Todas as salas ativas</li>
-                    <li>Todas as filas de vídeo</li>
-                    <li>Todo o histórico de chat</li>
-                    <li>Todos os dados de usuários</li>
-                </ul>
-                <strong style="color: var(--danger-color);">Esta ação não pode ser desfeita!</strong>
-            `;
-            modalConfirmBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Deletar Tudo';
-            modalConfirmBtn.className = 'btn danger';
-            openModal();
-        }
-
-        async function executeAction() {
-            closeModal();
-
-            if (currentAction === 'deleteRoom') {
-                await deleteRoom(currentRoomId);
-            } else if (currentAction === 'deleteAllRooms') {
-                await deleteAllRooms();
-            }
-
-            currentAction = null;
-            currentRoomId = null;
-        }
-
-        async function deleteRoom(roomId) {
-            try {
-                toggleLoading('deleteAllBtn', true);
-                await database.ref('rooms/' + roomId).remove();
-                console.log(`Sala ${roomId} deletada com sucesso.`);
+    currentAction = () => {
+        database.ref('rooms/' + roomId).remove()
+            .then(() => {
                 showToast('Sala deletada com sucesso!', 'success');
-                // O listener 'on("value")' vai atualizar a lista automaticamente.
-            } catch (error) {
-                console.error('Erro ao deletar sala:', error);
-                showToast('Erro ao deletar sala: ' + error.message, 'error');
-            } finally {
-                toggleLoading('deleteAllBtn', false);
-            }
+                // O listener once/on vai atualizar a tela sozinho
+            })
+            .catch(e => {
+                // Aqui pegamos o erro que virá das Regras de Segurança do Firebase
+                console.error(e);
+                showToast("Erro: Você não tem permissão de Admin (Backend).", "error");
+            });
+    };
+    
+    document.getElementById('confirmBody').innerHTML = `
+        Deletar a sala <strong>${room.roomName || roomId}</strong> permanentemente?<br>
+        <small style="color: var(--text-secondary)">Histórico e fila serão perdidos.</small>
+    `;
+    
+    // Configura o botão do modal e abre
+    const confirmBtn = document.getElementById('btnConfirmAction');
+    confirmBtn.onclick = () => {
+        currentAction();
+        closeModal('confirmModal');
+    };
+    
+    openModal('confirmModal');
+}
+        function confirmDeleteAllRooms() {
+            currentAction = () => {
+                database.ref('rooms').remove()
+                    .then(() => showToast('Todas as salas foram limpas.', 'success'))
+                    .catch(e => showToast(e.message, 'error'));
+            };
+            document.getElementById('confirmBody').innerHTML = `<span style="color: #ff7675">ATENÇÃO:</span> Você vai apagar TODAS as salas e dados ativos.`;
+            document.getElementById('btnConfirmAction').onclick = () => {
+                currentAction();
+                closeModal('confirmModal');
+            };
+            openModal('confirmModal');
         }
 
-        async function deleteAllRooms() {
-            try {
-                toggleLoading('deleteAllBtn', true);
-                
-                // 1. Pega a referência e os dados (como no index.html)
-                const roomsRef = database.ref('rooms');
-                const snapshot = await roomsRef.once('value'); // Busca os dados UMA VEZ
-                const roomsData = snapshot.val();
+        function openDetails(roomId) {
+            const room = roomsData[roomId];
+            if(!room) return;
 
-                if (!roomsData) {
-                    showToast('Nenhuma sala para deletar.', 'info');
-                    toggleLoading('deleteAllBtn', false); // Libera o botão
-                    return; // Para a execução
-                }
+            // Preencher dados
+            document.getElementById('detName').textContent = room.roomName || 'Sem nome';
+            document.getElementById('detId').textContent = roomId;
+            document.getElementById('detCreator').textContent = room.creatorName || '-';
+            document.getElementById('detCreated').textContent = new Date(room.createdAt).toLocaleString('pt-BR');
+            document.getElementById('detLinkBtn').href = `index.html?room=${roomId}`;
+            
+            // Botão Deletar no Modal
+            document.getElementById('detDeleteBtn').onclick = () => {
+                closeModal('detailsModal');
+                askDeleteRoom(roomId);
+            };
 
-                // 2. Cria as promessas de exclusão para cada sala individual
-                const roomIds = Object.keys(roomsData);
-                const deletePromises = [];
-
-                roomIds.forEach(roomId => {
-                    // Adiciona a promessa de deletar /rooms/ID_DA_SALA
-                    deletePromises.push(database.ref('rooms/' + roomId).remove());
+            // Listar Users
+            const usersDiv = document.getElementById('detUsersList');
+            usersDiv.innerHTML = '';
+            if(room.presence) {
+                Object.values(room.presence).forEach(u => {
+                    usersDiv.innerHTML += `<div style="font-size:0.9rem; padding: 4px 0;"><i class="fas fa-user-circle"></i> ${escapeHtml(u.name)}</div>`;
                 });
-
-                // 3. Executa todas as exclusões em paralelo
-                await Promise.all(deletePromises);
-                
-                console.log('Todas as salas foram deletadas com sucesso.');
-                showToast('Todas as salas foram deletadas com sucesso!', 'success');
-                // O listener principal (roomsRef.on('value', ...))
-                // já vai detectar as mudanças e atualizar a tela automaticamente.
-
-            } catch (error) {
-                console.error('Erro ao deletar todas as salas:', error);
-                showToast('Erro ao deletar salas: ' + error.message, 'error');
-            } finally {
-                toggleLoading('deleteAllBtn', false);
-            }
-        }
-
-        function refreshRooms() {
-            loadActiveRooms();
-            showToast('Lista de salas atualizada!', 'info');
-        }
-
-        // ====================================================================
-        // Detalhes da Sala
-        // ====================================================================
-
-        function showRoomDetails(roomId) {
-    console.log('Mostrando detalhes da sala:', roomId);
-    
-    const roomData = roomsData[roomId];
-    if (!roomData) {
-        showToast('Dados da sala não encontrados.', 'error');
-        return;
-    }
-    
-    try {
-        // Preenche os detalhes BÁSICOS primeiro (teste rápido)
-        document.getElementById('detailRoomName').textContent = roomData.roomName || 'Sala sem nome';
-        document.getElementById('detailRoomId').textContent = roomId;
-        document.getElementById('detailCreator').textContent = roomData.creatorName || 'Desconhecido';
-        
-        // Tenta formatar a data com tratamento de erro
-        let createdAtText = 'Data desconhecida';
-        if (roomData.createdAt) {
-            try {
-                createdAtText = new Date(roomData.createdAt).toLocaleString('pt-BR');
-            } catch (e) {
-                console.warn('Erro ao formatar data:', e);
-            }
-        }
-        document.getElementById('detailCreatedAt').textContent = createdAtText;
-        
-        // Contagens
-        const userCount = roomData.presence ? Object.keys(roomData.presence).length : 0;
-        const videoCount = roomData.videoQueue ? Object.keys(roomData.videoQueue).length : 0;
-        const chatCount = roomData.chat && roomData.chat.messages ? Object.keys(roomData.chat.messages).length : 0;
-        
-        document.getElementById('detailUsers').textContent = userCount;
-        document.getElementById('detailVideos').textContent = videoCount;
-        document.getElementById('detailChats').textContent = chatCount;
-        
-        const statusText = userCount > 0 ? 'Ativa' : 'Inativa';
-        document.getElementById('detailStatus').textContent = statusText;
-        document.getElementById('detailStatus').style.color = userCount > 0 ? 'var(--success-color)' : 'var(--text-secondary)';
-        
-        // Link para entrar na sala
-        document.getElementById('detailJoinLink').href = `index.html?room=${roomId}`;
-        
-        // Lista de usuários online (SIMPLIFICADA)
-        const usersList = document.getElementById('detailUsersList');
-        usersList.innerHTML = '';
-        
-        if (roomData.presence && Object.keys(roomData.presence).length > 0) {
-            Object.values(roomData.presence).forEach(user => {
-                const userEl = document.createElement('div');
-                userEl.className = 'user-item';
-                userEl.style.padding = '8px';
-                userEl.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
-                userEl.style.display = 'flex';
-                userEl.style.alignItems = 'center';
-                userEl.style.gap = '10px';
-                
-                userEl.innerHTML = `
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--success-color);"></div>
-                    <span>${user.name || 'Usuário'}</span>
-                `;
-                usersList.appendChild(userEl);
-            });
-        } else {
-            usersList.innerHTML = `
-                <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
-                    <i class="fas fa-users"></i>
-                    <p>Nenhum usuário online</p>
-                </div>
-            `;
-        }
-        
-        // Lista de vídeos (SIMPLIFICADA)
-        const videosList = document.getElementById('detailVideosList');
-        videosList.innerHTML = '';
-        
-        if (roomData.videoQueue && Object.keys(roomData.videoQueue).length > 0) {
-            Object.values(roomData.videoQueue).slice(0, 3).forEach(video => {
-                const videoEl = document.createElement('div');
-                videoEl.className = 'video-item';
-                videoEl.style.padding = '8px';
-                videoEl.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
-                
-                videoEl.innerHTML = `
-                    <div style="font-weight: 500;">${video.phone || 'Anônimo'}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
-                        ${video.videoUrl ? 'Vídeo adicionado' : 'Sem URL'}
-                    </div>
-                `;
-                videosList.appendChild(videoEl);
-            });
-        } else {
-            videosList.innerHTML = `
-                <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
-                    <i class="fas fa-film"></i>
-                    <p>Nenhum vídeo na fila</p>
-                </div>
-            `;
-        }
-        
-        currentRoomId = roomId;
-        openRoomDetailsModal();
-        console.log('Modal de detalhes aberto com sucesso!');
-        
-    } catch (error) {
-        console.error('Erro ao mostrar detalhes da sala:', error);
-        showToast('Erro ao carregar detalhes da sala.', 'error');
-    }
-}
-
-        function deleteRoomFromDetails() {
-            const roomName = document.getElementById('detailRoomName').textContent;
-            closeRoomDetailsModal();
-            confirmDeleteRoom(currentRoomId, roomName);
-        }
-
-        // ====================================================================
-        // Funcionalidades de UI
-        // ====================================================================
-
-        // Sistema de busca e filtros
-        searchInput.addEventListener('input', function () {
-            loadActiveRooms();
-        });
-
-        activityFilter.addEventListener('change', function () {
-            loadActiveRooms();
-        });
-
-        sortFilter.addEventListener('change', function () {
-            loadActiveRooms();
-        });
-
-        // Modal functions
-        function openModal() {
-    console.log('Abrindo modal de confirmação...');
-    confirmModal.classList.add('active');
-    document.body.style.overflow = 'hidden'; // Impede scroll do body
-}
-
-function closeModal() {
-    console.log('Fechando modal de confirmação...');
-    confirmModal.classList.remove('active');
-    document.body.style.overflow = ''; // Restaura scroll
-}
-
-function openRoomDetailsModal() {
-    console.log('Abrindo modal de detalhes da sala...');
-    roomDetailsModal.classList.add('active');
-    document.body.style.overflow = 'hidden'; // Impede scroll do body
-}
-
-function closeRoomDetailsModal() {
-    console.log('Fechando modal de detalhes da sala...');
-    roomDetailsModal.classList.remove('active');
-    document.body.style.overflow = ''; // Restaura scroll
-    currentRoomId = null;
-}
-
-// Event listeners CORRIGIDOS para fechar modais
-confirmModal.addEventListener('click', function(e) {
-    if (e.target === this) {
-        console.log('Clicou fora do modal de confirmação - fechando');
-        closeModal();
-    }
-});
-
-roomDetailsModal.addEventListener('click', function(e) {
-    if (e.target === this) {
-        console.log('Clicou fora do modal de detalhes - fechando');
-        closeRoomDetailsModal();
-    }
-});
-
-// Fechar com ESC - VERSÃO CORRIGIDA
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        if (confirmModal.classList.contains('active')) {
-            closeModal();
-        }
-        if (roomDetailsModal.classList.contains('active')) {
-            closeRoomDetailsModal();
-        }
-    }
-});
-
-        // Toast notifications
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-${getToastIcon(type)}"></i>
-                    <span>${message}</span>
-                </div>
-            `;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 100);
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => {
-                    document.body.removeChild(toast);
-                }, 300);
-            }, 4000);
-        }
-
-        function getToastIcon(type) {
-            switch (type) {
-                case 'success': return 'check-circle';
-                case 'error': return 'exclamation-circle';
-                case 'warning': return 'exclamation-triangle';
-                default: return 'info-circle';
-            }
-        }
-
-        // Event listeners
-        modalConfirmBtn.addEventListener('click', executeAction);
-
-        // Fechar modal ao clicar fora
-        confirmModal.addEventListener('click', function (e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
-        roomDetailsModal.addEventListener('click', function (e) {
-            if (e.target === this) {
-                closeRoomDetailsModal();
-            }
-        });
-
-        // ====================================================================
-        // Funções Utilitárias
-        // ====================================================================
-        function toggleLoading(buttonId, isLoading) {
-            const btn = document.getElementById(buttonId);
-            if (!btn) return;
-
-            const btnText = btn.querySelector(`#${buttonId}Text`);
-            const btnLoader = btn.querySelector(`#${buttonId}Loader`);
-
-            if (isLoading) {
-                btn.disabled = true;
-                if (btnText) btnText.style.display = 'none';
-                if (btnLoader) btnLoader.style.display = 'inline-block';
             } else {
-                btn.disabled = false;
-                if (btnText) btnText.style.display = 'inline';
-                if (btnLoader) btnLoader.style.display = 'none';
+                usersDiv.innerHTML = '<span style="color:var(--text-secondary); font-size: 0.8rem;">Ninguém online</span>';
             }
+
+            // Listar Vídeos (Top 3)
+            const videoDiv = document.getElementById('detVideoList');
+            videoDiv.innerHTML = '';
+            if(room.videoQueue) {
+                const videos = Object.values(room.videoQueue);
+                videos.slice(0, 3).forEach(v => {
+                    videoDiv.innerHTML += `
+                        <div style="background: rgba(0,0,0,0.2); padding: 8px; margin-bottom: 5px; border-radius: 4px; font-size: 0.85rem;">
+                            <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${v.videoUrl}</div>
+                            <small style="color: var(--text-secondary)">Por: ${escapeHtml(v.phone)}</small>
+                        </div>
+                    `;
+                });
+                if(videos.length > 3) videoDiv.innerHTML += `<small>+ ${videos.length - 3} outros vídeos...</small>`;
+            } else {
+                videoDiv.innerHTML = '<span style="color:var(--text-secondary); font-size: 0.8rem;">Fila vazia</span>';
+            }
+
+            openModal('detailsModal');
         }
 
-        function extractVideoId(url) {
-            const regExp = /(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=|embed\/|v\/|)([\w-]{11})(?:\S+)?/i;
-            const match = url.match(regExp);
-            return (match && match[1]) ? match[1] : null;
+        // --- UTILS ---
+        function updateStats(r, u, v) {
+            els.stats.rooms.innerText = r;
+            els.stats.users.innerText = u;
+            els.stats.videos.innerText = v;
         }
 
-        // Código de DEBUG - remova depois que funcionar
-console.log('=== DEBUG MODAL ===');
-console.log('Confirm Modal:', confirmModal);
-console.log('Room Details Modal:', roomDetailsModal);
-console.log('=== FIM DEBUG ===');
+        function renderEmptyState(msg = "Nenhuma sala ativa no momento.") {
+            els.roomList.innerHTML = `
+                <div style="text-align: center; padding: 50px; color: var(--text-secondary);">
+                    <i class="fas fa-wind" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5;"></i>
+                    <p>${msg}</p>
+                </div>
+            `;
+        }
 
-// Teste manual - adicione um botão de teste temporário
-function testModal() {
-    console.log('Testando abertura de modal...');
-    openRoomDetailsModal();
-}
+        // Modais
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-// Adicione este botão temporariamente no HTML para testar:
-// 
+        // Fechar com ESC ou Clicar fora
+        window.onclick = (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('active');
+            }
+        };
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+            }
+        });
+
+        // Toast System
+        function showToast(msg, type = 'info') {
+            const t = document.getElementById('toast');
+            let icon = 'info-circle';
+            if(type === 'success') icon = 'check-circle';
+            if(type === 'error') icon = 'times-circle';
+
+            t.className = `toast ${type} show`;
+            t.innerHTML = `<i class="fas fa-${icon}"></i> ${msg}`;
+            
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => showToast('ID copiado!', 'success'));
+        }
+
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function formatDate(timestamp) {
+            if(!timestamp) return '-';
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Listeners
+        els.searchInput.addEventListener('input', () => loadActiveRooms());
+        els.sortFilter.addEventListener('change', () => loadActiveRooms());
+
     </script>
 </body>
-
 </html>

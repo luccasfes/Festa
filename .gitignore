@@ -7,24 +7,35 @@ yarn-error.log*
 .eslintcache
 .pnp.js
 .pnp.cjs
+
+# Environment Variables (Segurança)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
+# --- SEGURANÇA CRÍTICA (Bloqueio de Chaves e Scripts Admin) ---
+# Bloqueia a chave mestra do Firebase (NUNCA REMOVA ISSO)
+serviceAccountKey.json
+serviceAccount.json
+*.json.key
+
+# Bloqueia o script de definir admin (uso local apenas)
+setAdmin.js
+
 # Dependency directories
 jspm_packages/
 bower_components/
 
 # Local Dotfiles
-.vscode/       # VSCode settings (se você usa)
-.idea/         # IntelliJ IDEA settings (se você usa)
+.vscode/       # VSCode settings
+.idea/         # IntelliJ IDEA settings
 .DS_Store      # macOS system files
 Thumbs.db      # Windows thumbnail cache
 
 # Build artifacts
-dist/          # Common output directory for built files
+dist/          # Common output directory
 build/         # Another common output directory
 *.zip
 *.tar.gz
@@ -34,12 +45,15 @@ build/         # Another common output directory
 .firebase/                 # Firebase CLI local emulators, cache, etc.
 firebase-debug.log
 firebase-debug.*.log
-!public/404.html           # Não ignorar o 404.html dentro de public
-!public/index.html         # Não ignorar o index.html dentro de public
-!public/style.css          # Não ignorar o style.css dentro de public
-# Adicione outras pastas ou arquivos que você queira que sejam publicadas aqui, se não forem globais.
 
-# Optional: if you generate any local test data or logs
+# Public folder exceptions (Mantém os arquivos do site visíveis)
+!public/404.html
+!public/index.html
+!public/style.css
+!public/admin.html
+!public/assets/
+
+# Logs e Temporários
 /logs/
 *.log
 *.tmp
