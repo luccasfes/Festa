@@ -2758,49 +2758,145 @@ body:not(.non-admin) .player-overlay-controls {
 /* =========================================
    ESTILOS DO MODAL DE TEMAS
    ========================================= */
+
+/* Grid de temas melhorado */
 .theme-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
-    padding: 10px 0;
+    margin: 20px 0;
 }
 
 .theme-btn {
-    padding: 15px;
-    border-radius: 12px;
-    border: 2px solid transparent;
-    cursor: pointer;
-    text-align: center;
-    transition: var(--transition);
-    background: var(--card-bg);
-    color: var(--text-primary);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    padding: 15px;
+    background: var(--card-bg);
+    border: 2px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
 }
 
 .theme-btn:hover {
-    transform: translateY(-2px);
+    transform: translateY(-5px);
     border-color: var(--accent-color);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
 .theme-btn.active {
-    border-color: var(--success-color);
-    background: rgba(0, 184, 148, 0.1); /* Brilho verde suave */
-    box-shadow: 0 0 10px rgba(0, 184, 148, 0.2);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px var(--accent-color), 0 10px 20px rgba(0,0,0,0.3);
+}
+
+.theme-btn.active::after {
+    content: '✓';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--accent-color);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
 }
 
 .theme-preview {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.2);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    width: 100%;
+    height: 80px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* Ajuste para garantir que textos em cards fiquem legíveis no modo claro */
-[data-theme="light"] .card h2, 
-[data-theme="light"] .card h3 {
-    color: var(--primary-color);
+.theme-btn span {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* Modal específico para temas */
+#themeModal .modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Indicador de tema ativo no header */
+.theme-indicator {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    background: var(--accent-color);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+
+/* Transição suave entre temas */
+.theme-transition * {
+    transition: background-color 0.5s ease, 
+                border-color 0.5s ease, 
+                color 0.5s ease,
+                box-shadow 0.5s ease !important;
+}
+
+/* Melhorias no botão de tema na navbar */
+.btn-theme {
+    position: relative;
+    overflow: visible;
+}
+
+.btn-theme i {
+    transition: transform 0.3s ease;
+}
+
+.btn-theme:hover i {
+    transform: rotate(15deg);
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+    .theme-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .theme-btn {
+        flex-direction: row;
+        text-align: left;
+        padding: 12px;
+    }
+    
+    .theme-preview {
+        width: 60px;
+        height: 60px;
+        margin-right: 15px;
+        margin-bottom: 0;
+    }
 }

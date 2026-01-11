@@ -502,42 +502,53 @@
         </div>
     </div>
 
-    <div id="themeModal" class="modal">
-    <div class="modal-content" style="max-width: 400px;">
-        <span class="close-button" onclick="closeThemeModal()">×</span>
-        <h3><i class="fas fa-palette"></i> Escolha um Tema</h3>
-        <p style="color: var(--text-secondary); margin-bottom: 20px;">Personalize as cores do FlowLink.</p>
+    <!-- Modal de temas  -->
+   <div id="themeModal" class="modal" style="opacity: 0; transition: opacity 0.3s ease;">
+    <div class="modal-content" style="max-width: 450px; transform: translateY(-20px); transition: transform 0.3s ease;">
+        <div class="modal-header">
+            <h3><i class="fas fa-palette"></i> Personalizar Tema</h3>
+            <p style="color: var(--text-secondary); margin: 5px 0 20px; font-size: 0.95em;">
+                Escolha um tema que combine com seu estilo
+            </p>
+            <span class="close-button" onclick="closeThemeModal()">×</span>
+        </div>
 
         <div class="theme-grid">
-            <div class="theme-btn" onclick="setTheme('default')" id="theme-btn-default">
-                <div class="theme-preview" style="background: linear-gradient(135deg, #4e54c8, #1a1a2e);"></div>
+            <div class="theme-btn" onclick="applyTheme('default')" id="theme-btn-default">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #4e54c8 0%, #1a1a2e 50%, #16213e 100%);"></div>
                 <span>Padrão</span>
+                <small style="color: var(--text-secondary); font-size: 0.8em; margin-top: 5px;">Clássico</small>
             </div>
 
-            <div class="theme-btn" onclick="setTheme('pink')" id="theme-btn-pink">
-                <div class="theme-preview" style="background: linear-gradient(135deg, #ff007f, #2d0a1e);"></div>
+            <div class="theme-btn" onclick="applyTheme('pink')" id="theme-btn-pink">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #ff007f 0%, #2d0a1e 50%, #4a1230 100%);"></div>
                 <span>Pink</span>
+                <small style="color: var(--text-secondary); font-size: 0.8em; margin-top: 5px;">Vibrante</small>
             </div>
 
-            <div class="theme-btn" onclick="setTheme('light')" id="theme-btn-light">
-                <div class="theme-preview" style="background: linear-gradient(135deg, #ffffff, #f0f2f5);"></div>
+            <div class="theme-btn" onclick="applyTheme('light')" id="theme-btn-light">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #ffffff 0%, #f0f2f5 50%, #e3e7ed 100%); border: 1px solid #ddd;"></div>
                 <span>Claro</span>
+                <small style="color: var(--text-secondary); font-size: 0.8em; margin-top: 5px;">Clean</small>
             </div>
 
-            <div class="theme-btn" onclick="setTheme('oled')" id="theme-btn-oled">
-                <div class="theme-preview" style="background: #000;"></div>
+            <div class="theme-btn" onclick="applyTheme('oled')" id="theme-btn-oled">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #000000 0%, #111111 50%, #222222 100%);"></div>
                 <span>Black</span>
+                <small style="color: var(--text-secondary); font-size: 0.8em; margin-top: 5px;">OLED</small>
             </div>
+        </div>
+
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
+            <button onclick="resetToDefault()" style="background: transparent; border: 1px solid var(--glass-border); color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: var(--transition);">
+                <i class="fas fa-undo"></i> Redefinir para padrão
+            </button>
         </div>
     </div>
 </div>
     <!-- //sessão -->
     <script>
-
-        /**
-         * ESTA É A VERSÃO CORRIGIDA DA "PORTEIRA"
-         * Ela só executa a lógica do player se ele estiver 100% pronto.
-         */
+       //Portera
         function updatePlayerMode() {
             // Guarda de segurança: Não faz nada se o player não estiver pronto
             if (!isPlayerReady) {
@@ -4028,63 +4039,169 @@ function atualizarVisibilidadeAutoDJ() {
 }
 
 /* ================================
-   SISTEMA DE TEMAS
+   SISTEMA DE TEMAS AVANÇADO
 ================================ */
 
-// 1. Carrega o tema salvo ao abrir a página
+// Configurações dos temas
+const THEMES = {
+    'default': {
+        name: 'Roxo Clássico',
+        icon: 'fas fa-moon',
+        description: 'Tema original azul/roxo'
+    },
+    'pink': {
+        name: 'Pink Vibes',
+        icon: 'fas fa-heart',
+        description: 'Rosa vibrante'
+    },
+    'light': {
+        name: 'Modo Claro',
+        icon: 'fas fa-sun',
+        description: 'Clean e claro'
+    },
+    'oled': {
+        name: 'Preto Absoluto',
+        icon: 'fas fa-adjust',
+        description: 'OLED puro'
+    }
+};
+
+// Carrega o tema salvo
 document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('flowLinkTheme') || 'default';
-    setTheme(savedTheme, false); // false = não abre notificação ao carregar
+    applyTheme(savedTheme, false);
+    updateThemeIcon(savedTheme);
 });
 
+// Abre o modal com animação
 function openThemeModal() {
-    document.getElementById('themeModal').style.display = 'flex';
-    // Marca o botão ativo visualmente
-    const current = document.body.getAttribute('data-theme') || 'default';
-    highlightActiveTheme(current);
+    const modal = document.getElementById('themeModal');
+    modal.style.display = 'flex';
+    
+    // Anima a entrada
+    setTimeout(() => {
+        modal.style.opacity = '1';
+        modal.querySelector('.modal-content').style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Atualiza preview dos temas
+    updateThemePreviews();
 }
 
+// Fecha o modal com animação
 function closeThemeModal() {
-    document.getElementById('themeModal').style.display = 'none';
+    const modal = document.getElementById('themeModal');
+    modal.style.opacity = '0';
+    modal.querySelector('.modal-content').style.transform = 'translateY(-20px)';
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
 }
 
-function setTheme(themeName, showNotify = true) {
-    // 1. Aplica o atributo no Body
+// Aplica o tema
+function applyTheme(themeName, showFeedback = true) {
+    // Remove tema anterior
+    document.body.classList.remove('theme-transition');
+    
+    // Aplica novo tema
     if (themeName === 'default') {
         document.body.removeAttribute('data-theme');
     } else {
         document.body.setAttribute('data-theme', themeName);
     }
-
-    // 2. Salva no LocalStorage
+    
+    // Adiciona classe para transição suave
+    document.body.classList.add('theme-transition');
+    
+    // Salva preferência
     localStorage.setItem('flowLinkTheme', themeName);
-
-    // 3. Atualiza visual dos botões
+    
+    // Atualiza UI
     highlightActiveTheme(themeName);
-
-    // 4. Feedback (opcional)
-    if (showNotify) {
-        // Mapeia nomes bonitos para notificação
-        const names = { 
-            'default': 'Roxo Clássico', 
-            'pink': 'Pink Vibes', 
-            'light': 'Modo Claro', 
-            'oled': 'Preto Absoluto' 
-        };
-        showNotification(`Tema alterado para: ${names[themeName]}`, 'success');
+    updateThemeIcon(themeName);
+    
+    // Feedback
+    if (showFeedback) {
+        const themeData = THEMES[themeName];
+        showNotification(`Tema: ${themeData.name}`, 'success');
         
-        // Fecha o modal após um tempinho para ver o efeito
-        setTimeout(closeThemeModal, 300);
+        // Fecha modal após delay
+        setTimeout(() => {
+            if (document.getElementById('themeModal').style.display === 'flex') {
+                closeThemeModal();
+            }
+        }, 800);
+    }
+    
+    // Remove classe de transição após animação
+    setTimeout(() => {
+        document.body.classList.remove('theme-transition');
+    }, 500);
+}
+
+// Atualiza ícone do botão de tema
+function updateThemeIcon(themeName) {
+    const themeBtn = document.querySelector('[onclick="openThemeModal()"]');
+    const themeData = THEMES[themeName];
+    
+    if (themeBtn && themeData) {
+        // Atualiza ícone se existir
+        const icon = themeBtn.querySelector('i');
+        if (icon) {
+            icon.className = themeData.icon;
+        }
+        
+        // Adiciona indicador visual
+        let indicator = themeBtn.querySelector('.theme-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.className = 'theme-indicator';
+            themeBtn.appendChild(indicator);
+        }
     }
 }
 
+// Destaca tema ativo
 function highlightActiveTheme(themeName) {
-    // Remove 'active' de todos
-    document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.querySelector('span').style.fontWeight = 'normal';
+    });
     
-    // Adiciona 'active' no selecionado
     const activeBtn = document.getElementById(`theme-btn-${themeName}`);
-    if (activeBtn) activeBtn.classList.add('active');
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.querySelector('span').style.fontWeight = 'bold';
+    }
+}
+
+// Atualiza previews dos temas
+function updateThemePreviews() {
+    // Pode adicionar funcionalidade de preview em tempo real
+    const currentTheme = document.body.getAttribute('data-theme') || 'default';
+    highlightActiveTheme(currentTheme);
+}
+
+// Fecha modal ao clicar fora
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('themeModal');
+    if (e.target === modal) {
+        closeThemeModal();
+    }
+});
+
+// Suporte para teclado (ESC fecha modal)
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeThemeModal();
+    }
+});
+
+// Função para resetar para tema padrão
+function resetToDefault() {
+    applyTheme('default', true);
+    showNotification('Tema redefinido para padrão', 'info');
 }
 </script>
 
