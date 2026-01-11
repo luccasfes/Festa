@@ -428,24 +428,30 @@
             </div>
 
             <div class="admin-panel-body">
-                <h4 style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fas fa-server"></i> Salas Ativas</span>
+    <h4 style="display: flex; justify-content: space-between; align-items: center;">
+        <span><i class="fas fa-server"></i> Salas Ativas</span>
 
-                    <div style="display: flex;"> <button class="btn small secondary" onclick="loadAdminPanelRooms()"
-                            title="Atualizar lista">
-                            <i class="fas fa-sync-alt"></i> Atualizar
-                        </button>
+        <div style="display: flex; align-items: center;">
+            <button class="btn small secondary" onclick="loadAdminPanelRooms()" title="Atualizar lista">
+                <i class="fas fa-sync-alt"></i> Atualizar
+            </button>
 
-                        <button class="btn small danger" onclick="openDeleteAllRoomsModal()"
-                            title="Deletar TODAS as salas" style="margin-left: 10px;">
-                            <i class="fas fa-exclamation-triangle"></i> Deletar Tudo
-                        </button>
-                    </div>
-                </h4>
+            <a href="admin.html" target="_blank" class="btn small secondary" 
+               style="margin-left: 10px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;" 
+               title="Abrir Painel Completo">
+                <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> Abrir Admin
+            </a>
 
-                <div id="adminRoomLoader" class="loading-yt" style="display: none; padding: 40px 0;">
-                    Carregando salas...
-                </div>
+            <button class="btn small danger" onclick="openDeleteAllRoomsModal()"
+                title="Deletar TODAS as salas" style="margin-left: 10px;">
+                <i class="fas fa-exclamation-triangle"></i> Deletar Tudo
+            </button>
+        </div>
+    </h4>
+
+    <div id="adminRoomLoader" class="loading-yt" style="display: none; padding: 40px 0;">
+        Carregando salas...
+    </div>
 
                 <div id="adminRoomList" class="admin-room-list">
                 </div>
