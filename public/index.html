@@ -35,8 +35,8 @@
                     <i class="fas fa-cog"></i> <span>Painel</span>
                 </button>
                 <button class="btn small secondary" onclick="openThemeModal()" title="Mudar Tema">
-        <i class="fas fa-palette"></i>
-    </button>
+                    <i class="fas fa-palette"></i>
+                </button>
             </div>
             <h1><i class="fas fa-music"></i> FlowLink<i class="fas fa-headphones"></i></h1>
             <div class="room-details">
@@ -119,8 +119,8 @@
                     </button>
 
                     <button id="btn-auto-sugestao" class="btn-sugestao" onclick="openSugestaoModal()">
-  <i class="fas fa-magic"></i> Sugerir Música
-</button>
+                        <i class="fas fa-magic"></i> Sugerir Música
+                    </button>
                 </h2>
                 <ul id="videoList" class="video-queue-list"></ul>
             </section>
@@ -256,107 +256,109 @@
         </div>
     </div>
 
-     <div id="sugestaoModal" class="modal sugestao-modal">
-  <div class="modal-content">
-    <span class="close-button" onclick="closeSugestaoModal()">×</span>
-    <h3><i class="fas fa-magic"></i> Sugestão Inteligente</h3>
-    
-    <div class="sugestao-tabs">
-      <button class="sugestao-tab active" onclick="switchTab('genero')">
-        <i class="fas fa-music"></i> Por Gênero
-      </button>
-      <button class="sugestao-tab" onclick="switchTab('similar')">
-        <i class="fas fa-random"></i> Similares
-      </button>
-      <button class="sugestao-tab" onclick="switchTab('tendencia')">
-        <i class="fas fa-chart-line"></i> Tendências
-      </button>
+    <div id="sugestaoModal" class="modal sugestao-modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeSugestaoModal()">×</span>
+            <h3><i class="fas fa-magic"></i> Sugestão Inteligente</h3>
+
+            <div class="sugestao-tabs">
+                <button class="sugestao-tab active" onclick="switchTab('genero')">
+                    <i class="fas fa-music"></i> Por Gênero
+                </button>
+                <button class="sugestao-tab" onclick="switchTab('similar')">
+                    <i class="fas fa-random"></i> Similares
+                </button>
+                <button class="sugestao-tab" onclick="switchTab('tendencia')">
+                    <i class="fas fa-chart-line"></i> Tendências
+                </button>
+            </div>
+
+            <div id="generoContent" class="tab-content active">
+                <div class="generos-container">
+                    <button class="genero-btn" onclick="selectGenero('sertanejo')" data-genero="sertanejo">
+                        <i class="fas fa-guitar genero-icon"></i>
+                        <span>Sertanejo</span>
+                    </button>
+                    <button class="genero-btn" onclick="selectGenero('funk')" data-genero="funk">
+                        <i class="fas fa-fire genero-icon"></i>
+                        <span>Funk</span>
+                    </button>
+                    <button class="genero-btn" onclick="selectGenero('pop')" data-genero="pop">
+                        <i class="fas fa-star genero-icon"></i>
+                        <span>Pop</span>
+                    </button>
+                    <button class="genero-btn" onclick="selectGenero('rock')" data-genero="rock">
+                        <i class="fas fa-guitar-electric genero-icon"></i>
+                        <span>Rock</span>
+                    </button>
+                    <button class="genero-btn" onclick="selectGenero('eletronica')" data-genero="eletronica">
+                        <i class="fas fa-synth genero-icon"></i>
+                        <span>Eletrônica</span>
+                    </button>
+                    <button class="genero-btn" onclick="selectGenero('rap')" data-genero="rap">
+                        <i class="fas fa-microphone-alt genero-icon"></i>
+                        <span>Rap/Hip-Hop</span>
+                    </button>
+                    <button class="genero-btn" onclick="selectGenero('reggaeton')" data-genero="reggaeton">
+                        <i class="fas fa-drum genero-icon"></i>
+                        <span>Reggaeton</span>
+                    </button>
+                    <button class="genero-btn" onclick="selectGenero('pagode')" data-genero="pagode">
+                        <i class="fas fa-drum genero-icon"></i>
+                        <span>Pagode/Samba</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="similarContent" class="tab-content" style="display: none;">
+                <div style="text-align: center; padding: 30px 0;">
+                    <i class="fas fa-random"
+                        style="font-size: 3rem; color: var(--primary-color); margin-bottom: 15px;"></i>
+                    <p>Vamos sugerir músicas similares à que está tocando agora!</p>
+                    <p class="text-muted" style="font-size: 0.9rem;">Baseado no artista e estilo atual.</p>
+                </div>
+            </div>
+
+            <div id="tendenciaContent" class="tab-content" style="display: none;">
+                <div style="text-align: center; padding: 30px 0;">
+                    <i class="fas fa-chart-line"
+                        style="font-size: 3rem; color: var(--success-color); margin-bottom: 15px;"></i>
+                    <p>Vamos sugerir as músicas mais populares no momento!</p>
+                    <p class="text-muted" style="font-size: 0.9rem;">Baseado nas tendências atuais do YouTube.</p>
+                </div>
+            </div>
+
+            <div class="autoplay-controls">
+                <h4><i class="fas fa-robot"></i> Reprodução Automática</h4>
+
+                <div class="autoplay-option">
+                    <span>Adicionar automaticamente quando a fila estiver acabando</span>
+                    <label class="switch">
+                        <input type="checkbox" id="autoAddToggle" onchange="ativarAutoSugestao()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="autoplay-option">
+                    <span>Quantidade de músicas na fila:</span>
+                    <div class="autoplay-count">
+                        <button class="count-btn" onclick="changeAutoCount(-1)">-</button>
+                        <span class="count-display" id="autoCount">1</span>
+                        <button class="count-btn" onclick="changeAutoCount(1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sugestao-actions">
+                <button class="btn btn-now" onclick="sugerirAgora()">
+                    <i class="fas fa-plus-circle"></i> Adicionar Agora
+                </button>
+                <button class="btn btn-auto" onclick="toggleAutoDjBtn()">
+                    <i class="fas fa-play-circle"></i> Auto (Ligar/Desligar)
+                </button>
+            </div>
+        </div>
     </div>
-
-    <div id="generoContent" class="tab-content active">
-      <div class="generos-container">
-        <button class="genero-btn" onclick="selectGenero('sertanejo')" data-genero="sertanejo">
-          <i class="fas fa-guitar genero-icon"></i>
-          <span>Sertanejo</span>
-        </button>
-        <button class="genero-btn" onclick="selectGenero('funk')" data-genero="funk">
-          <i class="fas fa-fire genero-icon"></i>
-          <span>Funk</span>
-        </button>
-        <button class="genero-btn" onclick="selectGenero('pop')" data-genero="pop">
-          <i class="fas fa-star genero-icon"></i>
-          <span>Pop</span>
-        </button>
-        <button class="genero-btn" onclick="selectGenero('rock')" data-genero="rock">
-          <i class="fas fa-guitar-electric genero-icon"></i>
-          <span>Rock</span>
-        </button>
-        <button class="genero-btn" onclick="selectGenero('eletronica')" data-genero="eletronica">
-          <i class="fas fa-synth genero-icon"></i>
-          <span>Eletrônica</span>
-        </button>
-        <button class="genero-btn" onclick="selectGenero('rap')" data-genero="rap">
-          <i class="fas fa-microphone-alt genero-icon"></i>
-          <span>Rap/Hip-Hop</span>
-        </button>
-        <button class="genero-btn" onclick="selectGenero('reggaeton')" data-genero="reggaeton">
-          <i class="fas fa-drum genero-icon"></i>
-          <span>Reggaeton</span>
-        </button>
-        <button class="genero-btn" onclick="selectGenero('pagode')" data-genero="pagode">
-          <i class="fas fa-drum genero-icon"></i>
-          <span>Pagode/Samba</span>
-        </button>
-      </div>
-    </div>
-
-    <div id="similarContent" class="tab-content" style="display: none;">
-      <div style="text-align: center; padding: 30px 0;">
-        <i class="fas fa-random" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 15px;"></i>
-        <p>Vamos sugerir músicas similares à que está tocando agora!</p>
-        <p class="text-muted" style="font-size: 0.9rem;">Baseado no artista e estilo atual.</p>
-      </div>
-    </div>
-
-    <div id="tendenciaContent" class="tab-content" style="display: none;">
-      <div style="text-align: center; padding: 30px 0;">
-        <i class="fas fa-chart-line" style="font-size: 3rem; color: var(--success-color); margin-bottom: 15px;"></i>
-        <p>Vamos sugerir as músicas mais populares no momento!</p>
-        <p class="text-muted" style="font-size: 0.9rem;">Baseado nas tendências atuais do YouTube.</p>
-      </div>
-    </div>
-
-   <div class="autoplay-controls">
-  <h4><i class="fas fa-robot"></i> Reprodução Automática</h4>
-  
-  <div class="autoplay-option">
-    <span>Adicionar automaticamente quando a fila estiver acabando</span>
-    <label class="switch">
-      <input type="checkbox" id="autoAddToggle" onchange="ativarAutoSugestao()">
-      <span class="slider"></span>
-    </label>
-  </div>
-
-  <div class="autoplay-option">
-    <span>Quantidade de músicas na fila:</span>
-    <div class="autoplay-count">
-      <button class="count-btn" onclick="changeAutoCount(-1)">-</button>
-      <span class="count-display" id="autoCount">1</span>
-      <button class="count-btn" onclick="changeAutoCount(1)">+</button>
-    </div>
-  </div>
-</div>
-
-<div class="sugestao-actions">
-  <button class="btn btn-now" onclick="sugerirAgora()">
-    <i class="fas fa-plus-circle"></i> Adicionar Agora
-  </button>
-  <button class="btn btn-auto" onclick="toggleAutoDjBtn()">
-    <i class="fas fa-play-circle"></i> Auto (Ligar/Desligar)
-  </button>
-</div>
-</div> 
-</div> 
     <div id="notification" class="notification">
         <span id="notificationMessage"></span>
     </div>
@@ -431,30 +433,30 @@
             </div>
 
             <div class="admin-panel-body">
-    <h4 style="display: flex; justify-content: space-between; align-items: center;">
-        <span><i class="fas fa-server"></i> Salas Ativas</span>
+                <h4 style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fas fa-server"></i> Salas Ativas</span>
 
-        <div style="display: flex; align-items: center;">
-            <button class="btn small secondary" onclick="loadAdminPanelRooms()" title="Atualizar lista">
-                <i class="fas fa-sync-alt"></i> Atualizar
-            </button>
+                    <div style="display: flex; align-items: center;">
+                        <button class="btn small secondary" onclick="loadAdminPanelRooms()" title="Atualizar lista">
+                            <i class="fas fa-sync-alt"></i> Atualizar
+                        </button>
 
-            <a href="admin.html" target="_blank" class="btn small secondary" 
-               style="margin-left: 10px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;" 
-               title="Abrir Painel Completo">
-                <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> Abrir Admin
-            </a>
+                        <a href="admin.html" target="_blank" class="btn small secondary"
+                            style="margin-left: 10px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;"
+                            title="Abrir Painel Completo">
+                            <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> Abrir Admin
+                        </a>
 
-            <button class="btn small danger" onclick="openDeleteAllRoomsModal()"
-                title="Deletar TODAS as salas" style="margin-left: 10px;">
-                <i class="fas fa-exclamation-triangle"></i> Deletar Tudo
-            </button>
-        </div>
-    </h4>
+                        <button class="btn small danger" onclick="openDeleteAllRoomsModal()"
+                            title="Deletar TODAS as salas" style="margin-left: 10px;">
+                            <i class="fas fa-exclamation-triangle"></i> Deletar Tudo
+                        </button>
+                    </div>
+                </h4>
 
-    <div id="adminRoomLoader" class="loading-yt" style="display: none; padding: 40px 0;">
-        Carregando salas...
-    </div>
+                <div id="adminRoomLoader" class="loading-yt" style="display: none; padding: 40px 0;">
+                    Carregando salas...
+                </div>
 
                 <div id="adminRoomList" class="admin-room-list">
                 </div>
@@ -503,52 +505,59 @@
     </div>
 
     <!-- Modal de temas  -->
-   <div id="themeModal" class="modal" style="opacity: 0; transition: opacity 0.3s ease;">
-    <div class="modal-content" style="max-width: 450px; transform: translateY(-20px); transition: transform 0.3s ease;">
-        <div class="modal-header">
-            <h3><i class="fas fa-palette"></i> Personalizar Tema</h3>
-            <p style="color: var(--text-secondary); margin: 5px 0 20px; font-size: 0.95em;">
-                Escolha um tema que combine com seu estilo
-            </p>
-            <span class="close-button" onclick="closeThemeModal()">×</span>
-        </div>
-
-        <div class="theme-grid">
-            <div class="theme-btn" onclick="applyTheme('default')" id="theme-btn-default">
-                <div class="theme-preview" style="background: linear-gradient(135deg, #4e54c8 0%, #1a1a2e 50%, #16213e 100%);"></div>
-                <span>Padrão</span>
-                <small style="color: var(--text-secondary); font-size: 0.8em; margin-top: 5px;">Clássico</small>
+    <div id="themeModal" class="modal" style="opacity: 0; transition: opacity 0.3s ease;">
+        <div class="modal-content"
+            style="max-width: 450px; transform: translateY(-20px); transition: transform 0.3s ease;">
+            <div class="modal-header">
+                <h3><i class="fas fa-palette"></i> Personalizar Tema</h3>
+                <p style="color: var(--text-secondary); margin: 5px 0 20px; font-size: 0.95em;">
+                    Escolha um tema que combine com seu estilo
+                </p>
+                <span class="close-button" onclick="closeThemeModal()">×</span>
             </div>
 
-            <div class="theme-btn" onclick="applyTheme('pink')" id="theme-btn-pink">
-                <div class="theme-preview" style="background: linear-gradient(135deg, #ff007f 0%, #2d0a1e 50%, #4a1230 100%);"></div>
-                <span>Pink</span>
-                <small style="color: var(--text-secondary); font-size: 0.8em; margin-top: 5px;">Vibrante</small>
+            <div class="theme-grid">
+                <div class="theme-btn" onclick="applyTheme('default')" id="theme-btn-default">
+                    <div class="theme-preview"
+                        style="background: linear-gradient(135deg, #4e54c8 0%, #1a1a2e 50%, #16213e 100%);"></div>
+                    <span>Padrão</span>
+                    <small style="color: var(--text-secondary); font-size: 0.8em; margin-top: 5px;">Clássico</small>
+                </div>
+
+                <div class="theme-btn" onclick="applyTheme('pink')" id="theme-btn-pink">
+                    <div class="theme-preview"
+                        style="background: linear-gradient(135deg, #ff007f 0%, #2d0a1e 50%, #4a1230 100%);"></div>
+                    <span>Pink</span>
+                    <small style="color: var(--text-secondary); font-size: 0.8em; margin-top: 5px;">Vibrante</small>
+                </div>
+
+                <div class="theme-btn" onclick="applyTheme('light')" id="theme-btn-light">
+                    <div class="theme-preview"
+                        style="background: linear-gradient(135deg, #ffffff 0%, #f0f2f5 50%, #e3e7ed 100%); border: 1px solid #ddd;">
+                    </div>
+                    <span>Claro</span>
+                    <small style="color: var(--text-secondary); font-size: 0.8em; margin-top: 5px;">Clean</small>
+                </div>
+
+                <div class="theme-btn" onclick="applyTheme('oled')" id="theme-btn-oled">
+                    <div class="theme-preview"
+                        style="background: linear-gradient(135deg, #000000 0%, #111111 50%, #222222 100%);"></div>
+                    <span>Black</span>
+                    <small style="color: var(--text-secondary); font-size: 0.8em; margin-top: 5px;">OLED</small>
+                </div>
             </div>
 
-            <div class="theme-btn" onclick="applyTheme('light')" id="theme-btn-light">
-                <div class="theme-preview" style="background: linear-gradient(135deg, #ffffff 0%, #f0f2f5 50%, #e3e7ed 100%); border: 1px solid #ddd;"></div>
-                <span>Claro</span>
-                <small style="color: var(--text-secondary); font-size: 0.8em; margin-top: 5px;">Clean</small>
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
+                <button onclick="resetToDefault()"
+                    style="background: transparent; border: 1px solid var(--glass-border); color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: var(--transition);">
+                    <i class="fas fa-undo"></i> Redefinir para padrão
+                </button>
             </div>
-
-            <div class="theme-btn" onclick="applyTheme('oled')" id="theme-btn-oled">
-                <div class="theme-preview" style="background: linear-gradient(135deg, #000000 0%, #111111 50%, #222222 100%);"></div>
-                <span>Black</span>
-                <small style="color: var(--text-secondary); font-size: 0.8em; margin-top: 5px;">OLED</small>
-            </div>
-        </div>
-
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
-            <button onclick="resetToDefault()" style="background: transparent; border: 1px solid var(--glass-border); color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: var(--transition);">
-                <i class="fas fa-undo"></i> Redefinir para padrão
-            </button>
         </div>
     </div>
-</div>
     <!-- //sessão -->
     <script>
-       //Portera
+        //Portera
         function updatePlayerMode() {
             // Guarda de segurança: Não faz nada se o player não estiver pronto
             if (!isPlayerReady) {
@@ -748,7 +757,7 @@
 
         // ====================================================================
         // Funções para o modal de busca no YouTube
-        
+
 
         function closeYTSearchModal() {
             document.getElementById('ytSearchModal').style.display = 'none';
@@ -981,10 +990,10 @@
 
 
 
-       // Monitora usuários online
+        // Monitora usuários online
         const userCountElement = document.getElementById('userCount');
         presenceRef.on('value', (snap) => {
-            onlineUserCount = snap.numChildren(); 
+            onlineUserCount = snap.numChildren();
 
             // --- CORREÇÃO DE LIDERANÇA ---
             // Se estou sozinho, assumo a liderança (Broadcaster).
@@ -1004,16 +1013,16 @@
                 document.body.classList.add('solo-mode');
                 document.body.classList.remove('festa-mode');
             }
-            
+
             // ... (o resto do código mantém igual: botões, contadores, updatePlayerMode) ...
-             const shouldHide = (onlineUserCount > 1) && !isAdminLoggedIn;
+            const shouldHide = (onlineUserCount > 1) && !isAdminLoggedIn;
             const removeButtons = document.querySelectorAll('.remove-button, .bulk-delete-controls');
-            
+
             removeButtons.forEach(el => {
                 if (shouldHide) {
                     el.style.setProperty('display', 'none', 'important');
                 } else {
-                    el.style.removeProperty('display'); 
+                    el.style.removeProperty('display');
                 }
             });
 
@@ -1228,102 +1237,102 @@
          * Desabilita os controles do player quando mais alguém entra.
          * (Volta ao modo "festa" padrão)
          */
-       function disableSoloPlayerControls() {
-    console.log('Ativando Modo Festa (Otimizado + Sem Reinício)...');
+        function disableSoloPlayerControls() {
+            console.log('Ativando Modo Festa (Otimizado + Sem Reinício)...');
 
-    // 1. SALVA O TEMPO ATUAL (Para a música não voltar ao início)
-    let savedTime = 0;
-    try {
-        if (player && typeof player.getCurrentTime === 'function') {
-            savedTime = player.getCurrentTime();
-        }
-    } catch (e) { console.warn('Erro ao salvar tempo:', e); }
-
-    // Pega o vídeo da fila
-    let currentVideoId = null;
-    if (typeof videoQueue !== 'undefined' && videoQueue.length > 0) {
-        currentVideoId = extractVideoId(videoQueue[0].videoUrl);
-    }
-
-    // 2. Se não estiver no modo FESTA, destrói o player (para tirar controles)
-    if (player && currentPlayerMode !== 'FESTA') {
-        console.log(`Mudança de modo detectada. Recriando player mantendo o tempo: ${savedTime}s`);
-        try { player.destroy(); } catch (e) {}
-        player = null; 
-    }
-
-    // 3. Se o player sobreviveu (já era FESTA), apenas garante o vídeo certo
-    if (player && typeof player.loadVideoById === 'function') {
-        // Verifica se o vídeo que está tocando é o mesmo da fila
-        let playingId = null;
-        try { playingId = player.getVideoData().video_id; } catch(e){}
-
-        if (currentVideoId && playingId !== currentVideoId) {
-            player.loadVideoById(currentVideoId); // Só carrega se mudou a música
-        }
-        
-        // Garante máscara
-        const mask = document.getElementById('player-mask');
-        if (mask) mask.style.display = 'block';
-    } 
-    // 4. Se precisa criar um novo player (sem barra)
-    else {
-        // Limpeza final de segurança
-        if (player) { try { player.destroy(); } catch (e) {} }
-
-        currentPlayerMode = 'FESTA';
-
-        if (currentVideoId) {
-            player = new YT.Player('videoPlayer', {
-                height: '100%',
-                width: '100%',
-                videoId: currentVideoId,
-                playerVars: {
-                    'autoplay': 1,
-                    'controls': 0, // SEM BARRA
-                    'modestbranding': 1,
-                    'rel': 0,
-                    'disablekb': 1,
-                    'iv_load_policy': 3,
-                    'fs': 0,
-                    'start': Math.floor(savedTime) // Tenta iniciar no tempo certo via parametro
-                },
-                events: {
-                    'onReady': (event) => {
-                        // GARANTIA EXTRA: Pula para o tempo salvo assim que carregar
-                        if (savedTime > 0) {
-                            event.target.seekTo(savedTime, true);
-                        }
-                        event.target.playVideo();
-                        const mask = document.getElementById('player-mask');
-                        if (mask) mask.style.display = 'block';
-                    },
-                    'onStateChange': onPlayerStateChange
+            // 1. SALVA O TEMPO ATUAL (Para a música não voltar ao início)
+            let savedTime = 0;
+            try {
+                if (player && typeof player.getCurrentTime === 'function') {
+                    savedTime = player.getCurrentTime();
                 }
-            });
-        } else {
-            console.log('Fila vazia no Modo Festa.');
-            const container = document.getElementById('videoPlayer');
-            if (container) container.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; color:white;">Aguardando músicas...</div>';
+            } catch (e) { console.warn('Erro ao salvar tempo:', e); }
+
+            // Pega o vídeo da fila
+            let currentVideoId = null;
+            if (typeof videoQueue !== 'undefined' && videoQueue.length > 0) {
+                currentVideoId = extractVideoId(videoQueue[0].videoUrl);
+            }
+
+            // 2. Se não estiver no modo FESTA, destrói o player (para tirar controles)
+            if (player && currentPlayerMode !== 'FESTA') {
+                console.log(`Mudança de modo detectada. Recriando player mantendo o tempo: ${savedTime}s`);
+                try { player.destroy(); } catch (e) { }
+                player = null;
+            }
+
+            // 3. Se o player sobreviveu (já era FESTA), apenas garante o vídeo certo
+            if (player && typeof player.loadVideoById === 'function') {
+                // Verifica se o vídeo que está tocando é o mesmo da fila
+                let playingId = null;
+                try { playingId = player.getVideoData().video_id; } catch (e) { }
+
+                if (currentVideoId && playingId !== currentVideoId) {
+                    player.loadVideoById(currentVideoId); // Só carrega se mudou a música
+                }
+
+                // Garante máscara
+                const mask = document.getElementById('player-mask');
+                if (mask) mask.style.display = 'block';
+            }
+            // 4. Se precisa criar um novo player (sem barra)
+            else {
+                // Limpeza final de segurança
+                if (player) { try { player.destroy(); } catch (e) { } }
+
+                currentPlayerMode = 'FESTA';
+
+                if (currentVideoId) {
+                    player = new YT.Player('videoPlayer', {
+                        height: '100%',
+                        width: '100%',
+                        videoId: currentVideoId,
+                        playerVars: {
+                            'autoplay': 1,
+                            'controls': 0, // SEM BARRA
+                            'modestbranding': 1,
+                            'rel': 0,
+                            'disablekb': 1,
+                            'iv_load_policy': 3,
+                            'fs': 0,
+                            'start': Math.floor(savedTime) // Tenta iniciar no tempo certo via parametro
+                        },
+                        events: {
+                            'onReady': (event) => {
+                                // GARANTIA EXTRA: Pula para o tempo salvo assim que carregar
+                                if (savedTime > 0) {
+                                    event.target.seekTo(savedTime, true);
+                                }
+                                event.target.playVideo();
+                                const mask = document.getElementById('player-mask');
+                                if (mask) mask.style.display = 'block';
+                            },
+                            'onStateChange': onPlayerStateChange
+                        }
+                    });
+                } else {
+                    console.log('Fila vazia no Modo Festa.');
+                    const container = document.getElementById('videoPlayer');
+                    if (container) container.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; color:white;">Aguardando músicas...</div>';
+                }
+            }
+
+            // Atualiza Botões da Interface
+            const overlay = document.querySelector('.player-overlay-controls');
+            if (overlay) overlay.style.display = 'flex'; // Overlay customizado aparece
+
+            const clearBtn = document.querySelector('.clear-queue-button');
+            if (clearBtn) clearBtn.style.display = 'none'; // Botão de limpar fila some
+
+            const skipBtn = document.querySelector('.skip-video-button');
+            if (skipBtn) skipBtn.style.display = 'inline-block';
+
+            const skipText = document.getElementById('skipVoteBtnText');
+            if (skipText) skipText.textContent = 'Votar para Pular';
+
+            const voteWrapper = document.getElementById('voteCounterWrapper');
+            if (voteWrapper) voteWrapper.style.display = 'inline';
         }
-    }
-
-    // Atualiza Botões da Interface
-    const overlay = document.querySelector('.player-overlay-controls');
-    if (overlay) overlay.style.display = 'flex'; // Overlay customizado aparece
-
-    const clearBtn = document.querySelector('.clear-queue-button');
-    if (clearBtn) clearBtn.style.display = 'none'; // Botão de limpar fila some
-
-    const skipBtn = document.querySelector('.skip-video-button');
-    if (skipBtn) skipBtn.style.display = 'inline-block';
-
-    const skipText = document.getElementById('skipVoteBtnText');
-    if (skipText) skipText.textContent = 'Votar para Pular';
-
-    const voteWrapper = document.getElementById('voteCounterWrapper');
-    if (voteWrapper) voteWrapper.style.display = 'inline';
-}
 
         function logoutAdminSession() {
 
@@ -1390,25 +1399,76 @@
         // Variável GLOBAL para o intervalo de sincronização
         let syncInterval = null;
 
+        function updateRoomActivity() {
+            if (isAdminLoggedIn || isBroadcaster || (videoQueue && videoQueue.length > 0)) {
+                roomRef.update({
+                    lastActivity: firebase.database.ServerValue.TIMESTAMP
+                }).catch(err => {
+                    // Ignora erros silenciosamente para não poluir o console
+                });
+            }
+        }
+
         function startSyncHeartbeat() {
             if (syncInterval) clearInterval(syncInterval);
             console.log("Iniciando batimento cardíaco de sincronização...");
-            
+
             syncInterval = setInterval(() => {
                 // CORREÇÃO: Usa 'isBroadcaster' em vez de contagem de usuários
                 if ((isAdminLoggedIn || isBroadcaster) && player && typeof player.getPlayerState === 'function') {
+
+                    // 1. Sincroniza o vídeo (seu código original)
                     if (player.getPlayerState() === YT.PlayerState.PLAYING) {
                         playerStateRef.update({
                             timestamp: firebase.database.ServerValue.TIMESTAMP,
                             videoTime: player.getCurrentTime()
                         });
                     }
+
+                    //Avisa o banco que a sala está ativa!
+                    updateRoomActivity();
+
                 }
-            }, 5000); 
+            }, 5000); // Roda a cada 5 segundos
+        }
+
+        // --- CLEANER FUNCTION: Removes rooms inactive for more than 24h ---
+        function cleanOldRooms(roomsData) {
+            if (!roomsData) return;
+
+            // Limit: Current time minus 24 hours (in ms)
+            const cutoffTime = Date.now() - (24 * 60 * 60 * 1000);
+            let deletedCount = 0;
+
+            Object.keys(roomsData).forEach(roomId => {
+                const room = roomsData[roomId];
+
+                // Last activity timestamp (or createdAt if never used)
+                const lastActivity = room.lastActivity || room.createdAt || 0;
+
+                // User count check (Safety)
+                const userCount = room.presence ? Object.keys(room.presence).length : 0;
+
+                // THE GOLDEN RULE:
+                // If (Old) AND (Empty) -> DELETE
+                if (lastActivity < cutoffTime && userCount === 0) {
+                    console.log(`🧹 Cleaner: Deleting inactive room ${roomId}...`);
+
+                    // Delete silently
+                    database.ref('rooms/' + roomId).remove()
+                        .then(() => console.log(`✅ Room ${roomId} removed.`))
+                        .catch(err => console.error(`Error removing ${roomId}:`, err));
+
+                    deletedCount++;
+                }
+            });
+
+            if (deletedCount > 0) {
+                showToast(`Faxina: ${deletedCount} salas antigas foram removidas.`, 'success');
+            }
         }
         /**
  * Exibe uma notificação temporária na tela.
- * (Versão corrigida para evitar bugs de 'race condition')
  * @param {string} message - A mensagem a ser exibida.
  * @param {string} [type='info'] - O tipo da notificação ('info', 'success', 'error').
  */
@@ -1506,108 +1566,108 @@
          * Esta função usa um listener 'value' que é acionado sempre que os dados na referência mudam.
          */
         function loadVideoQueue() {
-    videoQueueRef.on('value', async (snapshot) => {
-        const data = snapshot.val();
-        let fetchedQueue = [];
+            videoQueueRef.on('value', async (snapshot) => {
+                const data = snapshot.val();
+                let fetchedQueue = [];
 
-        // 1. Converte Firebase Object -> Array
-        if (data) {
-            fetchedQueue = Object.keys(data).map(key => ({
-                id: key,
-                ...data[key]
-            }));
-        }
-
-        // ============================================================
-        // LÓGICA INTELIGENTE DE ORDENAÇÃO
-        // ============================================================
-        const BOT_NAME = '🤖 DJ Flow';
-
-        // Função que define quem tem prioridade (Humanos primeiro)
-        function sortFunction(a, b) {
-            const isBotA = a.phone === BOT_NAME;
-            const isBotB = b.phone === BOT_NAME;
-            if (!isBotA && isBotB) return -1; // Humano fura fila
-            if (isBotA && !isBotB) return 1;  // Bot vai pro fim
-            return 0; // Se forem iguais, mantém ordem de chegada
-        }
-
-        // Descobre qual vídeo estava tocando antes dessa atualização
-        // (Usa a variável global videoQueue se ela já tiver dados)
-        const currentPlayingId = (videoQueue && videoQueue.length > 0) ? videoQueue[0].id : null;
-
-        // Verifica se esse vídeo AINDA existe na nova lista vinda do Firebase
-        const currentVideoStillExists = fetchedQueue.find(v => v.id === currentPlayingId);
-
-        if (currentVideoStillExists) {
-            // CENÁRIO 1: A música atual AINDA está tocando (alguém só adicionou outra na fila)
-            // -> Mantemos a atual fixa no topo [0] e ordenamos só o resto.
-            const waitingList = fetchedQueue.filter(v => v.id !== currentPlayingId);
-            waitingList.sort(sortFunction);
-            videoQueue = [currentVideoStillExists, ...waitingList];
-        } else {
-            // CENÁRIO 2: A música atual ACABOU e foi removida
-            // -> Ordenamos a lista INTEIRA. Assim, o humano mais antigo vira o novo topo [0].
-            videoQueue = fetchedQueue.sort(sortFunction);
-        }
-        // ============================================================
-
-
-        // --- DAQUI PRA BAIXO É A RENDERIZAÇÃO (IGUAL AO SEU CÓDIGO) ---
-        const videoList = document.getElementById('videoList');
-        videoList.innerHTML = '';
-        
-        if (isAdminLoggedIn) {
-            videoList.classList.add('admin-mode');
-        } else {
-            videoList.classList.remove('admin-mode');
-        }
-
-        if (videoQueue.length === 0) {
-            videoList.innerHTML = '<li class="empty-queue">A fila de vídeos está vazia. Adicione um vídeo!</li>';
-            document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
-            document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
-            if (player && typeof player.stopVideo === 'function') {
-                player.stopVideo();
-            }
-            return;
-        }
-
-        // Helper para pegar título (mantido do seu código)
-        async function getFormattedVideoTitle(url) {
-            try {
-                const videoId = extractVideoId(url);
-                const cachedTitle = sessionStorage.getItem(`videoTitle_${videoId}`);
-                if (cachedTitle) return cachedTitle;
-
-                const response = await fetch(`/api/video-info?id=${videoId}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.items && data.items[0]) {
-                        const title = data.items[0].snippet.title;
-                        sessionStorage.setItem(`videoTitle_${videoId}`, title);
-                        return title;
-                    }
+                // 1. Converte Firebase Object -> Array
+                if (data) {
+                    fetchedQueue = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    }));
                 }
-            } catch (error) { console.error('Erro ao buscar título:', error); }
-            const videoId = extractVideoId(url);
-            return videoId ? `Música (ID: ${videoId})` : 'Vídeo do YouTube';
-        }
 
-        // Renderiza a lista visual
-        for (const video of videoQueue) {
-            const listItem = document.createElement('li');
-            listItem.classList.add('video-item');
+                // ============================================================
+                // LÓGICA INTELIGENTE DE ORDENAÇÃO
+                // ============================================================
+                const BOT_NAME = '🤖 DJ Flow';
 
-            // Marca visual para o Bot
-            if (video.phone === BOT_NAME) {
-                listItem.style.opacity = '0.8';
-                listItem.style.borderLeft = '3px solid #777';
-            }
+                // Função que define quem tem prioridade (Humanos primeiro)
+                function sortFunction(a, b) {
+                    const isBotA = a.phone === BOT_NAME;
+                    const isBotB = b.phone === BOT_NAME;
+                    if (!isBotA && isBotB) return -1; // Humano fura fila
+                    if (isBotA && !isBotB) return 1;  // Bot vai pro fim
+                    return 0; // Se forem iguais, mantém ordem de chegada
+                }
 
-            const videoTitle = await getFormattedVideoTitle(video.videoUrl);
+                // Descobre qual vídeo estava tocando antes dessa atualização
+                // (Usa a variável global videoQueue se ela já tiver dados)
+                const currentPlayingId = (videoQueue && videoQueue.length > 0) ? videoQueue[0].id : null;
 
-            listItem.innerHTML = `
+                // Verifica se esse vídeo AINDA existe na nova lista vinda do Firebase
+                const currentVideoStillExists = fetchedQueue.find(v => v.id === currentPlayingId);
+
+                if (currentVideoStillExists) {
+                    // CENÁRIO 1: A música atual AINDA está tocando (alguém só adicionou outra na fila)
+                    // -> Mantemos a atual fixa no topo [0] e ordenamos só o resto.
+                    const waitingList = fetchedQueue.filter(v => v.id !== currentPlayingId);
+                    waitingList.sort(sortFunction);
+                    videoQueue = [currentVideoStillExists, ...waitingList];
+                } else {
+                    // CENÁRIO 2: A música atual ACABOU e foi removida
+                    // -> Ordenamos a lista INTEIRA. Assim, o humano mais antigo vira o novo topo [0].
+                    videoQueue = fetchedQueue.sort(sortFunction);
+                }
+                // ============================================================
+
+
+                // --- DAQUI PRA BAIXO É A RENDERIZAÇÃO (IGUAL AO SEU CÓDIGO) ---
+                const videoList = document.getElementById('videoList');
+                videoList.innerHTML = '';
+
+                if (isAdminLoggedIn) {
+                    videoList.classList.add('admin-mode');
+                } else {
+                    videoList.classList.remove('admin-mode');
+                }
+
+                if (videoQueue.length === 0) {
+                    videoList.innerHTML = '<li class="empty-queue">A fila de vídeos está vazia. Adicione um vídeo!</li>';
+                    document.getElementById('currentUser').textContent = 'Nenhum vídeo em execução';
+                    document.getElementById('currentVideoUrl').textContent = 'Nenhuma URL disponível';
+                    if (player && typeof player.stopVideo === 'function') {
+                        player.stopVideo();
+                    }
+                    return;
+                }
+
+                // Helper para pegar título (mantido do seu código)
+                async function getFormattedVideoTitle(url) {
+                    try {
+                        const videoId = extractVideoId(url);
+                        const cachedTitle = sessionStorage.getItem(`videoTitle_${videoId}`);
+                        if (cachedTitle) return cachedTitle;
+
+                        const response = await fetch(`/api/video-info?id=${videoId}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.items && data.items[0]) {
+                                const title = data.items[0].snippet.title;
+                                sessionStorage.setItem(`videoTitle_${videoId}`, title);
+                                return title;
+                            }
+                        }
+                    } catch (error) { console.error('Erro ao buscar título:', error); }
+                    const videoId = extractVideoId(url);
+                    return videoId ? `Música (ID: ${videoId})` : 'Vídeo do YouTube';
+                }
+
+                // Renderiza a lista visual
+                for (const video of videoQueue) {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('video-item');
+
+                    // Marca visual para o Bot
+                    if (video.phone === BOT_NAME) {
+                        listItem.style.opacity = '0.8';
+                        listItem.style.borderLeft = '3px solid #777';
+                    }
+
+                    const videoTitle = await getFormattedVideoTitle(video.videoUrl);
+
+                    listItem.innerHTML = `
                 <div class="bulk-delete-controls">
                     <input type="checkbox" class="video-select-checkbox" data-videoid="${video.id}" title="Selecionar para remover">
                 </div>
@@ -1625,32 +1685,32 @@
                 </button>
             `;
 
-            if (onlineUserCount > 1 && !isAdminLoggedIn) {
-                const btns = listItem.querySelectorAll('.remove-button, .bulk-delete-controls');
-                btns.forEach(b => b.style.setProperty('display', 'none', 'important'));
-            }
-            videoList.appendChild(listItem);
+                    if (onlineUserCount > 1 && !isAdminLoggedIn) {
+                        const btns = listItem.querySelectorAll('.remove-button, .bulk-delete-controls');
+                        btns.forEach(b => b.style.setProperty('display', 'none', 'important'));
+                    }
+                    videoList.appendChild(listItem);
+                }
+
+                // --- Gerenciamento do Player ---
+                if (player && typeof player.loadVideoById === 'function') {
+                    const firstVideoInQueue = videoQueue[0];
+                    const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
+                    let currentlyLoadedVideoId = null;
+
+                    if (player.getVideoData && typeof player.getVideoData === 'function') {
+                        try { currentlyLoadedVideoId = player.getVideoData().video_id; } catch (e) { }
+                    }
+
+                    if (currentlyLoadedVideoId === null ||
+                        currentlyLoadedVideoId !== firstVideoInQueueId ||
+                        (player.getPlayerState() !== YT.PlayerState.PLAYING && currentlyLoadedVideoId === firstVideoInQueueId)
+                    ) {
+                        updateVideoPlayer(firstVideoInQueue.videoUrl, firstVideoInQueue.phone);
+                    }
+                }
+            });
         }
-
-        // --- Gerenciamento do Player ---
-        if (player && typeof player.loadVideoById === 'function') {
-            const firstVideoInQueue = videoQueue[0];
-            const firstVideoInQueueId = extractVideoId(firstVideoInQueue.videoUrl);
-            let currentlyLoadedVideoId = null;
-
-            if (player.getVideoData && typeof player.getVideoData === 'function') {
-                try { currentlyLoadedVideoId = player.getVideoData().video_id; } catch (e) {}
-            }
-
-            if (currentlyLoadedVideoId === null ||
-                currentlyLoadedVideoId !== firstVideoInQueueId ||
-                (player.getPlayerState() !== YT.PlayerState.PLAYING && currentlyLoadedVideoId === firstVideoInQueueId)
-            ) {
-                updateVideoPlayer(firstVideoInQueue.videoUrl, firstVideoInQueue.phone);
-            }
-        }
-    });
-}
 
         /**
          * Extrai o ID do vídeo de uma URL do YouTube.
@@ -1683,7 +1743,7 @@
 
             if (videoId && player && typeof player.loadVideoById === 'function') {
                 playedVideoHistory.add(videoId);
-        console.log("Histórico atualizado. Vídeos ignorados:", playedVideoHistory.size);
+                console.log("Histórico atualizado. Vídeos ignorados:", playedVideoHistory.size);
                 player.loadVideoById(videoId);
                 document.getElementById('currentUser').textContent = userName;
                 document.getElementById('currentVideoUrl').textContent = videoUrl;
@@ -1725,10 +1785,10 @@
                     if (jumped && !nearEnd) {
                         console.log('Detectado adiantamento no vídeo.');
                     } else if (jumped && nearEnd) {
-                       if (isAdminLoggedIn || onlineUserCount <= 1) {
+                        if (isAdminLoggedIn || onlineUserCount <= 1) {
                             console.log('Adiantamento para o final permitido (Admin/Solo).');
                             // Não faz nada, deixa o código continuar e atualizar o tempo.
-                        } 
+                        }
                         else {
                             // Se for Visitante EM GRUPO, aí sim BLOQUEIA.
                             console.log('Bloqueando adiantamento para o final (Visitante).');
@@ -1763,37 +1823,37 @@
             // Regra: Se for Admin OU se estiver sozinho (Solo) -> Atualiza o banco.
             // Se estiver no Modo Festa sem admin -> O vídeo toca automático, então quem carregou primeiro manda.
             // Para simplificar: Vamos deixar o Admin ou o Modo Solo mandarem.
-            
+
             if (isAdminLoggedIn || isBroadcaster) {
-                 const currentTime = player.getCurrentTime();
-                 
-                 if (event.data === YT.PlayerState.PLAYING) {
-                     playerStateRef.set({
-                         status: 'playing',
-                         videoId: player.getVideoData().video_id,
-                         timestamp: firebase.database.ServerValue.TIMESTAMP, // Hora exata do servidor
-                         videoTime: currentTime // Onde o vídeo estava
-                     });
-                 } 
-                 else if (event.data === YT.PlayerState.PAUSED) {
-                     playerStateRef.set({
-                         status: 'paused',
-                         videoId: player.getVideoData().video_id,
-                         timestamp: firebase.database.ServerValue.TIMESTAMP,
-                         videoTime: currentTime
-                     });
-                 }
+                const currentTime = player.getCurrentTime();
+
+                if (event.data === YT.PlayerState.PLAYING) {
+                    playerStateRef.set({
+                        status: 'playing',
+                        videoId: player.getVideoData().video_id,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP, // Hora exata do servidor
+                        videoTime: currentTime // Onde o vídeo estava
+                    });
+                }
+                else if (event.data === YT.PlayerState.PAUSED) {
+                    playerStateRef.set({
+                        status: 'paused',
+                        videoId: player.getVideoData().video_id,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        videoTime: currentTime
+                    });
+                }
             }
             // =================================================================
 
             // 2. Lógica de Fim de Vídeo (Seu código original)
             if (event.data === YT.PlayerState.ENDED) {
                 // ... (seu código de remover vídeo mantém igual) ...
-                 const currentTime = player.getCurrentTime();
-                 const duration = player.getDuration();
-                 const naturalEndTolerance = 2.0;
+                const currentTime = player.getCurrentTime();
+                const duration = player.getDuration();
+                const naturalEndTolerance = 2.0;
 
-                 if (duration - currentTime <= naturalEndTolerance) {
+                if (duration - currentTime <= naturalEndTolerance) {
                     console.log('Vídeo terminou naturalmente. Avançando...');
                     if (videoQueue.length > 0) {
                         const firstVideoInQueue = videoQueue[0];
@@ -1803,12 +1863,12 @@
                             videoQueueRef.child(firstVideoInQueue.id).remove();
                         }
                     }
-                 } else {
-                     player.stopVideo();
-                 }
+                } else {
+                    player.stopVideo();
+                }
             }
         }
-        
+
 
         // Função para atualizar a exibição do nome do admin
         function updateAdminDisplay() {
@@ -2089,7 +2149,7 @@
             // ... (o resto da função continua igual) ...
             // 1. Encontra todos os checkboxes marcados
             const selectedCheckboxes = document.querySelectorAll('.video-select-checkbox:checked');
-            
+
             if (selectedCheckboxes.length === 0) {
                 showNotification('Nenhum vídeo selecionado.', 'info');
                 return;
@@ -2155,8 +2215,8 @@
                         // --- INÍCIO DA CORREÇÃO ---
                         console.log('Player está PRONTO.');
                         isPlayerReady = true;
-                    
-        startSyncHeartbeat();
+
+                        startSyncHeartbeat();
                         updatePlayerMode();
                         // --- FIM DA CORREÇÃO ---
                     },
@@ -2245,7 +2305,7 @@
             // (Se é Admin OU se tem 1 ou 0 pessoas na sala)
             if (isAdminLoggedIn || onlineUserCount <= 1) {
                 console.log('Modo Solo/Admin: Limpando fila direto...');
-                
+
                 // Pergunta de segurança simples (sem senha)
                 if (confirm('Tem certeza que deseja limpar toda a fila?')) {
                     executeClearQueue();
@@ -2303,7 +2363,7 @@
             try {
                 await videoQueueRef.remove();
                 showNotification('Fila limpa com sucesso!', 'success');
-                closeModal(); 
+                closeModal();
             } catch (error) {
                 console.error('Erro ao limpar fila:', error);
                 showNotification('Erro ao limpar a fila.', 'error');
@@ -2441,7 +2501,7 @@
                 closeBulkRemoveConfirmModal();
                 closePanelModal();
                 closeDeleteAllRoomsModal();
-                
+
 
             }
         });
@@ -2464,14 +2524,14 @@
         // =================================================================
         // SINCRONIZAÇÃO DE RECEBIMENTO (CLIENTES)
         // =================================================================
-        
+
         let isSeeking = false; // Para evitar loop infinito de updates
 
         // Ouve mudanças no estado do player
         playerStateRef.on('value', (snapshot) => {
             // Se eu sou Admin ou estou sozinho, EU sou a fonte da verdade. Ignoro atualizações.
             if (isAdminLoggedIn || isBroadcaster) return;
-            
+
             // Se o player não estiver pronto, não faz nada
             if (!player || typeof player.seekTo !== 'function') return;
 
@@ -2484,14 +2544,14 @@
             const now = Date.now();
             // Precisamos estimar o offset do servidor (approximado) ou usar o tempo local se o skew for pequeno.
             // Para simplificar, assumimos clocks sincronizados ou usamos a diferença direta se o update for recente.
-            
+
             // Se estiver tocando, compensamos o lag
             let targetTime = state.videoTime;
             if (state.status === 'playing') {
-                 // Convertendo timestamp do firebase (aprox) para local
-                 // Nota: Firebase timestamp é ms. VideoTime é segundos.
-                 const timePassedSeconds = (now - state.timestamp) / 1000; 
-                 targetTime += timePassedSeconds;
+                // Convertendo timestamp do firebase (aprox) para local
+                // Nota: Firebase timestamp é ms. VideoTime é segundos.
+                const timePassedSeconds = (now - state.timestamp) / 1000;
+                targetTime += timePassedSeconds;
             }
 
             // Verifica se meu player está muito desincronizado (> 2 segundos)
@@ -3228,7 +3288,7 @@
 
             // Esconde AMBOS
             contextBox.style.display = 'none';
-            actionsBar.style.display = 'none'; // <-- ESTA LINHA É NOVA
+            actionsBar.style.display = 'none'; 
         }
 
         /**
@@ -3308,6 +3368,10 @@
                 const snapshot = await roomsRef.once('value');
                 const roomsData = snapshot.val();
 
+                //Helper: Chama o faxineiro aqui! ⬇️
+                if (roomsData) {
+                    cleanOldRooms(roomsData);
+                }
                 if (!roomsData) {
                     // Se não houver salas, mostra mensagem
                     loaderElement.innerHTML = '<div class="empty-yt"><i class="fas fa-ghost"></i><p>Nenhuma sala ativa encontrada.</p></div>';
@@ -3587,623 +3651,623 @@
 
     </script>
 
-  <script>
-/* ================================
-   ESTADO
-================================ */
-let sugestaoGeneroSelecionado = 'pop';
-let sugestaoTipoSelecionado = 'genero';
-let autoSugestaoAtiva = false;
-let autoSugestaoInterval = null;
-let autoSugestaoCount = 1;
+    <script>
+        /* ================================
+           ESTADO
+        ================================ */
+        let sugestaoGeneroSelecionado = 'pop';
+        let sugestaoTipoSelecionado = 'genero';
+        let autoSugestaoAtiva = false;
+        let autoSugestaoInterval = null;
+        let autoSugestaoCount = 1;
 
-// --- Histórico para evitar repetições ---
-let playedVideoHistory = new Set();
-/* ================================
-   UI & MODAL
-================================ */
-function openSugestaoModal() {
-    const modal = document.getElementById('sugestaoModal');
-    if (!modal) return;
-    
-    // Abre o modal primeiro (garante que funciona visualmente)
-    modal.style.display = 'flex';
-    
-    // Tenta configurar as abas e detectar gênero
-    try {
-        switchTab('genero');
-        
-        // Verifica se o player existe antes de tentar detectar
-        if (player && typeof player.getVideoData === 'function') {
-            detectarGeneroAtual();
-        }
-    } catch (e) {
-        console.warn("Aviso: Não foi possível detectar o gênero atual (Player carregando?)", e);
-        // Não faz nada, apenas deixa o modal aberto com o padrão
-    }
-}
+        // --- Histórico para evitar repetições ---
+        let playedVideoHistory = new Set();
+        /* ================================
+           UI & MODAL
+        ================================ */
+        function openSugestaoModal() {
+            const modal = document.getElementById('sugestaoModal');
+            if (!modal) return;
 
-function closeSugestaoModal() {
-  document.getElementById('sugestaoModal').style.display = 'none';
-}
+            // Abre o modal primeiro (garante que funciona visualmente)
+            modal.style.display = 'flex';
 
-function switchTab(tabName) {
-  document.querySelectorAll('.sugestao-tab').forEach(tab => {
-    tab.classList.remove('active');
-  });
+            // Tenta configurar as abas e detectar gênero
+            try {
+                switchTab('genero');
 
-  document.querySelectorAll('.tab-content').forEach(content => {
-    content.style.display = 'none';
-  });
-
-  const tabBtn = document.querySelector(`.sugestao-tab[onclick="switchTab('${tabName}')"]`);
-  const tabContent = document.getElementById(`${tabName}Content`);
-
-  if (tabBtn) tabBtn.classList.add('active');
-  if (tabContent) tabContent.style.display = 'block';
-
-  sugestaoTipoSelecionado = tabName;
-}
-
-function selectGenero(genero) {
-  document.querySelectorAll('.genero-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-
-  const btn = document.querySelector(`.genero-btn[data-genero="${genero}"]`);
-  if (btn) btn.classList.add('active');
-
-  sugestaoGeneroSelecionado = genero;
-}
-
-function changeAutoCount(change) {
-  const el = document.getElementById('autoCount');
-  let v = parseInt(el.textContent) + change;
-  v = Math.max(1, Math.min(10, v)); // Mínimo 1, Máximo 10
-  el.textContent = v;
-  autoSugestaoCount = v;
-}
-
-/* ================================
-   Detectar estilos músicais
-================================ */
-function detectarGeneroAtual() {
-  if (!player || !player.getVideoData) return;
-
-  try {
-    const title = (player.getVideoData().title || '').toLowerCase();
-
-    const generosMap = {
-      sertanejo: [
-        'sertanejo', 'modão', 'arrocha', 'universitário'
-      ],
-      funk: [
-        'funk', 'mandelão', '150 bpm', 'dj', 'baile', 'proibidão'
-      ],
-      pop: [
-        'pop', 'official video', 'lyrics', 'hit', 'single'
-      ],
-      rock: [
-        'rock', 'metal', 'punk', 'grunge', 'hard rock', 'heavy metal'
-      ],
-      eletronica: [
-        'edm', 'house', 'techno', 'trance', 'deep house', 'remix', 'dj set'
-      ],
-      rap: [
-        'rap', 'trap', 'hip hop', 'hip-hop', 'freestyle', 'cypher'
-      ],
-      reggaeton: [
-        'reggaeton', 'latin', 'latino', 'perreo'
-      ],
-      pagode: [
-        'pagode', 'samba', 'partido alto', 'roda de samba'
-      ]
-    };
-
-    let melhorGenero = null;
-    let melhorScore = 0;
-
-    for (const genero in generosMap) {
-      let score = 0;
-
-      for (const palavra of generosMap[genero]) {
-        if (title.includes(palavra)) {
-          score++;
-        }
-      }
-
-      // Guarda o gênero com mais matches
-      if (score > melhorScore) {
-        melhorScore = score;
-        melhorGenero = genero;
-      }
-    }
-
-    // Só muda se tiver alguma confiança
-    if (melhorGenero && melhorScore > 0) {
-      selectGenero(melhorGenero);
-      console.log("🎧 Gênero detectado:", melhorGenero, "Score:", melhorScore);
-    }
-
-  } catch (e) {
-    console.warn("Erro ao detectar gênero:", e);
-  }
-}
-
-// para pegar o ano atual no sugestão de música 
-function getAnoAtual() {
-  return new Date().getFullYear();
-}
-
-function gerarQueryAtual() {
-  const ano = new Date().getFullYear();
-  let query = `top hits ${ano}`;
-  
-  if (sugestaoTipoSelecionado === 'genero') {
-    const map = {
-      sertanejo: `sertanejo ${ano} as mais tocadas`,
-      funk: `funk hits ${ano}`,
-      pop: `pop internacional ${ano} hits`,
-      rock: `rock playlist ${ano}`,
-      eletronica: `summer eletrohits ${ano}`,
-      rap: `rap trap brasil ${ano}`,
-      reggaeton: `reggaeton ${ano} éxitos`,
-      pagode: `pagode churrasco ${ano}`
-    };
-    query = map[sugestaoGeneroSelecionado] || query;
-  }
-  
-  if (sugestaoTipoSelecionado === 'tendencia') {
-    const arr = [
-      'top 50 brasil',
-      'viral hits global',
-      `tiktok music ${ano}`,
-      'billboard hot 100'
-    ];
-    query = arr[Math.floor(Math.random() * arr.length)];
-  }
-  
-  if (sugestaoTipoSelecionado === 'similar' && player?.getVideoData) {
-    try {
-      const t = player.getVideoData().title;
-      if (t) query = t.split(' ').slice(0, 1).join(' ') + ' mix';
-    } catch(e) {}
-  }
-  
-  return query;
-}
-
-
-/* ================================
-   FUNÇÃO ÚNICA: Adicionar Agora
-================================ */
-async function sugerirAgora() {
-  const btn = document.querySelector('.btn-now');
-  const original = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
-  btn.disabled = true;
-
-  try {
-    const query = gerarQueryAtual();
-
-    // Pede muitos para poder escolher vários válidos
-    const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}&maxResults=50`);
-    const json = await res.json();
-
-    if (!json.items || !json.items.length) {
-      showNotification('Nenhum resultado encontrado.', 'info');
-      return;
-    }
-
-    // Filtro rigoroso
-    let candidatos = json.items.filter(v => {
-      const isVideo = v.id.kind === 'youtube#video';
-      const t = v.snippet.title.toLowerCase();
-      const isClean = !t.includes('live') && !t.includes('ao vivo') && !t.includes('short');
-      return isVideo && isClean;
-    });
-
-    if (candidatos.length === 0) {
-      showNotification('Nenhum vídeo válido encontrado.', 'info');
-      return;
-    }
-
-    // Embaralha
-    candidatos.sort(() => Math.random() - 0.5);
-
-    const user = sessionStorage.getItem('ytSessionUser') || '🤖 DJ Flow';
-
-    let adicionados = 0;
-
-    for (const video of candidatos) {
-      if (adicionados >= autoSugestaoCount) break;
-
-      try {
-        const url = `https://www.youtube.com/watch?v=${video.id.videoId}`;
-
-        await videoQueueRef.push({
-          phone: user,
-          videoUrl: url
-        });
-
-        adicionados++;
-        await new Promise(r => setTimeout(r, 200)); // pequeno delay
-
-      } catch (errInner) {
-        console.warn("Erro ao adicionar vídeo individual:", errInner);
-      }
-    }
-
-    if (adicionados > 0) {
-      showNotification(`Adicionados ${adicionados} vídeos à fila 🎵`, 'success');
-      setTimeout(closeSugestaoModal, 500);
-    } else {
-      showNotification('Não foi possível adicionar vídeos.', 'error');
-    }
-
-  } catch (e) {
-    console.error(e);
-    showNotification('Erro ao buscar sugestão.', 'error');
-  } finally {
-    btn.innerHTML = original;
-    btn.disabled = false;
-  }
-}
-
-
-/* ================================
-   LÓGICA PRINCIPAL DO AUTO DJ
-================================ */
-async function rodarCicloAutoDJ() {
-    if (!autoSugestaoAtiva) return;
-
-    // 1. Verifica quantas músicas tem na fila
-    const snap = await videoQueueRef.once('value');
-    const data = snap.val();
-    const len = data ? Object.keys(data).length : 0;
-
-    // Se já temos músicas suficientes, não faz nada
-    if (len >= autoSugestaoCount) return;
-
-    const faltam = autoSugestaoCount - len;
-    console.log(`DJFlow: Fila tem ${len}. Meta é ${autoSugestaoCount}. Adicionando ${faltam}...`);
-
-    // 2. Busca músicas em lote
-    const query = gerarQueryAtual();
-    try {
-        const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}&maxResults=50`);
-        const json = await res.json();
-
-        if (!json.items || !json.items.length) return;
-
-        // --- PREPARAÇÃO DOS FILTROS ---
-        // Pega IDs da fila atual para não duplicar o que já vai tocar
-        const currentQueueIds = data 
-            ? Object.values(data).map(v => extractVideoId(v.videoUrl)) 
-            : [];
-
-        // 3. FILTRO RIGOROSO (Agora com Histórico!)
-        let candidatos = json.items.filter(v => {
-            const vid = v.id.videoId;
-            const isVideo = v.id.kind === 'youtube#video';
-            const t = v.snippet.title.toLowerCase();
-            
-            // Regras de limpeza
-            const isClean = !t.includes('live') && !t.includes('ao vivo') && !t.includes('short');
-            
-            // Regras de Repetição
-            const notInQueue = !currentQueueIds.includes(vid);
-            const notPlayed = !playedVideoHistory.has(vid); // Verifica se já tocou
-
-            return isVideo && isClean && notInQueue && notPlayed;
-        });
-
-        if (candidatos.length === 0) {
-            console.log("DJFlow: Todos os vídeos retornados já foram tocados ou estão na fila. Tentando próxima query...");
-            return;
+                // Verifica se o player existe antes de tentar detectar
+                if (player && typeof player.getVideoData === 'function') {
+                    detectarGeneroAtual();
+                }
+            } catch (e) {
+                console.warn("Aviso: Não foi possível detectar o gênero atual (Player carregando?)", e);
+                // Não faz nada, apenas deixa o modal aberto com o padrão
+            }
         }
 
-        // 4. Embaralha
-        candidatos.sort(() => Math.random() - 0.5);
+        function closeSugestaoModal() {
+            document.getElementById('sugestaoModal').style.display = 'none';
+        }
 
-        // 5. Adiciona a quantidade necessária
-        let adicionados = 0;
-        
-        for (const video of candidatos) {
-            if (adicionados >= faltam) break;
+        function switchTab(tabName) {
+            document.querySelectorAll('.sugestao-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+
+            const tabBtn = document.querySelector(`.sugestao-tab[onclick="switchTab('${tabName}')"]`);
+            const tabContent = document.getElementById(`${tabName}Content`);
+
+            if (tabBtn) tabBtn.classList.add('active');
+            if (tabContent) tabContent.style.display = 'block';
+
+            sugestaoTipoSelecionado = tabName;
+        }
+
+        function selectGenero(genero) {
+            document.querySelectorAll('.genero-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            const btn = document.querySelector(`.genero-btn[data-genero="${genero}"]`);
+            if (btn) btn.classList.add('active');
+
+            sugestaoGeneroSelecionado = genero;
+        }
+
+        function changeAutoCount(change) {
+            const el = document.getElementById('autoCount');
+            let v = parseInt(el.textContent) + change;
+            v = Math.max(1, Math.min(10, v)); // Mínimo 1, Máximo 10
+            el.textContent = v;
+            autoSugestaoCount = v;
+        }
+
+        /* ================================
+           Detectar estilos músicais
+        ================================ */
+        function detectarGeneroAtual() {
+            if (!player || !player.getVideoData) return;
 
             try {
-                const vidId = video.id.videoId;
-                const url = `https://www.youtube.com/watch?v=${vidId}`;
-                
-                // Adiciona ao Firebase
-                await videoQueueRef.push({
-                    phone: '🤖 DJ Flow',
-                    videoUrl: url
-                });
-                
-                // Já adiciona ao histórico preventivamente para não duplicar no mesmo loop
-                playedVideoHistory.add(vidId);
-                
-                adicionados++;
-                await new Promise(r => setTimeout(r, 200));
+                const title = (player.getVideoData().title || '').toLowerCase();
 
-            } catch (errInner) {
-                console.warn("Erro ao adicionar música específica no AutoDJ:", errInner);
+                const generosMap = {
+                    sertanejo: [
+                        'sertanejo', 'modão', 'arrocha', 'universitário'
+                    ],
+                    funk: [
+                        'funk', 'mandelão', '150 bpm', 'dj', 'baile', 'proibidão'
+                    ],
+                    pop: [
+                        'pop', 'official video', 'lyrics', 'hit', 'single'
+                    ],
+                    rock: [
+                        'rock', 'metal', 'punk', 'grunge', 'hard rock', 'heavy metal'
+                    ],
+                    eletronica: [
+                        'edm', 'house', 'techno', 'trance', 'deep house', 'remix', 'dj set'
+                    ],
+                    rap: [
+                        'rap', 'trap', 'hip hop', 'hip-hop', 'freestyle', 'cypher'
+                    ],
+                    reggaeton: [
+                        'reggaeton', 'latin', 'latino', 'perreo'
+                    ],
+                    pagode: [
+                        'pagode', 'samba', 'partido alto', 'roda de samba'
+                    ]
+                };
+
+                let melhorGenero = null;
+                let melhorScore = 0;
+
+                for (const genero in generosMap) {
+                    let score = 0;
+
+                    for (const palavra of generosMap[genero]) {
+                        if (title.includes(palavra)) {
+                            score++;
+                        }
+                    }
+
+                    // Guarda o gênero com mais matches
+                    if (score > melhorScore) {
+                        melhorScore = score;
+                        melhorGenero = genero;
+                    }
+                }
+
+                // Só muda se tiver alguma confiança
+                if (melhorGenero && melhorScore > 0) {
+                    selectGenero(melhorGenero);
+                    console.log("🎧 Gênero detectado:", melhorGenero, "Score:", melhorScore);
+                }
+
+            } catch (e) {
+                console.warn("Erro ao detectar gênero:", e);
             }
         }
-        
-        if (adicionados > 0) {
-            console.log(`AutoDJ finalizou ciclo. Adicionou ${adicionados} músicas.`);
+
+        // para pegar o ano atual no sugestão de música 
+        function getAnoAtual() {
+            return new Date().getFullYear();
         }
 
-    } catch (err) {
-        console.error('Erro crítico no AutoDJ:', err);
-    }
-}
+        function gerarQueryAtual() {
+            const ano = new Date().getFullYear();
+            let query = `top hits ${ano}`;
 
-/* ================================
-   CONTROLE DO AUTO DJ (CORRIGIDO)
-================================ */
+            if (sugestaoTipoSelecionado === 'genero') {
+                const map = {
+                    sertanejo: `sertanejo ${ano} as mais tocadas`,
+                    funk: `funk hits ${ano}`,
+                    pop: `pop internacional ${ano} hits`,
+                    rock: `rock playlist ${ano}`,
+                    eletronica: `summer eletrohits ${ano}`,
+                    rap: `rap trap brasil ${ano}`,
+                    reggaeton: `reggaeton ${ano} éxitos`,
+                    pagode: `pagode churrasco ${ano}`
+                };
+                query = map[sugestaoGeneroSelecionado] || query;
+            }
 
-// Função chamada pelo BOTÃO "Auto"
-function toggleAutoDjBtn() {
-  const toggle = document.getElementById('autoAddToggle');
-  // Inverte o estado visual da caixinha
-  toggle.checked = !toggle.checked;
-  // Chama a lógica principal baseada no novo estado
-  ativarAutoSugestao();
-}
+            if (sugestaoTipoSelecionado === 'tendencia') {
+                const arr = [
+                    'top 50 brasil',
+                    'viral hits global',
+                    `tiktok music ${ano}`,
+                    'billboard hot 100'
+                ];
+                query = arr[Math.floor(Math.random() * arr.length)];
+            }
 
-// Função chamada pelo CHECKBOX (onchange) e pelo BOTÃO
-function ativarAutoSugestao() {
-  const toggle = document.getElementById('autoAddToggle');
+            if (sugestaoTipoSelecionado === 'similar' && player?.getVideoData) {
+                try {
+                    const t = player.getVideoData().title;
+                    if (t) query = t.split(' ').slice(0, 1).join(' ') + ' mix';
+                } catch (e) { }
+            }
 
-  if (toggle.checked) {
-    if (!autoSugestaoAtiva) {
-      autoSugestaoAtiva = true;
-      showNotification('Auto-sugestão ligada 🤖', 'success');
-      iniciarAutoSugestao();
-    }
-  } else {
-    autoSugestaoAtiva = false;
-    if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
-    showNotification('Auto-sugestão desligada.', 'info');
-  }
-
-  // 🔥 ATUALIZA O BOTÃO
-  atualizarUIAutoDJ();
-}
-
-function atualizarUIAutoDJ() {
-  const btn = document.getElementById("btn-auto-sugestao");
-
-  if (!btn) return;
-
-  if (autoSugestaoAtiva) {
-    btn.classList.add("auto-dj-on");
-    btn.innerHTML = '<i class="fas fa-robot"></i> Auto DJ Ligado';
-  } else {
-    btn.classList.remove("auto-dj-on");
-    btn.innerHTML = '<i class="fas fa-magic"></i> Sugerir Música';
-  }
-}
+            return query;
+        }
 
 
-function iniciarAutoSugestao() {
-  if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
-  
-  // Roda IMEDIATAMENTE a primeira vez (não espera 15s)
-  rodarCicloAutoDJ();
+        /* ================================
+           FUNÇÃO ÚNICA: Adicionar Agora
+        ================================ */
+        async function sugerirAgora() {
+            const btn = document.querySelector('.btn-now');
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+            btn.disabled = true;
 
-  // Configura o intervalo para rodar a cada 15 segundos
-  autoSugestaoInterval = setInterval(rodarCicloAutoDJ, 15000);
-}
+            try {
+                const query = gerarQueryAtual();
 
-/* ================================
-   INIT
-================================ */
-document.addEventListener('DOMContentLoaded', () => {
-  selectGenero('pop');
-  switchTab('genero');
+                // Pede muitos para poder escolher vários válidos
+                const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}&maxResults=50`);
+                const json = await res.json();
 
-  const modal = document.getElementById('sugestaoModal');
-  if (modal) {
-      modal.addEventListener('click', e => {
-        if (e.target === modal) closeSugestaoModal();
-      });
-  }
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeSugestaoModal();
-  });
-});
+                if (!json.items || !json.items.length) {
+                    showNotification('Nenhum resultado encontrado.', 'info');
+                    return;
+                }
 
-/**
- * Controla se o botão do Auto DJ aparece ou não.
- * Regra: Só aparece se for Admin OU se estiver sozinho na sala.
- */
-function atualizarVisibilidadeAutoDJ() {
-    const btnAuto = document.getElementById("btn-auto-sugestao");
-    
-    if (!btnAuto) return;
+                // Filtro rigoroso
+                let candidatos = json.items.filter(v => {
+                    const isVideo = v.id.kind === 'youtube#video';
+                    const t = v.snippet.title.toLowerCase();
+                    const isClean = !t.includes('live') && !t.includes('ao vivo') && !t.includes('short');
+                    return isVideo && isClean;
+                });
 
-    // Use o contador global atualizado
-    const userCount = parseInt(document.getElementById('userCount').textContent, 10) || onlineUserCount || 1;
+                if (candidatos.length === 0) {
+                    showNotification('Nenhum vídeo válido encontrado.', 'info');
+                    return;
+                }
 
-    // FORÇA o display com !important para garantir que suma
-    if (isAdminLoggedIn || userCount <= 1) {
-        btnAuto.style.setProperty('display', 'inline-flex', 'important');
-    } else {
-        btnAuto.style.setProperty('display', 'none', 'important');
-    }
-}
+                // Embaralha
+                candidatos.sort(() => Math.random() - 0.5);
 
-/* ================================
-   SISTEMA DE TEMAS AVANÇADO
-================================ */
+                const user = sessionStorage.getItem('ytSessionUser') || '🤖 DJ Flow';
 
-// Configurações dos temas
-const THEMES = {
-    'default': {
-        name: 'Roxo Clássico',
-        icon: 'fas fa-moon',
-        description: 'Tema original azul/roxo'
-    },
-    'pink': {
-        name: 'Pink Vibes',
-        icon: 'fas fa-heart',
-        description: 'Rosa vibrante'
-    },
-    'light': {
-        name: 'Modo Claro',
-        icon: 'fas fa-sun',
-        description: 'Clean e claro'
-    },
-    'oled': {
-        name: 'Preto Absoluto',
-        icon: 'fas fa-adjust',
-        description: 'OLED puro'
-    }
-};
+                let adicionados = 0;
 
-// Carrega o tema salvo
-document.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('flowLinkTheme') || 'default';
-    applyTheme(savedTheme, false);
-    updateThemeIcon(savedTheme);
-});
+                for (const video of candidatos) {
+                    if (adicionados >= autoSugestaoCount) break;
 
-// Abre o modal com animação
-function openThemeModal() {
-    const modal = document.getElementById('themeModal');
-    modal.style.display = 'flex';
-    
-    // Anima a entrada
-    setTimeout(() => {
-        modal.style.opacity = '1';
-        modal.querySelector('.modal-content').style.transform = 'translateY(0)';
-    }, 10);
-    
-    // Atualiza preview dos temas
-    updateThemePreviews();
-}
+                    try {
+                        const url = `https://www.youtube.com/watch?v=${video.id.videoId}`;
 
-// Fecha o modal com animação
-function closeThemeModal() {
-    const modal = document.getElementById('themeModal');
-    modal.style.opacity = '0';
-    modal.querySelector('.modal-content').style.transform = 'translateY(-20px)';
-    
-    setTimeout(() => {
-        modal.style.display = 'none';
-    }, 300);
-}
+                        await videoQueueRef.push({
+                            phone: user,
+                            videoUrl: url
+                        });
 
-// Aplica o tema
-function applyTheme(themeName, showFeedback = true) {
-    // Remove tema anterior
-    document.body.classList.remove('theme-transition');
-    
-    // Aplica novo tema
-    if (themeName === 'default') {
-        document.body.removeAttribute('data-theme');
-    } else {
-        document.body.setAttribute('data-theme', themeName);
-    }
-    
-    // Adiciona classe para transição suave
-    document.body.classList.add('theme-transition');
-    
-    // Salva preferência
-    localStorage.setItem('flowLinkTheme', themeName);
-    
-    // Atualiza UI
-    highlightActiveTheme(themeName);
-    updateThemeIcon(themeName);
-    
-    // Feedback
-    if (showFeedback) {
-        const themeData = THEMES[themeName];
-        showNotification(`Tema: ${themeData.name}`, 'success');
-        
-        // Fecha modal após delay
-        setTimeout(() => {
-            if (document.getElementById('themeModal').style.display === 'flex') {
+                        adicionados++;
+                        await new Promise(r => setTimeout(r, 200)); // pequeno delay
+
+                    } catch (errInner) {
+                        console.warn("Erro ao adicionar vídeo individual:", errInner);
+                    }
+                }
+
+                if (adicionados > 0) {
+                    showNotification(`Adicionados ${adicionados} vídeos à fila 🎵`, 'success');
+                    setTimeout(closeSugestaoModal, 500);
+                } else {
+                    showNotification('Não foi possível adicionar vídeos.', 'error');
+                }
+
+            } catch (e) {
+                console.error(e);
+                showNotification('Erro ao buscar sugestão.', 'error');
+            } finally {
+                btn.innerHTML = original;
+                btn.disabled = false;
+            }
+        }
+
+
+        /* ================================
+           LÓGICA PRINCIPAL DO AUTO DJ
+        ================================ */
+        async function rodarCicloAutoDJ() {
+            if (!autoSugestaoAtiva) return;
+
+            // 1. Verifica quantas músicas tem na fila
+            const snap = await videoQueueRef.once('value');
+            const data = snap.val();
+            const len = data ? Object.keys(data).length : 0;
+
+            // Se já temos músicas suficientes, não faz nada
+            if (len >= autoSugestaoCount) return;
+
+            const faltam = autoSugestaoCount - len;
+            console.log(`DJFlow: Fila tem ${len}. Meta é ${autoSugestaoCount}. Adicionando ${faltam}...`);
+
+            // 2. Busca músicas em lote
+            const query = gerarQueryAtual();
+            try {
+                const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}&maxResults=50`);
+                const json = await res.json();
+
+                if (!json.items || !json.items.length) return;
+
+                // --- PREPARAÇÃO DOS FILTROS ---
+                // Pega IDs da fila atual para não duplicar o que já vai tocar
+                const currentQueueIds = data
+                    ? Object.values(data).map(v => extractVideoId(v.videoUrl))
+                    : [];
+
+                // 3. FILTRO RIGOROSO (Agora com Histórico!)
+                let candidatos = json.items.filter(v => {
+                    const vid = v.id.videoId;
+                    const isVideo = v.id.kind === 'youtube#video';
+                    const t = v.snippet.title.toLowerCase();
+
+                    // Regras de limpeza
+                    const isClean = !t.includes('live') && !t.includes('ao vivo') && !t.includes('short');
+
+                    // Regras de Repetição
+                    const notInQueue = !currentQueueIds.includes(vid);
+                    const notPlayed = !playedVideoHistory.has(vid); // Verifica se já tocou
+
+                    return isVideo && isClean && notInQueue && notPlayed;
+                });
+
+                if (candidatos.length === 0) {
+                    console.log("DJFlow: Todos os vídeos retornados já foram tocados ou estão na fila. Tentando próxima query...");
+                    return;
+                }
+
+                // 4. Embaralha
+                candidatos.sort(() => Math.random() - 0.5);
+
+                // 5. Adiciona a quantidade necessária
+                let adicionados = 0;
+
+                for (const video of candidatos) {
+                    if (adicionados >= faltam) break;
+
+                    try {
+                        const vidId = video.id.videoId;
+                        const url = `https://www.youtube.com/watch?v=${vidId}`;
+
+                        // Adiciona ao Firebase
+                        await videoQueueRef.push({
+                            phone: '🤖 DJ Flow',
+                            videoUrl: url
+                        });
+
+                        // Já adiciona ao histórico preventivamente para não duplicar no mesmo loop
+                        playedVideoHistory.add(vidId);
+
+                        adicionados++;
+                        await new Promise(r => setTimeout(r, 200));
+
+                    } catch (errInner) {
+                        console.warn("Erro ao adicionar música específica no AutoDJ:", errInner);
+                    }
+                }
+
+                if (adicionados > 0) {
+                    console.log(`AutoDJ finalizou ciclo. Adicionou ${adicionados} músicas.`);
+                }
+
+            } catch (err) {
+                console.error('Erro crítico no AutoDJ:', err);
+            }
+        }
+
+        /* ================================
+           CONTROLE DO AUTO DJ (CORRIGIDO)
+        ================================ */
+
+        // Função chamada pelo BOTÃO "Auto"
+        function toggleAutoDjBtn() {
+            const toggle = document.getElementById('autoAddToggle');
+            // Inverte o estado visual da caixinha
+            toggle.checked = !toggle.checked;
+            // Chama a lógica principal baseada no novo estado
+            ativarAutoSugestao();
+        }
+
+        // Função chamada pelo CHECKBOX (onchange) e pelo BOTÃO
+        function ativarAutoSugestao() {
+            const toggle = document.getElementById('autoAddToggle');
+
+            if (toggle.checked) {
+                if (!autoSugestaoAtiva) {
+                    autoSugestaoAtiva = true;
+                    showNotification('Auto-sugestão ligada 🤖', 'success');
+                    iniciarAutoSugestao();
+                }
+            } else {
+                autoSugestaoAtiva = false;
+                if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
+                showNotification('Auto-sugestão desligada.', 'info');
+            }
+
+            // 🔥 ATUALIZA O BOTÃO
+            atualizarUIAutoDJ();
+        }
+
+        function atualizarUIAutoDJ() {
+            const btn = document.getElementById("btn-auto-sugestao");
+
+            if (!btn) return;
+
+            if (autoSugestaoAtiva) {
+                btn.classList.add("auto-dj-on");
+                btn.innerHTML = '<i class="fas fa-robot"></i> Auto DJ Ligado';
+            } else {
+                btn.classList.remove("auto-dj-on");
+                btn.innerHTML = '<i class="fas fa-magic"></i> Sugerir Música';
+            }
+        }
+
+
+        function iniciarAutoSugestao() {
+            if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
+
+            // Roda IMEDIATAMENTE a primeira vez (não espera 15s)
+            rodarCicloAutoDJ();
+
+            // Configura o intervalo para rodar a cada 15 segundos
+            autoSugestaoInterval = setInterval(rodarCicloAutoDJ, 15000);
+        }
+
+        /* ================================
+           INIT
+        ================================ */
+        document.addEventListener('DOMContentLoaded', () => {
+            selectGenero('pop');
+            switchTab('genero');
+
+            const modal = document.getElementById('sugestaoModal');
+            if (modal) {
+                modal.addEventListener('click', e => {
+                    if (e.target === modal) closeSugestaoModal();
+                });
+            }
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') closeSugestaoModal();
+            });
+        });
+
+        /**
+         * Controla se o botão do Auto DJ aparece ou não.
+         * Regra: Só aparece se for Admin OU se estiver sozinho na sala.
+         */
+        function atualizarVisibilidadeAutoDJ() {
+            const btnAuto = document.getElementById("btn-auto-sugestao");
+
+            if (!btnAuto) return;
+
+            // Use o contador global atualizado
+            const userCount = parseInt(document.getElementById('userCount').textContent, 10) || onlineUserCount || 1;
+
+            // FORÇA o display com !important para garantir que suma
+            if (isAdminLoggedIn || userCount <= 1) {
+                btnAuto.style.setProperty('display', 'inline-flex', 'important');
+            } else {
+                btnAuto.style.setProperty('display', 'none', 'important');
+            }
+        }
+
+        /* ================================
+           SISTEMA DE TEMAS AVANÇADO
+        ================================ */
+
+        // Configurações dos temas
+        const THEMES = {
+            'default': {
+                name: 'Roxo Clássico',
+                icon: 'fas fa-moon',
+                description: 'Tema original azul/roxo'
+            },
+            'pink': {
+                name: 'Pink Vibes',
+                icon: 'fas fa-heart',
+                description: 'Rosa vibrante'
+            },
+            'light': {
+                name: 'Modo Claro',
+                icon: 'fas fa-sun',
+                description: 'Clean e claro'
+            },
+            'oled': {
+                name: 'Preto Absoluto',
+                icon: 'fas fa-adjust',
+                description: 'OLED puro'
+            }
+        };
+
+        // Carrega o tema salvo
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('flowLinkTheme') || 'default';
+            applyTheme(savedTheme, false);
+            updateThemeIcon(savedTheme);
+        });
+
+        // Abre o modal com animação
+        function openThemeModal() {
+            const modal = document.getElementById('themeModal');
+            modal.style.display = 'flex';
+
+            // Anima a entrada
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.querySelector('.modal-content').style.transform = 'translateY(0)';
+            }, 10);
+
+            // Atualiza preview dos temas
+            updateThemePreviews();
+        }
+
+        // Fecha o modal com animação
+        function closeThemeModal() {
+            const modal = document.getElementById('themeModal');
+            modal.style.opacity = '0';
+            modal.querySelector('.modal-content').style.transform = 'translateY(-20px)';
+
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // Aplica o tema
+        function applyTheme(themeName, showFeedback = true) {
+            // Remove tema anterior
+            document.body.classList.remove('theme-transition');
+
+            // Aplica novo tema
+            if (themeName === 'default') {
+                document.body.removeAttribute('data-theme');
+            } else {
+                document.body.setAttribute('data-theme', themeName);
+            }
+
+            // Adiciona classe para transição suave
+            document.body.classList.add('theme-transition');
+
+            // Salva preferência
+            localStorage.setItem('flowLinkTheme', themeName);
+
+            // Atualiza UI
+            highlightActiveTheme(themeName);
+            updateThemeIcon(themeName);
+
+            // Feedback
+            if (showFeedback) {
+                const themeData = THEMES[themeName];
+                showNotification(`Tema: ${themeData.name}`, 'success');
+
+                // Fecha modal após delay
+                setTimeout(() => {
+                    if (document.getElementById('themeModal').style.display === 'flex') {
+                        closeThemeModal();
+                    }
+                }, 800);
+            }
+
+            // Remove classe de transição após animação
+            setTimeout(() => {
+                document.body.classList.remove('theme-transition');
+            }, 500);
+        }
+
+        // Atualiza ícone do botão de tema
+        function updateThemeIcon(themeName) {
+            const themeBtn = document.querySelector('[onclick="openThemeModal()"]');
+            const themeData = THEMES[themeName];
+
+            if (themeBtn && themeData) {
+                // Atualiza ícone se existir
+                const icon = themeBtn.querySelector('i');
+                if (icon) {
+                    icon.className = themeData.icon;
+                }
+
+                // Adiciona indicador visual
+                let indicator = themeBtn.querySelector('.theme-indicator');
+                if (!indicator) {
+                    indicator = document.createElement('div');
+                    indicator.className = 'theme-indicator';
+                    themeBtn.appendChild(indicator);
+                }
+            }
+        }
+
+        // Destaca tema ativo
+        function highlightActiveTheme(themeName) {
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.querySelector('span').style.fontWeight = 'normal';
+            });
+
+            const activeBtn = document.getElementById(`theme-btn-${themeName}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.querySelector('span').style.fontWeight = 'bold';
+            }
+        }
+
+        // Atualiza previews dos temas
+        function updateThemePreviews() {
+            // Pode adicionar funcionalidade de preview em tempo real
+            const currentTheme = document.body.getAttribute('data-theme') || 'default';
+            highlightActiveTheme(currentTheme);
+        }
+
+        // Fecha modal ao clicar fora
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('themeModal');
+            if (e.target === modal) {
                 closeThemeModal();
             }
-        }, 800);
-    }
-    
-    // Remove classe de transição após animação
-    setTimeout(() => {
-        document.body.classList.remove('theme-transition');
-    }, 500);
-}
+        });
 
-// Atualiza ícone do botão de tema
-function updateThemeIcon(themeName) {
-    const themeBtn = document.querySelector('[onclick="openThemeModal()"]');
-    const themeData = THEMES[themeName];
-    
-    if (themeBtn && themeData) {
-        // Atualiza ícone se existir
-        const icon = themeBtn.querySelector('i');
-        if (icon) {
-            icon.className = themeData.icon;
+        // Suporte para teclado (ESC fecha modal)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeThemeModal();
+            }
+        });
+
+        // Função para resetar para tema padrão
+        function resetToDefault() {
+            applyTheme('default', true);
+            showNotification('Tema redefinido para padrão', 'info');
         }
-        
-        // Adiciona indicador visual
-        let indicator = themeBtn.querySelector('.theme-indicator');
-        if (!indicator) {
-            indicator = document.createElement('div');
-            indicator.className = 'theme-indicator';
-            themeBtn.appendChild(indicator);
-        }
-    }
-}
-
-// Destaca tema ativo
-function highlightActiveTheme(themeName) {
-    document.querySelectorAll('.theme-btn').forEach(btn => {
-        btn.classList.remove('active');
-        btn.querySelector('span').style.fontWeight = 'normal';
-    });
-    
-    const activeBtn = document.getElementById(`theme-btn-${themeName}`);
-    if (activeBtn) {
-        activeBtn.classList.add('active');
-        activeBtn.querySelector('span').style.fontWeight = 'bold';
-    }
-}
-
-// Atualiza previews dos temas
-function updateThemePreviews() {
-    // Pode adicionar funcionalidade de preview em tempo real
-    const currentTheme = document.body.getAttribute('data-theme') || 'default';
-    highlightActiveTheme(currentTheme);
-}
-
-// Fecha modal ao clicar fora
-document.addEventListener('click', (e) => {
-    const modal = document.getElementById('themeModal');
-    if (e.target === modal) {
-        closeThemeModal();
-    }
-});
-
-// Suporte para teclado (ESC fecha modal)
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        closeThemeModal();
-    }
-});
-
-// Função para resetar para tema padrão
-function resetToDefault() {
-    applyTheme('default', true);
-    showNotification('Tema redefinido para padrão', 'info');
-}
-</script>
+    </script>
 
     <script src="https://www.youtube.com/iframe_api"></script>
     </div>
