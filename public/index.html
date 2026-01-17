@@ -1935,6 +1935,9 @@
                 document.getElementById('videoList').classList.add('admin-mode');
                 document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
                 document.getElementById('clearChatBtn').style.display = 'inline-block';
+                document.querySelectorAll('.remove-button, .bulk-delete-controls').forEach(el => {
+                    el.style.removeProperty('display');
+                });
                 document.getElementById('panelBtn').style.display = 'flex';
 
                 // CHAMA A FUNÇÃO CENTRALIZADA para cuidar do player e botões associados
