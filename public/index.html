@@ -411,10 +411,11 @@
                             <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> Abrir Admin
                         </a>
 
-                        <button class="btn small danger" onclick="openDeleteAllRoomsModal()"
-                            title="Deletar TODAS as salas" style="margin-left: 10px;">
-                            <i class="fas fa-exclamation-triangle"></i> Deletar Tudo
-                        </button>
+                        <button class="btn small warning" onclick="limparSalasVazias()"
+    title="Apagar apenas salas vazias" style="margin-left: 10px; background:#ff9800; color:white;">
+    <i class="fas fa-broom"></i> Limpar Salas Vazias
+</button>
+
                     </div>
                 </h4>
 
@@ -428,12 +429,6 @@
         </div>
     </div>
 
-    <div id="deleteAllRoomsModal" class="modal">
-        <div class="modal-content"><span class="close-button" onclick="closeDeleteAllRoomsModal()">×</span>
-            <h3>Deletar Tudo?</h3><button class="btn danger" onclick="executeDeleteAllRooms()"
-                id="deleteAllRoomsConfirmBtn">Sim</button>
-        </div>
-    </div>
 
   <div id="roomPasswordModal" class="modal" style="display: none; background: rgba(0,0,0,0.95); z-index: 9999; align-items: center; justify-content: center;">
         <div class="modal-content" style="border: 1px solid var(--accent-color); box-shadow: 0 0 30px rgba(0, 210, 255, 0.2); max-width: 400px; text-align: center;">

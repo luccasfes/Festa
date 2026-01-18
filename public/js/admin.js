@@ -39,18 +39,7 @@ function loadAdminPanelRooms() {
     if (loader) loader.style.display = 'flex';
     list.innerHTML = '';
 
-    // === BOTÃO FAXINEIRO ===
-    // Adiciona o botão de LIMPEZA no topo da lista
-    var headerActions = document.createElement('div');
-    headerActions.style.padding = "10px";
-    headerActions.style.textAlign = "right";
-    headerActions.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
-    headerActions.innerHTML = `
-        <button onclick="limparSalasVazias()" class="btn warning small" style="background: #ff9800; color: white; border: none;">
-            <i class="fas fa-broom"></i> Limpar Salas Vazias
-        </button>
-    `;
-    list.appendChild(headerActions);
+    
 
     firebase.database().ref('rooms').once('value')
         .then(function(snapshot) {
@@ -136,51 +125,85 @@ function confirmDeleteRoom(roomId) {
     }
 }
 
-// === O FAXINEIRO AUTOMÁTICO ===
+/// === O FAXINEIRO AUTOMÁTICO (VERSÃO PROTEGIDA) ===
 async function limparSalasVazias() {
-    if(!confirm("Isso vai apagar TODAS as salas que estão marcadas como 'Vazia'.\nDeseja continuar?")) return;
-
-    var btn = document.querySelector('.btn.warning'); 
-    if(btn) btn.innerText = "Limpando...";
+    if(!confirm("Isso vai apagar salas vazias há mais de 24h.\nSalas novas e com pessoas estão seguras.\nDeseja continuar?")) return;
 
     try {
         const snapshot = await firebase.database().ref('rooms').once('value');
         if (!snapshot.exists()) {
-            alert("Não há salas para limpar.");
-            loadAdminPanelRooms();
+            alert("Não há salas para verificar.");
             return;
         }
 
+        const agora = Date.now();
+        const VINTE_E_QUATRO_HORAS = 24 * 60 * 60 * 1000; 
+
         let deletedCount = 0;
+        let skippedCount = 0;
         const updates = {};
 
         snapshot.forEach((child) => {
             const room = child.val();
             const roomId = child.key;
+            
+            // 1. VERIFICAÇÃO DE PRESENÇA
+            const presence = room.presence || {};
+            const userCount = Object.keys(presence).length;
 
-            // Lógica: Se não tem a chave 'presence' (ninguém online), deleta.
-            if (!room.presence) {
-                updates['rooms/' + roomId] = null; // Marca para deletar
-                deletedCount++;
+            // --- TRAVA DE SEGURANÇA 1: SALA COM GENTE ---
+            if (userCount > 0) {
+                // Se tem gente, remove qualquer marcação de "vazia" e pula
+                if (room.emptySince) updates[`rooms/${roomId}/emptySince`] = null;
+                return; 
+            }
+
+            // --- TRAVA DE SEGURANÇA 2: DATA DE CRIAÇÃO ---
+            // Se a sala NÃO tem data de criação, tratamos como "nova" por segurança e não mexemos
+            if (!room.createdAt) {
+                skippedCount++;
+                return;
+            }
+
+            const tempoDeVida = agora - room.createdAt;
+            // Se a sala foi criada a menos de 24h, NUNCA apaga, mesmo se estiver vazia
+            if (tempoDeVida < VINTE_E_QUATRO_HORAS) {
+                if (room.emptySince) updates[`rooms/${roomId}/emptySince`] = null;
+                return;
+            }
+
+            // --- LÓGICA DE LIMPEZA (SÓ PARA SALAS ANTIGAS E VAZIAS) ---
+            if (userCount === 0) {
+                if (!room.emptySince) {
+                    // Marca o início da contagem de tempo vazia
+                    updates[`rooms/${roomId}/emptySince`] = agora;
+                } else {
+                    const tempoVazia = agora - room.emptySince;
+                    // Só apaga se estiver vazia há mais de 24h
+                    if (tempoVazia >= VINTE_E_QUATRO_HORAS) {
+                        updates[`rooms/${roomId}`] = null;
+                        deletedCount++;
+                    }
+                }
             }
         });
 
-        if (deletedCount > 0) {
+        if (Object.keys(updates).length > 0) {
             await firebase.database().ref().update(updates);
-            if(typeof showNotification === 'function') {
-                showNotification(`Limpeza concluída! ${deletedCount} salas apagadas.`, "success");
-            } else {
-                alert(`Sucesso! ${deletedCount} salas vazias foram apagadas.`);
-            }
-        } else {
-            alert("Nenhuma sala vazia encontrada no momento.");
         }
 
+        let msg = `Faxina concluída.\n`;
+        if (deletedCount > 0) msg += `🧹 ${deletedCount} salas antigas apagadas.\n`;
+        if (skippedCount > 0) msg += `🛡️ ${skippedCount} salas protegidas (sem data ou muito novas).`;
+        if (deletedCount === 0 && skippedCount === 0) msg = "Nenhuma sala precisou ser alterada.";
+        
+        alert(msg);
+
     } catch (error) {
-        console.error(error);
-        alert("Erro ao limpar: " + error.message);
+        console.error("Erro no faxineiro:", error);
+        alert("Erro ao executar faxina: " + error.message);
     } finally {
-        loadAdminPanelRooms(); // Atualiza a lista visual
+        loadAdminPanelRooms();
     }
 }
 
