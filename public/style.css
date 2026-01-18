@@ -1064,23 +1064,6 @@ body.festa-mode.non-admin .bulk-delete-controls {
     opacity: 0.5;
 }
 
-.session-info {
-    background: var(--glass-bg);
-    padding: 15px 20px;
-    border-radius: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid var(--glass-border);
-}
-
-.session-info label {
-    margin-bottom: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-}
 
 #userNameInputGroup {
     display: none;
@@ -1171,7 +1154,7 @@ body.festa-mode.non-admin .bulk-delete-controls {
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
     transform: translateX(110%);
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1100;
+    z-index: 20000;
     min-width: 280px;
     text-align: center;
     border: 1px solid var(--glass-border);
@@ -3400,4 +3383,181 @@ emoji-picker {
     --category-icon-color: var(--text-primary);
     width: 100%;
     height: 300px;
+}
+
+
+/* Modal editar o nome mais bonito */
+/* Estilo para o modal principal de nome */
+#editNameModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+#editNameModal .modal-content {
+    background: #1a1a2e;
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid var(--accent-color);
+    box-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    animation: slideUp 0.4s ease;
+}
+
+#editNameModal h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: white;
+    font-size: 1.5rem;
+}
+
+#editNameInput {
+    width: 100%;
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid var(--accent-color);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 1.2rem;
+    text-align: center;
+    margin-bottom: 20px;
+    outline: none;
+    transition: all 0.3s;
+}
+
+#editNameInput:focus {
+    border-color: #00e5ff;
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
+}
+
+#editNameModal .btn.primary {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, var(--accent-color), #0066ff);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#editNameModal .btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 102, 255, 0.4);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   BARRA DE USUÁRIO (Modal YouTube)
+   ========================================= */
+
+.yt-session-info {
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    
+    /* Visual escuro e sutil */
+    background: rgba(255, 255, 255, 0.05); 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    padding: 12px 15px; 
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+}
+
+/* Texto "Como: Visitante" */
+.yt-session-text {
+    font-size: 0.95rem; 
+    color: var(--text-secondary); /* Usa a cor cinza do tema */
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Espaço entre ícone e texto */
+}
+
+/* Ícone de usuário */
+.yt-session-text i {
+    margin-right: 2px;
+}
+
+/* Nome do usuário (Destaque) */
+.yt-session-text strong {
+    color: white; 
+    font-weight: 600;
+}
+
+/* Ajuste fino para o botão "Alterar" não ficar gigante */
+.yt-session-info .btn {
+    margin: 0; /* Remove margens externas */
+    padding: 6px 12px; /* Um pouco mais compacto */
+    font-size: 0.85rem;
+}
+
+/* =========================================
+   BARRA DE USUÁRIO (Modal YouTube) - NOVO
+   ========================================= */
+
+.yt-session-info {
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    
+    /* Visual escuro e sutil */
+    background: rgba(255, 255, 255, 0.05); 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    padding: 12px 15px; 
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+}
+
+/* Texto "Como: Visitante" */
+.yt-session-text {
+    font-size: 0.95rem; 
+    color: var(--text-secondary); /* Usa a cor cinza do tema */
+    display: flex;
+    align-items: center;
+    gap: 6px; 
+}
+
+.yt-session-text i {
+    margin-right: 2px;
+}
+
+/* Nome do usuário (Destaque Branco) */
+.yt-session-text strong {
+    color: white; 
+    font-weight: 600;
+}
+
+/* Ajuste do botão Alterar */
+.yt-session-info .btn {
+    margin: 0; 
+    padding: 6px 12px; 
+    font-size: 0.85rem;
 }

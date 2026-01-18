@@ -6,13 +6,22 @@ let isTyping = false;
 let typingTimeout;
 let currentReplyMessage = null;
 
+
 // Enviar Mensagem Nova
+window.updateChatUserDisplay = function(name) {
+    console.log("Chat: Atualizando display para:", name);
+    const chatDisplay = document.getElementById('userNameDisplay');
+    if (chatDisplay) {
+        chatDisplay.textContent = name || 'Visitante';
+    }
+};
+// E modifique a função sendChatMessage para usar o nome atualizado:
 function sendChatMessage() {
     const input = document.getElementById('chatMessageInput');
     const text = input.value.trim();
     if (!text) return;
 
-    const userName = sessionStorage.getItem('ytSessionUser') || 'Visitante';
+    const userName = window.currentSessionUser || sessionStorage.getItem('ytSessionUser') || 'Visitante'; // PREFERE window.currentSessionUser
     const userId = sessionStorage.getItem('userVoteId');
 
     const msgData = {
@@ -21,7 +30,7 @@ function sendChatMessage() {
         userIsAdmin: isAdminLoggedIn,
         text: text,
         timestamp: firebase.database.ServerValue.TIMESTAMP,
-        isEdited: false // Inicializa como não editado
+        isEdited: false
     };
 
     if (currentReplyMessage) {

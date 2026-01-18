@@ -1,103 +1,112 @@
 // ====================================================================
-// ADMIN PAINEL - VERSÃO CORRIGIDA E MODERNA
+// PAINEL DE ADMINISTRAÇÃO & FAXINEIRO (VERSÃO FINAL)
 // ====================================================================
 
+// --- Funções de Abertura/Fechamento ---
+
 function FuncaoParaAbrirPainel() {
-    const modal = document.getElementById('panelModal');
+    // Verifica se está logado usando a variável global do session.js
+    if (!window.isAdminLoggedIn && !firebase.auth().currentUser) {
+        // Tenta mostrar notificação ou alerta
+        if(typeof showNotification === 'function') {
+            showNotification("Faça login como Admin primeiro.", "error");
+        } else {
+            alert("Faça login como Admin primeiro (clique no cadeado no topo).");
+        }
+        return;
+    }
+
+    var modal = document.getElementById('panelModal');
     if (modal) {
         modal.style.display = 'flex';
         loadAdminPanelRooms();
-    } else {
-        console.error("Erro: Modal 'panelModal' não encontrado no HTML.");
     }
 }
 
 function closePanelModal() {
-    document.getElementById('panelModal').style.display = 'none';
+    var modal = document.getElementById('panelModal');
+    if (modal) modal.style.display = 'none';
 }
 
+// --- Carregamento das Salas ---
+
 function loadAdminPanelRooms() {
-    const list = document.getElementById('adminRoomList');
-    const loader = document.getElementById('adminRoomLoader');
+    var list = document.getElementById('adminRoomList');
+    var loader = document.getElementById('adminRoomLoader');
     
     if (!list) return;
 
-    // Mostra loading se existir o elemento, senão limpa a lista
     if (loader) loader.style.display = 'flex';
     list.innerHTML = '';
 
-    // Busca as salas no Firebase
-    database.ref('rooms').once('value')
-        .then((snapshot) => {
+    // === BOTÃO FAXINEIRO ===
+    // Adiciona o botão de LIMPEZA no topo da lista
+    var headerActions = document.createElement('div');
+    headerActions.style.padding = "10px";
+    headerActions.style.textAlign = "right";
+    headerActions.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
+    headerActions.innerHTML = `
+        <button onclick="limparSalasVazias()" class="btn warning small" style="background: #ff9800; color: white; border: none;">
+            <i class="fas fa-broom"></i> Limpar Salas Vazias
+        </button>
+    `;
+    list.appendChild(headerActions);
+
+    firebase.database().ref('rooms').once('value')
+        .then(function(snapshot) {
             if (loader) loader.style.display = 'none';
             
             if (!snapshot.exists()) {
-                list.innerHTML = '<div style="text-align:center; color:#aaa; padding:20px; font-style:italic;">Nenhuma sala ativa no momento.</div>';
+                list.innerHTML += '<div style="padding:20px; text-align:center; color:#aaa;">Nenhuma sala ativa.</div>';
                 return;
             }
 
-            snapshot.forEach((childSnapshot) => {
-                const key = childSnapshot.key;
-                const val = childSnapshot.val();
+            snapshot.forEach(function(childSnapshot) {
+                var key = childSnapshot.key;
+                var val = childSnapshot.val();
 
-                // === 1. CORREÇÃO DE DADOS ===
+                // Dados
+                var roomName = val.roomName || 'Sala sem Nome';
+                var creatorName = val.creatorName || 'Desconhecido';
                 
-                // Nome da sala (fallback para 'Sala sem Nome')
-                const roomName = val.name || val.titulo || val.roomName || 'Sala sem Nome';
-                
-                // Nome do Criador (Tenta todas as variações possíveis para evitar "Desconhecido")
-                const creatorName = val.creatorName || val.adminName || val.criador || val.createdBy || 'Desconhecido';
-
-                // Data de criação (se existir timestamp)
-                let dateStr = "";
-                if (val.createdAt) {
-                    const date = new Date(val.createdAt);
-                    dateStr = date.toLocaleDateString('pt-BR');
+                // Contagem de usuários (Presença)
+                var userCount = 0;
+                if (val.presence) {
+                    userCount = Object.keys(val.presence).length;
                 }
 
-                // Estatísticas rápidas (Opcional, mas útil)
-                const userCount = val.presence ? Object.keys(val.presence).length : 0;
-                const videoCount = val.videoQueue ? Object.keys(val.videoQueue).length : 0;
-
-                // === 2. GERAÇÃO DO HTML MODERNO ===
-                const item = document.createElement('div');
+                // Cria elemento visual
+                var item = document.createElement('div');
                 item.className = 'admin-room-item';
                 
-                // Estrutura: Cabeçalho com Nome e ID, Subtítulo com Criador, Rodapé com Ações
+                // Marca visualmente se está vazia
+                var statusColor = userCount > 0 ? '#00e676' : '#666'; 
+                var statusText = userCount > 0 ? userCount + ' online' : 'Vazia';
+
                 item.innerHTML = `
                     <div class="room-header" style="margin-bottom:0;">
-                        <div style="display:flex; flex-direction:column; width:100%;">
-                            
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                <h5 class="room-name" style="margin:0; font-size:1.1rem; color: white;">${escapeHtml(roomName)}</h5>
-                                <span class="room-id" style="font-family:monospace; background:rgba(0,0,0,0.4); padding:2px 8px; border-radius:4px; font-size:0.85rem; color:#ccc; border:1px solid rgba(255,255,255,0.1);">
-                                    ID: ${key}
-                                </span>
-                            </div>
-                            
-                            <div style="font-size: 0.85rem; color: #aaa; margin-top: 8px; display:flex; align-items:center; gap:6px;">
-                                <i class="fas fa-user-circle" style="color:var(--accent-color);"></i> 
-                                <strong style="color:#ddd;">${escapeHtml(creatorName)}</strong> 
-                                ${dateStr ? `<span style="opacity:0.5; font-size:0.8rem;">• Criada em ${dateStr}</span>` : ''}
-                            </div>
-
-                            <div style="display:flex; gap:10px; margin-top:8px;">
-                                <span style="font-size:0.75rem; color:#00b894; background:rgba(0, 184, 148, 0.1); padding:2px 6px; border-radius:4px;">
-                                    <i class="fas fa-users"></i> ${userCount} online
-                                </span>
-                                <span style="font-size:0.75rem; color:#74b9ff; background:rgba(9, 132, 227, 0.1); padding:2px 6px; border-radius:4px;">
-                                    <i class="fas fa-play"></i> ${videoCount} vídeos
-                                </span>
-                            </div>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <h5 class="room-name" style="margin:0; font-size:1.1rem; color: white;">
+                                <span style="display:inline-block; width:8px; height:8px; background:${statusColor}; border-radius:50%; margin-right:6px;"></span>
+                                ${escapeHtml(roomName)}
+                            </h5>
+                            <span class="room-id" style="font-family:monospace; background:rgba(0,0,0,0.4); padding:2px 8px; border-radius:4px; font-size:0.85rem; color:#ccc;">
+                                ${key}
+                            </span>
+                        </div>
+                        
+                        <div style="font-size: 0.85rem; color: #aaa; margin-top: 6px; display:flex; justify-content:space-between;">
+                            <span>Criador: <strong>${escapeHtml(creatorName)}</strong></span>
+                            <span style="color:${statusColor}">${statusText}</span>
                         </div>
                     </div>
 
-                    <div class="room-actions" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px; margin-top: 12px; display:flex; justify-content:flex-end; gap:10px;">
-                        <button class="btn small secondary" onclick="entrarNaSala('${key}')" title="Entrar na sala">
+                    <div class="room-actions" style="margin-top: 10px; display:flex; justify-content:flex-end; gap:10px;">
+                        <button class="btn small secondary" onclick="entrarNaSalaPeloAdmin('${key}')">
                             <i class="fas fa-sign-in-alt"></i> Entrar
                         </button>
-                        <button class="btn small danger" onclick="deleteRoom('${key}')" title="Deletar Sala">
-                            <i class="fas fa-trash"></i> Deletar
+                        <button class="btn small danger" onclick="confirmDeleteRoom('${key}')">
+                            <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 `;
@@ -105,75 +114,80 @@ function loadAdminPanelRooms() {
                 list.appendChild(item);
             });
         })
-        .catch((error) => {
+        .catch(function(error) {
             console.error(error);
             if (loader) loader.style.display = 'none';
-            list.innerHTML = `<div class="error-message" style="color:#ff7675; padding:20px;">Erro ao carregar salas: ${error.message}</div>`;
         });
 }
 
-// === FUNÇÕES DE AÇÃO ===
+// --- AÇÕES DO ADMIN ---
 
-function entrarNaSala(roomId) {
-    // Recarrega a página atual com o novo hash da sala
-    window.location.hash = roomId;
-    window.location.reload();
+function entrarNaSalaPeloAdmin(roomId) {
+    window.location.href = 'index.html?room=' + roomId;
 }
 
-async function deleteRoom(id) {
-    if(confirm(`Tem certeza absoluta que deseja DELETAR a sala ID: ${id}?\nEssa ação não pode ser desfeita.`)) {
-        try {
-            await database.ref('rooms/' + id).remove();
-            // Recarrega a lista para mostrar que sumiu
-            loadAdminPanelRooms();
-            // Mostra um alerta simples (ou use toast se tiver)
-            // alert('Sala deletada com sucesso!'); 
-        } catch(e) {
-            alert('Erro ao deletar: ' + e.message);
-        }
+function confirmDeleteRoom(roomId) {
+    if(confirm('Tem certeza que deseja apagar a sala ' + roomId + '?')) {
+        firebase.database().ref('rooms/' + roomId).remove()
+            .then(function() { 
+                loadAdminPanelRooms(); // Recarrega a lista
+                if(typeof showNotification === 'function') showNotification("Sala apagada.", "success");
+            });
     }
 }
 
-// === FUNÇÕES DO MODAL "DELETAR TUDO" ===
+// === O FAXINEIRO AUTOMÁTICO ===
+async function limparSalasVazias() {
+    if(!confirm("Isso vai apagar TODAS as salas que estão marcadas como 'Vazia'.\nDeseja continuar?")) return;
 
-function openDeleteAllRoomsModal() {
-    document.getElementById('deleteAllRoomsModal').style.display = 'flex';
-}
-
-function closeDeleteAllRoomsModal() {
-    document.getElementById('deleteAllRoomsModal').style.display = 'none';
-}
-
-async function executeDeleteAllRooms() {
-    // Muda o texto do botão para dar feedback
-    const btn = document.getElementById('deleteAllRoomsConfirmBtn'); // Certifique-se que o botão tem esse ID no HTML
-    const originalText = btn ? btn.innerText : 'Sim';
-    
-    if(btn) {
-        btn.innerText = "Apagando...";
-        btn.disabled = true;
-    }
+    var btn = document.querySelector('.btn.warning'); 
+    if(btn) btn.innerText = "Limpando...";
 
     try {
-        await database.ref('rooms').remove();
-        closeDeleteAllRoomsModal();
-        loadAdminPanelRooms();
-        alert('Todas as salas foram apagadas com sucesso.');
-    } catch(e) {
-        alert('Erro ao apagar tudo: ' + e.message);
-    } finally {
-        if(btn) {
-            btn.innerText = originalText;
-            btn.disabled = false;
+        const snapshot = await firebase.database().ref('rooms').once('value');
+        if (!snapshot.exists()) {
+            alert("Não há salas para limpar.");
+            loadAdminPanelRooms();
+            return;
         }
+
+        let deletedCount = 0;
+        const updates = {};
+
+        snapshot.forEach((child) => {
+            const room = child.val();
+            const roomId = child.key;
+
+            // Lógica: Se não tem a chave 'presence' (ninguém online), deleta.
+            if (!room.presence) {
+                updates['rooms/' + roomId] = null; // Marca para deletar
+                deletedCount++;
+            }
+        });
+
+        if (deletedCount > 0) {
+            await firebase.database().ref().update(updates);
+            if(typeof showNotification === 'function') {
+                showNotification(`Limpeza concluída! ${deletedCount} salas apagadas.`, "success");
+            } else {
+                alert(`Sucesso! ${deletedCount} salas vazias foram apagadas.`);
+            }
+        } else {
+            alert("Nenhuma sala vazia encontrada no momento.");
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Erro ao limpar: " + error.message);
+    } finally {
+        loadAdminPanelRooms(); // Atualiza a lista visual
     }
 }
 
-// Função auxiliar de segurança (para evitar injeção de HTML nos nomes)
+// --- UTIL ---
 function escapeHtml(text) {
     if (!text) return text;
-    return text
-        .toString()
+    return text.toString()
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")

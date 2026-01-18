@@ -90,8 +90,17 @@ async function searchYouTube() {
     }
 }
 
-document.getElementById('ytSearchQuery').addEventListener('keypress', e=>{ if(e.key==='Enter') searchYouTube() });
-document.getElementById('ytSearchName').addEventListener('keypress', e=>{ if(e.key==='Enter') setSessionUser() });
+// Verifica se o campo de busca existe antes de adicionar o evento (Segurança)
+const searchInput = document.getElementById('ytSearchQuery');
+if (searchInput) {
+    searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') searchYouTube() });
+}
+
+// Se o campo existir, adiciona o evento de apertar Enter meio que se o user apertar enter ele fala entrega quando apertar enter
+const nameInput = document.getElementById('ytSearchName');
+if (nameInput) {
+    nameInput.addEventListener('keypress', e => { if (e.key === 'Enter') setSessionUser() });
+}
 
 
 // --- AUTO DJ E GÊNEROS ---

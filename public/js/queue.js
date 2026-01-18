@@ -58,7 +58,7 @@ async function addVideo(urlArg = null, titleArg = null) {
         // SUA REGRA PERMITE ISSO (videoQueue: write true)
         await videoQueueRef.push({ phone, videoUrl: url, title });
 
-        showNotification('Vídeo adicionado!', 'success');
+        showNotification('Vídeo adicionado na Fila!', 'success');
         if (!urlArg) document.getElementById('videoUrl').value = '';
         
         if(phone && !sessionStorage.getItem('ytSessionUser')) {
@@ -189,15 +189,29 @@ function checkCurrentVideo() {
     }
 }
 
-// Ações
+// Ações 
+// remove da fila 
 function handleRemoveVideo(id) {
+    // Verifica se é admin ou se a sala está vazia (modo livre)
     if (isAdminLoggedIn || onlineUserCount <= 1) {
-        videoQueueRef.child(id).remove();
+        
+        // Remove do Firebase e DEPOIS mostra a notificação
+        videoQueueRef.child(id).remove()
+            .then(() => {
+                showNotification('Vídeo removido da fila!', 'success');
+            })
+            .catch((error) => {
+                console.error(error);
+                showNotification('Erro ao remover vídeo.', 'error');
+            });
+
     } else {
+        // Se não for admin e tiver gente na sala, abre o modal de senha
         openRemoveModalWithId(id);
     }
 }
 
+// Skipa o voto
 function handleSkipOrVote() {
     if (isAdminLoggedIn || onlineUserCount <= 1) {
         if (videoQueue.length > 0) videoQueueRef.child(videoQueue[0].id).remove();

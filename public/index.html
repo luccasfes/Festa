@@ -28,11 +28,9 @@
 
         <header class="app-header">
             <div class="header-controls-left">
-                <button class="btn small" id="adminUnlockBtn" onclick="openAdminUnlockModal()">
-                    <i class="fas fa-lock"></i>
-                    <span id="adminStatusText">Admin</span>
-                    <span id="adminNameDisplay" style="margin-left: 5px; display: none;"></span>
-                </button>
+                <button id="adminUnlockBtn" class="btn-icon" onclick="openAdminUnlockModal()" title="Admin">
+    <i class="fas fa-lock"></i>
+</button>
 
                 <button class="btn small" id="panelBtn" onclick="FuncaoParaAbrirPainel()" style="display: none;">
                     <i class="fas fa-cog"></i> <span>Painel</span>
@@ -202,14 +200,20 @@
         </div>
     </div>
 
-    <div id="editNameModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="closeEditNameModal()">×</span>
-            <h3>Alterar Nome</h3>
-            <div class="input-group"><input type="text" id="editNameInput" maxlength="25"></div>
-            <button class="btn primary" onclick="saveUserName()" id="saveUserNameBtn">Salvar</button>
+    <div id="editNameModal" class="modal" style="display: none; z-index: 10000; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 350px; text-align: center;">
+        <h3 style="margin-top: 0; color: white;">Quem é você?</h3>
+        
+        <div class="input-group">
+            <input type="text" id="editNameInput" placeholder="Seu apelido..." maxlength="15"
+                   style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: rgba(0,0,0,0.3); color: white; text-align: center; font-size: 1.1rem; margin-bottom: 20px;">
         </div>
+
+        <button class="btn primary" onclick="saveUserName()" style="width: 100%; padding: 12px; font-weight: bold;">
+            Salvar e Entrar
+        </button>
     </div>
+</div>
 
     <div id="modal" class="modal">
         <div class="modal-content">
@@ -253,28 +257,41 @@
     </div>
 
     <div id="ytSearchModal" class="modal yt-search-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Buscar no YouTube</h3>
-                <span class="close-button" onclick="closeYTSearchModal()">×</span>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fab fa-youtube"></i> Buscar no YouTube</h3>
+            <span class="close-button" onclick="closeYTSearchModal()">×</span>
+        </div>
+        <div class="modal-body">
+            
+            <div class="yt-session-info">
+                <div class="yt-session-text">
+                    <i class="fas fa-user"></i> 
+                    <span>Como:</span> 
+                    <strong id="currentSessionUser">Visitante</strong>
+                </div>
+
+                <button class="btn small secondary" onclick="openEditNameModal()">
+                    <i class="fas fa-edit"></i> Alterar
+                </button>
             </div>
-            <div class="modal-body">
-                <div class="session-info input-group" style="display:none;">
-                    <label>Como: <strong id="currentSessionUser">-</strong></label>
-                    <button class="btn small secondary" onclick="changeUserName()">Alterar</button>
-                </div>
-                <div id="userNameInputGroup" class="input-group">
-                    <label>Seu Nome:</label> <input type="text" id="ytSearchName">
-                    <button class="btn small primary" onclick="setSessionUser()">OK</button>
-                </div>
-                <div class="search-controls">
-                    <input type="text" id="ytSearchQuery" placeholder="Busca...">
-                    <button class="btn primary" onclick="searchYouTube()">Buscar</button>
-                </div>
-                <div id="ytSearchResults"></div>
+            
+            <div class="search-controls">
+                <input type="text" id="ytSearchQuery" placeholder="Digite o nome da música..." onkeypress="if(event.key === 'Enter') searchYouTube()">
+                <button class="btn primary" onclick="searchYouTube()">
+                    <i class="fas fa-search"></i>
+                </button>
             </div>
+            
+            <div id="ytSearchResults"></div>
         </div>
     </div>
+</div>
+
+<!-- Cuida das notificações -->
+<div id="notification" class="notification">
+    <span id="notificationMessage"></span>
+</div>
 
     <div id="sugestaoModal" class="modal sugestao-modal">
         <div class="modal-content">
@@ -418,12 +435,37 @@
         </div>
     </div>
 
-    <div id="notification" class="notification"><span id="notificationMessage"></span></div>
+  <div id="roomPasswordModal" class="modal" style="display: none; background: rgba(0,0,0,0.95); z-index: 9999; align-items: center; justify-content: center;">
+        <div class="modal-content" style="border: 1px solid var(--accent-color); box-shadow: 0 0 30px rgba(0, 210, 255, 0.2); max-width: 400px; text-align: center;">
+            <div style="margin-bottom: 20px;">
+                <i class="fas fa-lock" style="font-size: 3rem; color: var(--accent-color); margin-bottom: 15px;"></i>
+                <h3 style="margin: 0; color: white;">Sala Privada</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Digite a senha para entrar.</p>
+            </div>
+            
+            <form onsubmit="event.preventDefault(); verifyRoomPassword();">
+                <input type="password" id="roomEntryPassword" placeholder="Senha..." 
+                       autocomplete="current-password"
+                       style="text-align: center; letter-spacing: 2px; font-weight: bold; font-size: 1.2rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #444; border-radius: 8px; padding: 12px; width: 100%; margin-bottom: 10px;">
+                
+                <div id="passwordErrorMsg" style="color: var(--error-color); margin-bottom: 10px; display: none; font-size: 0.9rem;">Senha incorreta!</div>
 
-    <script src="js/config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/session.js"></script>
-    <script src="js/presence.js"></script>
+                <button type="submit" class="btn primary" id="verifyPassBtn" style="width: 100%;">
+                    <i class="fas fa-key"></i> Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="initialLoader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0f1a; z-index: 8888; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s;">
+        <i class="fas fa-circle-notch fa-spin" style="font-size: 3rem; color: var(--accent-color);"></i>
+        <p style="margin-top: 15px; color: #aaa;">Conectando à festa...</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <script src="js/config.js"></script>   <script src="js/utils.js"></script>
+    <script src="js/session.js"></script>  <script src="js/presence.js"></script>
     <script src="js/queue.js"></script>
     <script src="js/search.js"></script>
     <script src="js/chat.js"></script>
@@ -433,16 +475,29 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+        // Esse script força a tela a aparecer se o session.js falhar
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.getElementById('initialLoader');
+                // Se o loader ainda estiver visível depois de 4 segundos...
+                if (loader && loader.style.display !== 'none') {
+                    console.warn("⚠️ O carregamento demorou demais. Forçando entrada.");
+                    
+                    // Verifica se o Firebase carregou
+                    if (typeof firebase === 'undefined') {
+                        alert("Erro Crítico: O Firebase não carregou. Verifique sua internet ou o arquivo config.js");
+                    } 
+                    // Verifica se o session.js carregou
+                    else if (typeof checkRoomProtection === 'undefined') {
+                        alert("Erro: O arquivo 'js/session.js' não foi encontrado ou tem erro. Verifique a pasta 'js'.");
+                    }
+                    
+                    // Libera a tela de qualquer jeito para não travar
+                    loader.style.display = 'none';
+                    document.body.style.opacity = '1';
+                }
+            }, 4000); // 4 segundos de tolerância
         });
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(() => { });
-            });
-        }
     </script>
 </body>
-
 </html>
