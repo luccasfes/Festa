@@ -39,7 +39,7 @@ function loadAdminPanelRooms() {
     if (loader) loader.style.display = 'flex';
     list.innerHTML = '';
 
-    
+    // (Removi a parte que criava os botões de Atualizar e Limpar aqui)
 
     firebase.database().ref('rooms').once('value')
         .then(function(snapshot) {
@@ -54,47 +54,64 @@ function loadAdminPanelRooms() {
                 var key = childSnapshot.key;
                 var val = childSnapshot.val();
 
-                // Dados
+                // 1. DADOS BÁSICOS
                 var roomName = val.roomName || 'Sala sem Nome';
                 var creatorName = val.creatorName || 'Desconhecido';
                 
-                // Contagem de usuários (Presença)
-                var userCount = 0;
-                if (val.presence) {
-                    userCount = Object.keys(val.presence).length;
-                }
+                // 2. CONTAGEM INTELIGENTE
+                var userCount = val.presence ? Object.keys(val.presence).length : 0;
+                var videoCount = val.videoQueue ? Object.keys(val.videoQueue).length : 0;
+                var chatCount = (val.chat && val.chat.messages) ? Object.keys(val.chat.messages).length : 0;
+
+                // Cor do status
+                var statusColor = userCount > 0 ? '#00e676' : '#666'; 
 
                 // Cria elemento visual
                 var item = document.createElement('div');
                 item.className = 'admin-room-item';
+                item.style.marginBottom = '15px'; // Espaçamento entre salas
                 
-                // Marca visualmente se está vazia
-                var statusColor = userCount > 0 ? '#00e676' : '#666'; 
-                var statusText = userCount > 0 ? userCount + ' online' : 'Vazia';
-
                 item.innerHTML = `
                     <div class="room-header" style="margin-bottom:0;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <h5 class="room-name" style="margin:0; font-size:1.1rem; color: white;">
-                                <span style="display:inline-block; width:8px; height:8px; background:${statusColor}; border-radius:50%; margin-right:6px;"></span>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
+                            <h5 class="room-name" style="margin:0; font-size:1.1rem; color: white; font-weight: 600;">
                                 ${escapeHtml(roomName)}
                             </h5>
-                            <span class="room-id" style="font-family:monospace; background:rgba(0,0,0,0.4); padding:2px 8px; border-radius:4px; font-size:0.85rem; color:#ccc;">
+                            <span class="room-id" style="font-family:monospace; background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-size:0.8rem; color:#aaa; border: 1px solid rgba(255,255,255,0.05);">
                                 ${key}
                             </span>
                         </div>
                         
-                        <div style="font-size: 0.85rem; color: #aaa; margin-top: 6px; display:flex; justify-content:space-between;">
-                            <span>Criador: <strong>${escapeHtml(creatorName)}</strong></span>
-                            <span style="color:${statusColor}">${statusText}</span>
+                        <div style="font-size: 0.9rem; color: #ddd; margin-bottom: 12px; display: flex; align-items: center;">
+                            <i class="fas fa-crown" style="color: #ffb300; margin-right: 6px; font-size: 0.8rem;"></i> 
+                            Criador: <strong style="margin-left: 4px;">${escapeHtml(creatorName)}</strong>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 8px; margin-bottom: 10px;">
+                            
+                            <div style="text-align: center; color: ${statusColor};" title="Usuários Online">
+                                <i class="fas fa-users"></i> <span style="font-weight:bold; margin-left:4px;">${userCount}</span>
+                                <div style="font-size:0.65rem; opacity:0.7;">Online</div>
+                            </div>
+
+                            <div style="text-align: center; color: #29b6f6;" title="Vídeos na Fila">
+                                <i class="fas fa-music"></i> <span style="font-weight:bold; margin-left:4px;">${videoCount}</span>
+                                <div style="font-size:0.65rem; opacity:0.7;">Músicas</div>
+                            </div>
+
+                            <div style="text-align: center; color: #ffca28;" title="Total de Mensagens">
+                                <i class="fas fa-comments"></i> <span style="font-weight:bold; margin-left:4px;">${chatCount}</span>
+                                <div style="font-size:0.65rem; opacity:0.7;">Chats</div>
+                            </div>
+
                         </div>
                     </div>
 
-                    <div class="room-actions" style="margin-top: 10px; display:flex; justify-content:flex-end; gap:10px;">
-                        <button class="btn small secondary" onclick="entrarNaSalaPeloAdmin('${key}')">
-                            <i class="fas fa-sign-in-alt"></i> Entrar
+                    <div class="room-actions" style="margin-top: 10px; display:flex; justify-content:flex-end; gap:10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                        <button class="btn small secondary" onclick="entrarNaSalaPeloAdmin('${key}')" style="flex: 1;">
+                            <i class="fas fa-sign-in-alt"></i> Espiar / Entrar
                         </button>
-                        <button class="btn small danger" onclick="confirmDeleteRoom('${key}')">
+                        <button class="btn small danger" onclick="confirmDeleteRoom('${key}')" style="width: 40px;">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -106,6 +123,7 @@ function loadAdminPanelRooms() {
         .catch(function(error) {
             console.error(error);
             if (loader) loader.style.display = 'none';
+            list.innerHTML = '<div style="padding:20px; text-align:center; color: #ff5252;">Erro ao carregar salas.</div>';
         });
 }
 
