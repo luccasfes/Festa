@@ -8,13 +8,13 @@
     --danger-glow: rgba(211, 47, 47, 0.4);
     --success-color: #388e3c;
     --warning-color: #f39c12;
-    
+
     /* Cores de fundo originais */
     --light-color: #e8eaf6;
     --dark-color: #121212;
     --darker-color: #0a0a0a;
     --gray-color: #757575;
-    
+
     /* Variáveis de UI */
     --card-bg: #1e1e1e;
     --card-hover: #252525;
@@ -26,7 +26,7 @@
 
     /* O SEU GRADIENTE ORIGINAL (Convertido em variável) */
     --gradient-bg: linear-gradient(135deg, var(--darker-color) 0%, #1a1a2e 50%, var(--dark-color) 100%);
-    
+
     /* Variáveis de texto padrão */
     --text-primary: var(--light-color);
     --text-secondary: var(--gray-color);
@@ -81,13 +81,14 @@
     padding: 0;
     box-sizing: border-box;
 }
+
 body {
     font-family: 'Poppins', sans-serif;
-    
+
     /* Usa a variável dinâmica para permitir a troca de tema */
     background: var(--gradient-bg);
     color: var(--text-primary);
-    
+
     line-height: 1.6;
     min-height: 100vh;
     padding: 20px;
@@ -104,21 +105,27 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    
+
     /* Usa as cores do tema atual (accent e primary) */
-    background-image: 
+    background-image:
         radial-gradient(circle at 10% 20%, var(--accent-color) 0%, transparent 25%),
         radial-gradient(circle at 90% 80%, var(--primary-color) 0%, transparent 25%);
-        
-    opacity: 0.1; /* Bem sutil */
+
+    opacity: 0.1;
+    /* Bem sutil */
     z-index: -1;
     animation: backgroundShift 20s ease-in-out infinite;
     pointer-events: none;
 }
 
 @keyframes backgroundShift {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(1.1) rotate(180deg); }
+    0%, 100% {
+        transform: scale(1) rotate(0deg);
+    }
+
+    50% {
+        transform: scale(1.1) rotate(180deg);
+    }
 }
 
 .container {
@@ -129,7 +136,7 @@ body::before {
     background: rgba(18, 18, 18, 0.85);
     backdrop-filter: blur(20px);
     border-radius: var(--border-radius);
-    box-shadow: 
+    box-shadow:
         0 20px 40px rgba(0, 0, 0, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     border: 1px solid var(--glass-border);
@@ -149,8 +156,13 @@ body::before {
 }
 
 @keyframes shimmer {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
+    0%, 100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }
 
 /* Header Aprimorado */
@@ -176,19 +188,32 @@ body::before {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
     animation: shine 3s infinite;
 }
 
 @keyframes shine {
-    0% { left: -100%; }
-    100% { left: 100%; }
+    0% {
+        left: -100%;
+    }
+
+    100% {
+        left: 100%;
+    }
 }
 
 @keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 .app-header h1 {
@@ -230,8 +255,15 @@ body::before {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 0.6; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.1); }
+    0%, 100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
 }
 
 /* ANTES (Seu código atual) */
@@ -316,7 +348,8 @@ body::before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap; /* <-- ADICIONE ESTA LINHA */
+    flex-wrap: wrap;
+    /* <-- ADICIONE ESTA LINHA */
     gap: 12px;
     font-weight: 700;
 }
@@ -508,17 +541,18 @@ body::before {
     border: none;
     border-radius: 12px;
 }
+
 #videoPlayer, iframe {
     /* Força a placa de vídeo a renderizar o player, liberando o processador */
-    transform: translateZ(0); 
+    transform: translateZ(0);
     will-change: transform;
 }
 
-    /* Esconde o botão de remover (X) quando estiver em Modo Festa e não for Admin */
-    body.festa-mode.non-admin .remove-button,
-    body.festa-mode.non-admin .bulk-delete-controls {
-        display: none !important;
-    }
+/* Esconde o botão de remover (X) quando estiver em Modo Festa e não for Admin */
+body.festa-mode.non-admin .remove-button,
+body.festa-mode.non-admin .bulk-delete-controls {
+    display: none !important;
+}
 
 #currentVideoInfo {
     text-align: center;
@@ -737,6 +771,7 @@ body::before {
         opacity: 0;
         transform: scale(0.9) translateY(-20px);
     }
+
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
@@ -793,16 +828,30 @@ body::before {
 .modal.yt-search-modal .modal-content {
     max-width: 800px;
     width: 95%;
-    max-height: 90vh; /* Ajustado do novo arquivo */
+    max-height: 90vh;
+    /* Ajustado do novo arquivo */
     display: flex;
     flex-direction: column;
     background: var(--card-bg);
     border-radius: var(--border-radius);
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
     border: 1px solid var(--glass-border);
-    overflow: hidden; /* Importante! */
+    overflow: hidden;
+    /* Importante! */
     animation: modalAppear 0.3s ease-out;
 }
+
+.modal.yt-search-modal .modal-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Impede rolagem no corpo pai */
+    min-height: 0;
+    /* Importante para o flexbox funcionar no Firefox */
+}
+
 /* Header do Modal */
 .modal-header {
     padding: 20px;
@@ -811,7 +860,8 @@ body::before {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--glass-border);
-    flex-shrink: 0; /* Impede que o header encolha */
+    flex-shrink: 0;
+    /* Impede que o header encolha */
 }
 
 .modal-header h3 {
@@ -820,7 +870,8 @@ body::before {
     gap: 10px;
     color: white;
     font-size: 1.3rem;
-    margin-bottom: 0; /* Reseta o margin-bottom do seu H3 original */
+    margin-bottom: 0;
+    /* Reseta o margin-bottom do seu H3 original */
 }
 
 /* O <span> foi trocado por <button>, então usamos a regra do novo CSS */
@@ -847,10 +898,12 @@ body::before {
 /* Corpo do Modal */
 .modal-body {
     padding: 20px;
-    flex: 1; /* Ocupa todo o espaço restante */
+    flex: 1;
+    /* Ocupa todo o espaço restante */
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Impede o corpo de rolar, apenas os resultados */
+    overflow: hidden;
+    /* Impede o corpo de rolar, apenas os resultados */
 }
 
 /* Controles de Busca (Adaptado do .input-group) */
@@ -858,7 +911,8 @@ body::before {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
-    flex-shrink: 0; /* Impede que os controles encolham */
+    flex-shrink: 0;
+    /* Impede que os controles encolham */
 }
 
 .search-controls input {
@@ -881,46 +935,62 @@ body::before {
 /* O botão de busca dentro dos controles */
 .search-controls button {
     padding: 12px 20px;
-    width: auto; /* Reseta o width: 100% dos .btn */
+    width: auto;
+    /* Reseta o width: 100% dos .btn */
     font-weight: 600;
     /* Ele já pega os estilos de .btn.primary */
 }
 
-/* Container dos Resultados da Busca */
-.yt-search-results {
-    flex: 1; /* Ocupa todo o espaço restante no modal-body */
-    overflow-y: auto; /* ESTA É A BARRA DE ROLAGEM! */
+/* ===============================
+   CONTAINER DOS RESULTADOS
+=============================== */
+#ytSearchResults {
+    height: 350px;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 5px;
+    padding: 10px;
+    margin-top: 15px;
+
+    /* Scrollbar Firefox */
     scrollbar-width: thin;
-    scrollbar-color: var(--accent-color) #333;
+    scrollbar-color: var(--accent-color) #121212;
 }
 
-.yt-search-results::-webkit-scrollbar {
-    width: 8px;
+/* Scrollbar Chrome / Edge */
+#ytSearchResults::-webkit-scrollbar {
+    width: 12px;
 }
 
-.yt-search-results::-webkit-scrollbar-track {
-    background: #333;
+#ytSearchResults::-webkit-scrollbar-track {
+    background: #0f0f0f;
     border-radius: 10px;
 }
 
-.yt-search-results::-webkit-scrollbar-thumb {
+#ytSearchResults::-webkit-scrollbar-thumb {
     background-color: var(--accent-color);
     border-radius: 10px;
+    border: 3px solid #0f0f0f;
 }
 
-/* Estilo para cada item de resultado */
+/* ===============================
+   ITEM DO RESULTADO
+=============================== */
 .yt-video-result {
     display: flex;
     gap: 12px;
     padding: 12px;
     margin-bottom: 8px;
+
     background: rgba(0, 0, 0, 0.3);
     border-radius: 8px;
-    border: 1px solid var(--glass-border);
-    transition: var(--transition);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    transition: all 0.2s ease;
     cursor: pointer;
 }
 
@@ -930,33 +1000,37 @@ body::before {
     border-color: var(--accent-color);
 }
 
+/* ===============================
+   THUMBNAIL
+=============================== */
 .yt-video-thumbnail {
     flex-shrink: 0;
     width: 120px;
     height: 68px;
     border-radius: 6px;
     overflow: hidden;
-    position: relative;
 }
 
 .yt-video-thumbnail img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: var(--transition);
+    transition: 0.2s ease;
 }
 
 .yt-video-result:hover .yt-video-thumbnail img {
     transform: scale(1.05);
 }
 
-/* Info do Vídeo */
+/* ===============================
+   INFO DO VÍDEO
+=============================== */
 .yt-video-info {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-width: 0; 
+    min-width: 0;
 }
 
 .yt-video-info h4 {
@@ -964,12 +1038,15 @@ body::before {
     font-weight: 600;
     margin-bottom: 6px;
     line-height: 1.3;
+
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+
     color: var(--light-color);
 }
+
 
 /* Estados de carregamento e vazio */
 .loading-yt, .empty-yt, .error-yt {
@@ -1010,15 +1087,6 @@ body::before {
     margin-bottom: 0;
 }
 
-.yt-search-results {
-    flex: 1;
-    overflow-y: auto;
-    border-radius: 12px;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 8px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--accent-color) #2a2a2a;
-}
 
 .yt-video-result {
     display: flex;
@@ -1136,7 +1204,9 @@ body::before {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Design Responsivo */
@@ -1144,15 +1214,15 @@ body::before {
     .main-layout {
         grid-template-columns: 1fr 1fr;
     }
-    
+
     .input-section {
         grid-column: span 2;
     }
-    
+
     .video-player-section {
         grid-column: 1 / 2;
     }
-    
+
     .queue-section {
         grid-column: 2 / 3;
     }
@@ -1162,108 +1232,111 @@ body::before {
     .container {
         padding: 15px;
     }
-    
+
     .app-header h1 {
         font-size: 2.2rem;
         flex-direction: column;
         gap: 10px;
     }
-    
+
     .presence-indicator, #adminUnlockBtn {
         display: none;
     }
-    
+
     .main-layout {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .input-section,
     .video-player-section,
     .queue-section {
         grid-column: span 1;
     }
-    
+
     .card h2 {
         font-size: 1.3rem;
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
     }
-    
+
     .clear-queue-button,
     .bulk-remove-button {
         margin-left: 0;
         margin-top: 10px;
         align-self: stretch;
     }
-    
+
     .modal-content {
         margin: 0 10px;
         padding: 25px 20px;
     }
-    
+
     .modal.yt-search-modal .modal-content {
-        width: 100%;
-        height: 100%;
-        max-height: 100%;
-        border-radius: 0;
+        max-height: 90vh;
+        /* Limita a altura do cartão do modal */
+        display: flex;
+        flex-direction: column;
     }
-    
+
     .yt-video-result {
         flex-direction: column;
         gap: 12px;
     }
-    
+
     .yt-video-thumbnail {
         width: 100%;
         height: 180px;
     }
 }
+
 .search-controls {
-            flex-direction: column; /* Empilha o input e o botão */
-        }
-        
-        .search-controls button {
-            width: 100%; /* Faz o botão "Buscar" ocupar a largura toda */
-        }
-        
+    flex-direction: column;
+    /* Empilha o input e o botão */
+}
+
+.search-controls button {
+    width: 100%;
+    /* Faz o botão "Buscar" ocupar a largura toda */
+}
+
 @media (max-width: 480px) {
     body {
         padding: 10px;
     }
-    
+
     .container {
         padding: 15px 10px;
     }
-    
+
     .app-header {
         padding: 20px 0;
         margin-bottom: 25px;
     }
-    
+
     .app-header h1 {
         font-size: 1.8rem;
     }
-    
+
     .card {
         padding: 20px;
     }
-    
+
     .modal-buttons {
         flex-direction: column;
     }
-    
+
     .btn {
         width: 100%;
     }
-    
+
     .video-meta {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
     }
-    
+
     .notification {
         right: 10px;
         left: 10px;
@@ -1295,19 +1368,26 @@ body::before {
 }
 
 @keyframes loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 /* ADICIONE ISSO AO SEU style.css */
 
 #particles {
-    position: fixed; /* Fica fixo no fundo */
+    position: fixed;
+    /* Fica fixo no fundo */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1; /* Fica atrás de todo o conteúdo */
+    z-index: -1;
+    /* Fica atrás de todo o conteúdo */
     overflow: hidden;
 }
 
@@ -1326,11 +1406,14 @@ body::before {
         transform: translateY(0) translateX(0);
         opacity: 0.6;
     }
+
     50% {
         opacity: 0.2;
     }
+
     100% {
-        transform: translateY(-100vh) translateX(20vw); /* Sobe e vai para o lado */
+        transform: translateY(-100vh) translateX(20vw);
+        /* Sobe e vai para o lado */
         opacity: 0.6;
     }
 }
@@ -1348,7 +1431,8 @@ body::before {
 }
 
 #queueProgress {
-    width: 0%; /* O script vai controlar a largura */
+    width: 0%;
+    /* O script vai controlar a largura */
     height: 100%;
     background: var(--accent-color);
     border-radius: 4px;
@@ -1359,102 +1443,107 @@ body::before {
 /* MÁSCARA DO PLAYER     */
 /* ===================== */
 #player-mask {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0);
-  z-index: 5;
-  pointer-events: none; /* deixa o restante do player clicável */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0);
+    z-index: 5;
+    pointer-events: none;
+    /* deixa o restante do player clicável */
 }
 
 /* Bloqueia apenas a área da barra de progresso para usuários comuns */
 body.non-admin #player-mask::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 40px; /* altura aproximada da barra de progresso */
-  background: rgba(0, 0, 0, 0);
-  pointer-events: auto; /* bloqueia cliques só nessa faixa */
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    /* altura aproximada da barra de progresso */
+    background: rgba(0, 0, 0, 0);
+    pointer-events: auto;
+    /* bloqueia cliques só nessa faixa */
 }
 
 /* Admin pode interagir com tudo (mask desativado) */
 body:not(.non-admin) #player-mask,
 body:not(.non-admin) #player-mask::after {
-  display: none !important;
-  pointer-events: none !important;
+    display: none !important;
+    pointer-events: none !important;
 }
 
 /* ===================== */
 /* CONTROLES PERSONALIZADOS (Overlay) */
 /* ===================== */
 .player-overlay-controls {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  z-index: 10; /* acima do mask */
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-  transition: all 0.3s ease;
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    z-index: 10;
+    /* acima do mask */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
 }
 
 /* Botão play/pause */
 .player-overlay-controls button {
-  background: transparent;
-  border: none;
-  color: var(--light-color);
-  font-size: 1.1rem;
-  cursor: pointer;
-  padding: 6px;
-  transition: transform 0.2s ease;
+    background: transparent;
+    border: none;
+    color: var(--light-color);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 6px;
+    transition: transform 0.2s ease;
 }
 
 .player-overlay-controls button:hover {
-  transform: scale(1.1);
-  color: var(--accent-color);
+    transform: scale(1.1);
+    color: var(--accent-color);
 }
 
 /* Slider de volume */
 .player-overlay-controls input[type="range"] {
-  width: 140px;
-  -webkit-appearance: none;
-  height: 6px;
-  border-radius: 6px;
-  background: rgba(255,255,255,0.12);
-  outline: none;
-  cursor: pointer;
-  transition: background 0.2s ease;
+    width: 140px;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.12);
+    outline: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
 }
 
 .player-overlay-controls input[type="range"]:hover {
-  background: rgba(255,255,255,0.25);
+    background: rgba(255, 255, 255, 0.25);
 }
 
 /* Exibir overlay só para non-admin */
 body.non-admin .player-overlay-controls {
-  display: flex;
+    display: flex;
 }
 
 /* Esconder overlay para admin */
 body:not(.non-admin) .player-overlay-controls {
-  display: none;
+    display: none;
 }
 
 /* Estilo para o nome do admin no botão */
 #adminUnlockBtn.admin-logged-in {
     background: linear-gradient(135deg, #4CAF50, #388e3c);
     box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-    min-width: 150px; /* Largura maior para acomodar o nome */
+    min-width: 150px;
+    /* Largura maior para acomodar o nome */
 }
 
 #adminNameDisplay {
@@ -1469,20 +1558,23 @@ body:not(.non-admin) .player-overlay-controls {
 /* Ajuste para telas menores */
 @media (max-width: 768px) {
     #adminUnlockBtn {
-        display: none; /* Mantém oculto em mobile como antes */
+        display: none;
+        /* Mantém oculto em mobile como antes */
     }
 }
 
 #adminInfo {
     position: absolute;
     top: 20px;
-    left: 165px; /* Ajustei de 150px para 165px para dar espaço ao botão */
+    left: 165px;
+    /* Ajustei de 150px para 165px para dar espaço ao botão */
     background: var(--glass-bg);
     padding: 8px 15px;
     border-radius: 20px;
     font-size: 0.9rem;
     color: var(--text-primary);
-    display: none; /* Começa escondido. O JS vai mostrar */
+    display: none;
+    /* Começa escondido. O JS vai mostrar */
     align-items: center;
     gap: 8px;
     backdrop-filter: blur(10px);
@@ -1490,23 +1582,25 @@ body:not(.non-admin) .player-overlay-controls {
 }
 
 .notification {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: #2196f3;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 10px;
-  font-weight: 600;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  opacity: 1;
-  transition: opacity 0.5s, transform 0.5s;
-  z-index: 9999;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #2196f3;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+    transition: opacity 0.5s, transform 0.5s;
+    z-index: 9999;
 }
+
 .notification.hide {
-  opacity: 0;
-  transform: translateY(-20px);
+    opacity: 0;
+    transform: translateY(-20px);
 }
+
 .chat-section {
     margin-top: 30px;
     grid-column: 1 / -1;
@@ -1536,36 +1630,70 @@ body:not(.non-admin) .player-overlay-controls {
 }
 
 .chat-messages-list {
-    height: 400px; /* Aumentei a altura um pouco */
+    height: 400px;
+    /* Aumentei a altura um pouco */
     overflow-y: auto;
-    background: var(--chat-bg-color); /* Usa a variável de cor */
+    background: var(--chat-bg-color);
+    /* Usa a variável de cor */
     border-radius: 12px;
     padding: 15px;
     margin-bottom: 15px;
     border: 1px solid var(--glass-border);
     display: flex;
-    flex-direction: column; /* Necessário para as bolhas */
-    gap: 12px; /* Espaço entre as bolhas */
+    flex-direction: column;
+    /* Necessário para as bolhas */
+    gap: 12px;
+    /* Espaço entre as bolhas */
+     /* Scroll suave */
+     scroll-behavior: smooth;
+    
+    /* Estilo da scrollbar mais consistente */
     scrollbar-width: thin;
-    scrollbar-color: var(--accent-color) #2a2a2a;
+    scrollbar-color: var(--accent-color) transparent;
+}
+@media (min-width: 769px) {
+    .chat-messages-list {
+        scrollbar-color: transparent transparent;
+    }
+    
+    .chat-messages-list:hover {
+        scrollbar-color: var(--accent-color) #2a2a2a;
+    }
+}
+/* Ajustar cores das bolhas no tema light */
+[data-theme="light"] .chat-message {
+    --bubble-theirs-bg: #f0f0f0;
+    --text-theirs-color: #333;
 }
 
-/* ... (as regras de ::-webkit-scrollbar podem continuar as mesmas) ... */
+[data-theme="light"] .chat-message.mine {
+    --bubble-mine-bg: var(--accent-color);
+    --text-mine-color: white;
+}
+
+.chat-messages-list::-webkit-scrollbar {
+    width: 8px;
+}
 
 /* ESTILO DA BOLHA DE MENSAGEM */
 .chat-message {
     padding: 10px 14px;
-    border-radius: 18px; /* Mais arredondado */
-    max-width: 75%; /* Bolhas não ocupam a tela toda */
-    word-break: break-word; /* Quebra de linha */
+    border-radius: 18px;
+    /* Mais arredondado */
+    max-width: 75%;
+    /* Bolhas não ocupam a tela toda */
+    word-break: break-word;
+    /* Quebra de linha */
     animation: messageSlideIn 0.3s ease-out;
     line-height: 1.4;
 
     /* === Estilo "Eles" (Padrão) === */
     background: var(--bubble-theirs-bg);
     color: var(--text-theirs-color);
-    align-self: flex-start; /* Alinha à esquerda */
-    border-bottom-left-radius: 4px; /* "Rabicho" da bolha */
+    align-self: flex-start;
+    /* Alinha à esquerda */
+    border-bottom-left-radius: 4px;
+    /* "Rabicho" da bolha */
 }
 
 /* Remove a barra lateral antiga */
@@ -1577,9 +1705,12 @@ body:not(.non-admin) .player-overlay-controls {
 .chat-message.mine {
     background: var(--bubble-mine-bg);
     color: var(--text-mine-color);
-    align-self: flex-end; /* ALINHA À DIREITA */
-    border-bottom-left-radius: 18px; /* Reseta o rabicho esquerdo */
-    border-bottom-right-radius: 4px; /* Adiciona "rabicho" à direita */
+    align-self: flex-end;
+    /* ALINHA À DIREITA */
+    border-bottom-left-radius: 18px;
+    /* Reseta o rabicho esquerdo */
+    border-bottom-right-radius: 4px;
+    /* Adiciona "rabicho" à direita */
 }
 
 /* === Estilo "Admin" === */
@@ -1595,7 +1726,8 @@ body:not(.non-admin) .player-overlay-controls {
     border-color: rgba(243, 156, 18, 0.3);
     text-align: center;
     font-style: italic;
-    align-self: center; /* Fica no meio */
+    align-self: center;
+    /* Fica no meio */
     max-width: 90%;
     border-radius: 8px;
 }
@@ -1606,12 +1738,12 @@ body:not(.non-admin) .player-overlay-controls {
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 4px;
-    position: relative; 
+    position: relative;
 }
 
 .chat-user {
     font-weight: 700;
-    
+
     font-size: 0.8rem;
     display: flex;
     align-items: center;
@@ -1624,21 +1756,75 @@ body:not(.non-admin) .player-overlay-controls {
 }
 
 .chat-message.admin .chat-user {
-    color: #d32f2f; /* Nome do admin em vermelho */
+    color: #d32f2f;
+    /* Nome do admin em vermelho */
 }
 
 .chat-text {
-    color: inherit; /* Herda a cor da bolha */
-    font-size: 0.95rem;
+    /* Melhorar legibilidade */
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 
+/* Limitar altura máxima da bolha com scroll interno */
+.chat-message.long {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Melhorar os estados de foco (acessibilidade) */
+.chat-reply-btn:focus,
+.chat-edit-btn:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* Adicionar "novas mensagens" indicator */
+.new-messages-indicator {
+    position: sticky;
+    bottom: 10px;
+    background: var(--accent-color);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    margin: 0 auto;
+    width: fit-content;
+    cursor: pointer;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+
 .chat-time {
-    color: inherit; /* Herda a cor da bolha */
+    color: inherit;
+    /* Herda a cor da bolha */
     opacity: 0.7;
     font-size: 0.7rem;
     text-align: right;
     margin-top: 5px;
-    display: block; /* Garante que fique abaixo */
+    display: block;
+    /* Garante que fique abaixo */
+    position: relative;
+}
+
+.chat-time:hover::after {
+    content: attr(data-full);
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 100;
 }
 
 /* RESTANTE DA INTERFACE DO CHAT */
@@ -1655,28 +1841,29 @@ body:not(.non-admin) .player-overlay-controls {
     background: rgba(0, 0, 0, 0.4);
     color: var(--light-color);
     font-family: 'Poppins', sans-serif;
+    font-size: 16px; /* Evita zoom no iOS */
+    min-height: 44px; /* Tamanho mínimo de toque */
 
-    
-    height: 48px;        
-    border-radius: 24px;  
+    height: 48px;
+    border-radius: 24px;
     font-size: 1rem;
-    padding: 0 20px;     
+    padding: 0 20px;
 }
 
 .chat-input-group button.btn.primary {
-    width: 48px;        
-    height: 48px;        
-    border-radius: 50%; 
-    padding: 0;         
-    min-width: 0;       
-    flex-shrink: 0;      
-    font-size: 1.1rem;   
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    padding: 0;
+    min-width: 0;
+    flex-shrink: 0;
+    font-size: 1.1rem;
 }
 
 .chat-input-group input:focus {
     border-color: var(--accent-color);
     outline: none;
-    box-shadow: 0 0 0 3px var(--accent-glow);
+    box-shadow: 0 0 0 3px var(--accent-glow), 0 0 0 1px var(--accent-color);
     background: rgba(0, 0, 0, 0.6);
 }
 
@@ -1695,102 +1882,103 @@ body:not(.non-admin) .player-overlay-controls {
     opacity: 0.5;
 }
 
-        @keyframes messageSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
 
-        /* Indicador de usuários online no chat */
-        .chat-users-online {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
-        .online-indicator {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+/* Indicador de usuários online no chat */
+.chat-users-online {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
 
-        .online-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success-color);
-            animation: pulse 2s infinite;
-        }
+.online-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
 
-        /* Efeito de digitação */
-        .typing-indicator {
-            display: none;
-            padding: 8px 15px;
-            color: var(--text-secondary);
-            font-style: italic;
-            font-size: 0.9rem;
-        }
+.online-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success-color);
+    animation: pulse 2s infinite;
+}
 
-        .typing-indicator.active {
-            display: block;
-        }
+/* Efeito de digitação */
+.typing-indicator {
+    display: none;
+    padding: 8px 15px;
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 0.9rem;
+}
 
-        .typing-dots {
-            display: inline-block;
-        }
+.typing-indicator.active {
+    display: block;
+}
 
-        .typing-dots span {
-            animation: typing 1.4s infinite;
-            opacity: 0.6;
-        }
+.typing-dots {
+    display: inline-block;
+}
 
-        .typing-dots span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
+.typing-dots span {
+    animation: typing 1.4s infinite;
+    opacity: 0.6;
+}
 
-        .typing-dots span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
 
-        @keyframes typing {
-            0%, 60%, 100% {
-                opacity: 0.6;
-            }
-            30% {
-                opacity: 1;
-            }
-        }
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
 
-        /* Responsividade para o chat */
-        @media (max-width: 768px) {
-            .chat-messages-list {
-                height: 250px;
-            }
-            
-            .chat-input-group {
-                flex-direction: column;
-            }
-            
-            .chat-input-group button {
-                width: 100%;
-            }
-        }
+@keyframes typing {
+    0%, 60%, 100% {
+        opacity: 0.6;
+    }
 
-        /* =================================== */
+    30% {
+        opacity: 1;
+    }
+}
+
+/* Responsividade para o chat */
+/* Mostrar ações em mobile mesmo sem hover */
+@media (max-width: 768px) {
+    .chat-message-actions {
+        opacity: 1 !important;
+        position: relative !important;
+        top: auto !important;
+        right: auto !important;
+        margin-top: 5px;
+        justify-content: flex-end;
+    }
+}
+
+/* =================================== */
 /* === CSS PARA FUNÇÃO "RESPONDER" === */
 /* =================================== */
 
 /* 1. Botão de Resposta (que aparece na bolha) */
 .chat-message {
-    position: relative; /* Necessário para o botão */
+    position: relative;
+    /* Necessário para o botão */
 }
 
 .chat-reply-btn {
@@ -1803,13 +1991,13 @@ body:not(.non-admin) .player-overlay-controls {
     font-size: 0.8rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    
+
     /* Adicionado para garantir o alinhamento */
     display: flex;
     align-items: center;
     justify-content: center;
 }
-            
+
 .chat-reply-btn:hover {
     background: var(--primary-color);
     color: white;
@@ -1821,10 +2009,12 @@ body:not(.non-admin) .player-overlay-controls {
     align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
-    background: var(--bubble-theirs-bg); /* Reutiliza a cor da bolha */
+    background: var(--bubble-theirs-bg);
+    /* Reutiliza a cor da bolha */
     color: var(--text-theirs-color);
     border-radius: 8px 8px 0 0;
-    margin-bottom: -10px; /* Gruda no input */
+    margin-bottom: -10px;
+    /* Gruda no input */
     border: 1px solid var(--glass-border);
     border-bottom: none;
     animation: messageSlideIn 0.2s ease-out;
@@ -1859,21 +2049,25 @@ body:not(.non-admin) .player-overlay-controls {
     cursor: pointer;
     padding: 0 5px;
 }
-.chat-reply-cancel:hover { opacity: 1; }
+
+.chat-reply-cancel:hover {
+    opacity: 1;
+}
 
 /* 3. Bloco de Resposta (Dentro da bolha de chat) */
 .chat-reply-block {
-    background: rgba(0,0,0,0.08);
+    background: rgba(0, 0, 0, 0.08);
     padding: 8px 10px;
     border-radius: 6px;
     margin-bottom: 6px;
     border-left: 3px solid var(--accent-color);
-    cursor: pointer; /* Para o scroll */
+    cursor: pointer;
+    /* Para o scroll */
 }
 
 .chat-message.mine .chat-reply-block {
     /* Ajusta cor para a bolha escura */
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     border-left-color: var(--light-color);
 }
 
@@ -1897,18 +2091,24 @@ body:not(.non-admin) .player-overlay-controls {
 
 /* 4. Destaque para mensagem "scrollada" */
 @keyframes highlight-message {
-  0% { background-color: rgba(25, 118, 210, 0.4); }
-  100% { background-color: transparent; }
+    0% {
+        background-color: rgba(25, 118, 210, 0.4);
+    }
+
+    100% {
+        background-color: transparent;
+    }
 }
 
 .message-highlighted {
-  /* No 'mine', precisamos forçar a cor, senão a da bolha sobrescreve */
-  background-color: var(--bubble-mine-bg); 
-  animation: highlight-message 1.5s ease-out;
+    /* No 'mine', precisamos forçar a cor, senão a da bolha sobrescreve */
+    background-color: var(--bubble-mine-bg);
+    animation: highlight-message 1.5s ease-out;
 }
+
 .chat-message.message-highlighted {
-  background-color: var(--bubble-theirs-bg);
-  animation: highlight-message 1.5s ease-out;
+    background-color: var(--bubble-theirs-bg);
+    animation: highlight-message 1.5s ease-out;
 }
 
 /* 1. Estiliza o novo container que segura os botões */
@@ -1917,15 +2117,18 @@ body:not(.non-admin) .player-overlay-controls {
     top: 20px;
     left: 25px;
     z-index: 2;
-    
+
     display: flex;
-    flex-direction: column; /* Empilha os botões verticalmente */
-    gap: 10px; /* Adiciona um espaço de 10px entre eles */
+    flex-direction: column;
+    /* Empilha os botões verticalmente */
+    gap: 10px;
+    /* Adiciona um espaço de 10px entre eles */
 }
 
 /* 2. Remove o posicionamento absoluto do botão Admin (o container agora faz isso) */
 #adminUnlockBtn {
-    position: static; /* Remove o 'position: absolute' original */
+    position: static;
+    /* Remove o 'position: absolute' original */
     top: auto;
     left: auto;
     z-index: auto;
@@ -1938,40 +2141,50 @@ body:not(.non-admin) .player-overlay-controls {
     color: white;
     border: none;
     font-weight: 700;
-    display: none; /* <-- ADICIONADO: Esconde o botão por padrão */
+    display: none;
+    /* <-- ADICIONADO: Esconde o botão por padrão */
 }
 
 /* 4. Garante que AMBOS os botões tenham o mesmo tamanho (como pedido) */
 .header-controls-left .btn.small {
-    min-width: 110px; /* Pega a largura do botão admin original */
-    justify-content: center; /* Centraliza o ícone e o texto */
+    min-width: 110px;
+    /* Pega a largura do botão admin original */
+    justify-content: center;
+    /* Centraliza o ícone e o texto */
 }
 
 /* 5. Ajuste para mobile: esconde o container inteiro em telas pequenas */
 @media (max-width: 768px) {
+
     /* Esconde o NOVO container em vez do botão individual */
     .header-controls-left {
         display: none;
     }
-    
+
     /* Garante que a regra antiga que escondia #adminUnlockBtn seja sobrescrita */
     #adminUnlockBtn {
-        display: flex; 
+        display: flex;
     }
 }
 
 /* =================================== */
-/* === PAINEL ADMIN - SALAS ATIVAS === */
+/* === PAINEL ADMIN - SALAS ATIVAS (CORRIGIDO) === */
 /* =================================== */
 
-/* Deixa o modal do painel maior e sem padding interno inicial */
+/* Modal do Painel - Ajustes Gerais */
 #panelModal.admin-panel-modal .modal-content {
     max-width: 800px;
     width: 95%;
     padding: 0;
     overflow: hidden;
+    background: var(--card-bg);
+    /* Garante fundo sólido/escuro */
+    border: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
 }
 
+/* Cabeçalho do Painel */
 .admin-panel-header {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     padding: 20px 25px;
@@ -1980,120 +2193,90 @@ body:not(.non-admin) .player-overlay-controls {
     align-items: center;
     color: white;
     border-bottom: 1px solid var(--glass-border);
+    flex-shrink: 0;
 }
 
 .admin-panel-header h3 {
     margin: 0;
-    color: white; /* Sobrescreve a cor 'accent-color' do h3 padrão */
+    color: white;
     font-size: 1.3rem;
-}
-
-/* Garante que o botão 'Sair' não ocupe 100% */
-.admin-panel-header .btn {
-    width: auto;
-    margin: 0;
-    flex-shrink: 0;
-}
-
-.admin-panel-body {
-    padding: 25px;
-    max-height: 60vh; /* Limita a altura e cria scroll */
-    overflow-y: auto;
-    background: var(--card-bg); /* Fundo escuro para o conteúdo */
-    /* Estilização da barra de scroll (opcional, mas fica bonito) */
-    scrollbar-width: thin;
-    scrollbar-color: var(--accent-color) #2a2a2a;
-}
-.admin-panel-body::-webkit-scrollbar {
-    width: 8px;
-}
-.admin-panel-body::-webkit-scrollbar-track {
-    background: #2a2a2a;
-}
-.admin-panel-body::-webkit-scrollbar-thumb {
-    background-color: var(--accent-color);
-    border-radius: 10px;
-}
-
-
-.admin-panel-body h4 {
-    font-size: 1.3rem;
-    color: var(--text-primary);
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--glass-border);
-    padding-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
+.admin-panel-header .close-button {
+    position: static;
+    /* Remove posição absoluta para alinhar no flex */
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Corpo do Painel */
+.admin-panel-body {
+    padding: 25px;
+    max-height: 60vh;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.2);
+    /* Fundo levemente mais escuro */
+}
+
+/* Barra de rolagem bonita */
+.admin-panel-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.admin-panel-body::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.admin-panel-body::-webkit-scrollbar-thumb {
+    background-color: var(--accent-color);
+    border-radius: 10px;
+}
+
+/* Subtítulo e botões de ação globais */
+.admin-panel-body h4 {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Lista de Salas */
 .admin-room-list {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
+/* ITEM DA SALA - Onde estava o problema */
 .admin-room-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap; /* Para telas menores */
-    gap: 15px;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 20px;
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    /* Fundo sutil */
     border: 1px solid var(--glass-border);
-    transition: var(--transition);
-}
-
-.admin-room-item:hover {
-    border-color: var(--accent-color);
-    background: rgba(0, 0, 0, 0.4);
-}
-
-.room-info {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    word-break: break-all; /* Quebra o ID da sala se for muito longo */
-}
-
-.room-info strong {
-    font-size: 1.2rem;
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-.room-actions {
-    display: flex;
-    gap: 10px;
-    flex-shrink: 0; /* Impede que os botões quebrem */
-}
-
-.room-actions .btn {
-    width: auto; /* Tira o width 100% */
-}
-
-
-/* Painel admin style */
-  .admin-room-item {
-    background: var(--dark-2);
-    border: 1px solid var(--dark-3);
     border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
+    padding: 20px;
     transition: all 0.3s ease;
     position: relative;
+    display: block;
+    /* Importante: Garante layout em bloco */
 }
 
 .admin-room-item:hover {
-    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: var(--accent-color);
     transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
+/* Bordas coloridas baseadas na atividade */
 .admin-room-item[data-activity="high"] {
     border-left: 4px solid var(--success-color);
 }
@@ -2103,152 +2286,145 @@ body:not(.non-admin) .player-overlay-controls {
 }
 
 .admin-room-item[data-activity="low"] {
-    border-left: 4px solid var(--primary-color);
+    border-left: 4px solid var(--accent-color);
 }
 
 .admin-room-item[data-activity="inactive"] {
     border-left: 4px solid var(--text-secondary);
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
+/* Layout interno do item */
 .room-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 1rem;
-    gap: 1rem;
-}
-
-.room-title-section {
-    flex: 1;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .room-name {
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 5px 0;
     color: var(--text-primary);
     font-size: 1.2rem;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .room-meta {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
 }
 
 .room-id {
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    font-family: monospace;
-    background: var(--dark-3);
-    padding: 0.25rem 0.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
     border-radius: 4px;
+    font-family: monospace;
 }
 
-.time-ago {
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    font-style: italic;
-}
-
+/* Estatísticas (Badges) */
 .room-stats {
     display: flex;
-    gap: 0.75rem;
+    gap: 10px;
 }
 
 .stat-badge {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    background: var(--dark-3);
-    border-radius: 8px;
-    min-width: 80px;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
 }
 
 .stat-badge i {
-    color: var(--primary-color);
-    width: 16px;
+    font-size: 0.8rem;
 }
 
 .stat-count {
     font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--text-primary);
+    color: white;
 }
 
 .stat-label {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    text-transform: lowercase;
+    font-size: 0.75rem;
+    color: #ccc;
 }
 
-.users-online .stat-count {
+.users-online i {
     color: var(--success-color);
 }
 
-.videos-queue .stat-count {
-    color: var(--primary-color-light);
+.videos-queue i {
+    color: var(--warning-color);
+}
+
+/* Detalhes (Criador e Data) */
+.room-details {
+    display: flex;
+    /* Garante que fique em linha se houver espaço */
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    border: none;
+    /* Remove borda azul antiga */
+    box-shadow: none;
 }
 
 .detail-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
     color: var(--text-secondary);
-    font-size: 0.9rem;
 }
 
 .detail-item i {
-    width: 16px;
-    color: var(--primary-color);
-}
-
-.detail-label {
-    font-weight: 500;
-    color: var(--text-primary);
+    color: var(--accent-color);
 }
 
 .creator-name {
-    color: var(--warning-color);
+    color: white;
     font-weight: 500;
 }
 
-.created-date, .last-activity {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
+.created-date {
+    color: #ccc;
 }
 
+/* Botões de Ação do Item */
 .room-actions {
     display: flex;
-    gap: 0.5rem;
     justify-content: flex-end;
-    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
 }
 
-/* Responsividade */
+/* Mobile */
 @media (max-width: 768px) {
     .room-header {
         flex-direction: column;
-        align-items: stretch;
     }
-    
+
     .room-stats {
-        justify-content: center;
+        width: 100%;
+        justify-content: flex-start;
     }
-    
-    .room-details {
-        grid-template-columns: 1fr;
-    }
-    
+
     .room-actions {
-        justify-content: center;
+        width: 100%;
     }
-    
+
     .room-actions .btn {
         flex: 1;
-        min-width: 120px;
     }
 }
 
@@ -2256,12 +2432,12 @@ body:not(.non-admin) .player-overlay-controls {
     .admin-room-item {
         padding: 1rem;
     }
-    
+
     .room-stats {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .stat-badge {
         width: 100%;
         justify-content: center;
@@ -2269,7 +2445,8 @@ body:not(.non-admin) .player-overlay-controls {
 }
 
 .room-details {
-    background: #f0f7ff; /* azul pastel suave */
+    background: #f0f7ff;
+    /* azul pastel suave */
     border: 1px solid #cfe3ff;
     border-radius: 12px;
     padding: 10px 16px;
@@ -2307,10 +2484,13 @@ body:not(.non-admin) .player-overlay-controls {
     /* right: 8px; (REMOVIDO) */
     display: flex;
     gap: 4px;
-    opacity: 0; /* Escondido por padrão */
+    opacity: 0;
+    /* Escondido por padrão */
     transition: opacity 0.2s ease;
-    z-index: 2; /* Garante que fique sobre o nome se ele for longo */
-    flex-shrink: 0; /* Impede que os botões quebrem a linha */
+    z-index: 2;
+    /* Garante que fique sobre o nome se ele for longo */
+    flex-shrink: 0;
+    /* Impede que os botões quebrem a linha */
 }
 
 /* Mostra os botões quando o mouse passa sobre a mensagem */
@@ -2330,6 +2510,7 @@ body:not(.non-admin) .player-overlay-controls {
     cursor: pointer;
     transition: all 0.2s ease;
 }
+
 .chat-edit-btn:hover {
     background: var(--primary-color);
     color: white;
@@ -2425,6 +2606,7 @@ body:not(.non-admin) .player-overlay-controls {
         opacity: 0;
         transform: translateY(-5px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2432,283 +2614,312 @@ body:not(.non-admin) .player-overlay-controls {
 }
 
 .chat-edit-actions .btn.danger:hover {
-    background-color: #dc2626; /* Vermelho mais escuro */
+    background-color: #dc2626;
+    /* Vermelho mais escuro */
     border-color: #dc2626;
 }
 
 /* Corrige centralização e UX do modal */
 #roomDetailsModal.active,
 #confirmModal.active {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
 }
 
 #roomDetailsModal .modal,
 #confirmModal .modal {
-  display: block !important;
-  margin: 0 auto;
-  transform: translateY(0);
-  animation: modalFadeIn 0.3s ease;
+    display: block !important;
+    margin: 0 auto;
+    transform: translateY(0);
+    animation: modalFadeIn 0.3s ease;
 }
 
 /* Animação suave de entrada */
 @keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* =========================================
    BOTÃO PRINCIPAL (MENOR E ELEGANTE)
    ========================================= */
 .btn-sugestao {
-  background: linear-gradient(135deg, #7B1FA2 0%, #512DA8 100%);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-  font-size: 0.9rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(123, 31, 162, 0.3);
-  height: 36px;
-  margin-left: 10px;
+    background: linear-gradient(135deg, #7B1FA2 0%, #512DA8 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(123, 31, 162, 0.3);
+    height: 36px;
+    margin-left: 10px;
 }
 
 .btn-sugestao:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(123, 31, 162, 0.4);
-  background: linear-gradient(135deg, #8E24AA 0%, #5C35B5 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(123, 31, 162, 0.4);
+    background: linear-gradient(135deg, #8E24AA 0%, #5C35B5 100%);
 }
 
 .btn-sugestao:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(123, 31, 162, 0.3);
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(123, 31, 162, 0.3);
 }
 
 .btn-sugestao i {
-  font-size: 0.9rem;
+    font-size: 0.9rem;
 }
 
 /* Versão compacta quando precisa de menos espaço */
 .btn-sugestao.compact {
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  height: 32px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    height: 32px;
 }
 
 /* Ícone girando no hover */
 .btn-sugestao:hover i {
-  animation: magicSpin 1s ease;
+    animation: magicSpin 1s ease;
 }
 
 @keyframes magicSpin {
-  0% { transform: rotate(0deg) scale(1); }
-  25% { transform: rotate(90deg) scale(1.1); }
-  100% { transform: rotate(0deg) scale(1); }
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+
+    25% {
+        transform: rotate(90deg) scale(1.1);
+    }
+
+    100% {
+        transform: rotate(0deg) scale(1);
+    }
 }
 
 /* ================================
    MODAL DE SUGESTÃO — DESKTOP FIRST
    ================================ */
 .sugestao-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(6px);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
 }
 
 .sugestao-modal .modal-content {
-  width: 100%;
-  max-width: 900px;
-  height: 100%;
-  max-height: 90vh;
+    width: 100%;
+    max-width: 900px;
+    height: 100%;
+    max-height: 90vh;
 
-  background: #1a1a1a;
-  color: #fff;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+    background: #1a1a1a;
+    color: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
 
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 /* HEADER */
 .sugestao-modal h3 {
-  margin: 0;
-  padding: 14px 20px;
-  background: rgba(0,0,0,0.4);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+    margin: 0;
+    padding: 14px 20px;
+    background: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 .sugestao-modal .close-button {
-  position: absolute;
-  right: 16px;
-  top: 12px;
-  font-size: 26px;
-  cursor: pointer;
-  opacity: 0.7;
+    position: absolute;
+    right: 16px;
+    top: 12px;
+    font-size: 26px;
+    cursor: pointer;
+    opacity: 0.7;
 }
-.sugestao-modal .close-button:hover { opacity: 1; }
+
+.sugestao-modal .close-button:hover {
+    opacity: 1;
+}
 
 /* TABS */
 .sugestao-tabs {
-  display: flex;
-  flex-shrink: 0;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  background: rgba(0,0,0,0.25);
+    display: flex;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.25);
 }
 
 .sugestao-tab {
-  flex: 1;
-  padding: 12px;
-  background: none;
-  border: none;
-  color: #aaa;
-  cursor: pointer;
-  font-weight: 600;
+    flex: 1;
+    padding: 12px;
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    font-weight: 600;
 }
 
 .sugestao-tab.active {
-  color: #fff;
-  border-bottom: 3px solid #7B1FA2;
+    color: #fff;
+    border-bottom: 3px solid #7B1FA2;
 }
 
 /* ÁREA DE CONTEÚDO COM SCROLL */
 .tab-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-  min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    /* ÚNICA barra de rolagem vertical permitida */
+    padding: 16px;
+    min-height: 0;
+
+    /* Estilo da barra de rolagem */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color) #2a2a2a;
 }
 
-/* GRID DE GÊNEROS RESPONSIVO DE VERDADE */
-.generos-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 12px;
+.tab-content::-webkit-scrollbar {
+    width: 8px;
 }
+
+.tab-content::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 4px;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 4px;
+}
+
+
 
 .genero-btn {
-  height: 100px;
-  border-radius: 12px;
-  background: #252525;
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #ccc;
-  cursor: pointer;
+    height: 100px;
+    border-radius: 12px;
+    background: #252525;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #ccc;
+    cursor: pointer;
 
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 
-  transition: 0.2s;
+    transition: 0.2s;
 }
 
 .genero-btn i {
-  font-size: 22px;
+    font-size: 22px;
 }
 
 .genero-btn span {
-  font-size: 0.85rem;
+    font-size: 0.85rem;
 }
 
 .genero-btn:hover {
-  transform: translateY(-2px);
-  border-color: #7B1FA2;
-  color: #fff;
+    transform: translateY(-2px);
+    border-color: #7B1FA2;
+    color: #fff;
 }
 
 .genero-btn.active,
 .genero-btn.selected {
-  background: rgba(123,31,162,0.2);
-  border-color: #7B1FA2;
-  color: #fff;
+    background: rgba(123, 31, 162, 0.2);
+    border-color: #7B1FA2;
+    color: #fff;
 }
 
 /* AUTOPLAY */
 .autoplay-controls {
-  flex-shrink: 0;
-  margin: 12px;
-  padding: 12px;
-  background: #111;
-  border-radius: 12px;
+    flex-shrink: 0;
+    margin: 12px;
+    padding: 12px;
+    background: #111;
+    border-radius: 12px;
 }
 
 /* RODAPÉ */
 .sugestao-actions {
-  flex-shrink: 0;
-  padding: 12px;
-  display: flex;
-  gap: 12px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  background: rgba(0,0,0,0.4);
+    flex-shrink: 0;
+    padding: 12px;
+    display: flex;
+    gap: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.4);
 }
 
 .btn-now,
 .btn-auto {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
 }
 
 .btn-now {
-  background: #333;
-  color: #fff;
+    background: #333;
+    color: #fff;
 }
 
 .btn-auto {
-  background: linear-gradient(135deg, #7B1FA2, #512DA8);
-  color: #fff;
+    background: linear-gradient(135deg, #7B1FA2, #512DA8);
+    color: #fff;
 }
 
 /* MOBILE */
 @media (max-width: 600px) {
-  .sugestao-modal .modal-content {
-    max-height: 95vh;
-    border-radius: 12px;
-  }
+    .sugestao-modal .modal-content {
+        max-height: 95vh;
+        border-radius: 12px;
+    }
 
-  .genero-btn {
-    height: 90px;
-  }
+    .genero-btn {
+        height: 90px;
+    }
 
-  .genero-btn span {
-    font-size: 0.8rem;
-  }
+    .genero-btn span {
+        font-size: 0.8rem;
+    }
 }
 
 /* --- Estado ATIVO do botão principal (na tela inicial) --- */
 .btn-sugestao.active-dj {
-    background-color: #00c853; /* Verde Sucesso */
+    background-color: #00c853;
+    /* Verde Sucesso */
     color: white;
     border-color: #00c853;
-    box-shadow: 0 0 15px rgba(0, 200, 83, 0.6); /* Brilho verde */
+    box-shadow: 0 0 15px rgba(0, 200, 83, 0.6);
+    /* Brilho verde */
     transition: all 0.3s ease;
 }
 
@@ -2718,9 +2929,17 @@ body:not(.non-admin) .player-overlay-controls {
 }
 
 @keyframes pulse-icon {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* --- Estado ATIVO do botão dentro do modal --- */
@@ -2733,26 +2952,34 @@ body:not(.non-admin) .player-overlay-controls {
 /* --- Css para fazer com que o botão de auto sugestão fale que o DJ está ativo --- */
 /* Estado normal */
 .btn-sugestao {
-  transition: all 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 /* Quando Auto DJ está ligado */
 .btn-sugestao.auto-dj-on {
-  background: linear-gradient(135deg, #00e676, #00c853) !important;
-  color: #000 !important;
-  font-weight: 800;
-  box-shadow: 0 0 15px rgba(0, 255, 150, 0.6);
+    background: linear-gradient(135deg, #00e676, #00c853) !important;
+    color: #000 !important;
+    font-weight: 800;
+    box-shadow: 0 0 15px rgba(0, 255, 150, 0.6);
 }
 
 /* Efeito pulsando */
 .btn-sugestao.auto-dj-on {
-  animation: pulseAutoDJ 1.5s infinite;
+    animation: pulseAutoDJ 1.5s infinite;
 }
 
 @keyframes pulseAutoDJ {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* =========================================
@@ -2784,12 +3011,12 @@ body:not(.non-admin) .player-overlay-controls {
 .theme-btn:hover {
     transform: translateY(-5px);
     border-color: var(--accent-color);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .theme-btn.active {
     border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px var(--accent-color), 0 10px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 0 0 2px var(--accent-color), 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
 .theme-btn.active::after {
@@ -2814,7 +3041,7 @@ body:not(.non-admin) .player-overlay-controls {
     height: 80px;
     border-radius: 8px;
     margin-bottom: 10px;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .theme-btn span {
@@ -2835,6 +3062,7 @@ body:not(.non-admin) .player-overlay-controls {
         opacity: 0;
         transform: translateY(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2854,17 +3082,22 @@ body:not(.non-admin) .player-overlay-controls {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }
 
 
 /* Transição suave entre temas */
 .theme-transition * {
-    transition: background-color 0.5s ease, 
-                border-color 0.5s ease, 
-                color 0.5s ease,
-                box-shadow 0.5s ease !important;
+    transition: background-color 0.5s ease,
+        border-color 0.5s ease,
+        color 0.5s ease,
+        box-shadow 0.5s ease !important;
 }
 
 /* Melhorias no botão de tema na navbar */
@@ -2886,17 +3119,285 @@ body:not(.non-admin) .player-overlay-controls {
     .theme-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .theme-btn {
         flex-direction: row;
         text-align: left;
         padding: 12px;
     }
-    
+
     .theme-preview {
         width: 60px;
         height: 60px;
         margin-right: 15px;
         margin-bottom: 0;
     }
+}
+
+/* --- ADICIONAR AO FINAL DO STYLE.CSS --- */
+
+/* 1. Correção da Banner Gigante na Fila */
+.video-info-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.queue-thumb {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+}
+
+.video-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.video-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary, #fff);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+/* 2. Visual do Modal de Temas Moderno */
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.theme-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 15px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.theme-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.theme-btn.active {
+    border-color: var(--primary-color, #6c5ce7);
+    background: rgba(108, 92, 231, 0.1);
+    box-shadow: 0 0 15px rgba(108, 92, 231, 0.2);
+}
+
+.theme-preview {
+    width: 100%;
+    height: 60px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* 3. Modal do Auto DJ (Abas) */
+.sugestao-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+.sugestao-tab {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #aaa);
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.sugestao-tab.active {
+    color: var(--primary-color, #fff);
+    border-bottom: 2px solid var(--primary-color, #6c5ce7);
+}
+
+/* GRID DE GÊNEROS RESPONSIVO DE VERDADE */
+.generos-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 12px;
+    max-height: none !important;
+    overflow-y: visible !important;
+}
+
+.genero-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.genero-btn.active {
+    border-color: var(--primary-color, #6c5ce7);
+    background: rgba(108, 92, 231, 0.15);
+}
+
+/* Para os botões admin e tema aparecer no celular */
+/* ======================================================= */
+/* CORREÇÃO FINAL: CABEÇALHO MOBILE   */
+/* ======================================================= */
+
+@media (max-width: 768px) {
+
+    /* 1. Organiza os botões em linha horizontal no topo */
+    .header-controls-left {
+        display: flex !important;
+        flex-direction: row !important;
+        top: 15px;
+        left: 15px;
+        gap: 8px;
+    }
+
+    /* 2. Transforma os botões em Círculos (Ícones apenas) */
+    .header-controls-left .btn {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+
+        /* Agora, se o JS disser 'display: none', o botão vai obedecer e sumir. */
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    /* 3. Esconde TODOS os textos dentro dos botões no mobile */
+    .header-controls-left .btn span,
+    #adminStatusText,
+    #adminNameDisplay {
+        display: none !important;
+    }
+
+    /* 4. Garante que o ícone fique centralizado */
+    .header-controls-left .btn i {
+        margin: 0 !important;
+        font-size: 1rem !important;
+    }
+
+    /* 5. Ajusta o título para não bater nos botões */
+    .app-header h1 {
+        margin-top: 35px;
+        /* Empurra mais para baixo para não cobrir os botões */
+        font-size: 1.8rem;
+    }
+
+    /* 6. Ajuste da caixa do header */
+    .app-header {
+        padding: 15px 10px 25px 10px;
+    }
+}
+
+/* ======================================================= */
+/* CORREÇÃO: INDICADOR DE PRESENÇA NO MOBILE               */
+/* ======================================================= */
+
+@media (max-width: 768px) {
+
+    /* 1. Força o indicador a aparecer (sobrescreve o display:none antigo) */
+    .presence-indicator {
+        display: flex !important;
+
+        /* 2. Posiciona no canto superior DIREITO */
+        position: absolute;
+        top: 15px;
+        right: 15px;
+
+        /* 3. Estilo Compacto para Celular */
+        padding: 6px 12px !important;
+        font-size: 0.75rem !important;
+        /* Fonte menor */
+        border-radius: 20px;
+        background: rgba(0, 0, 0, 0.4);
+        /* Fundo escuro para leitura */
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 10;
+        gap: 6px;
+    }
+
+    /* 4. Ajuste do ícone de usuários */
+    .presence-indicator i {
+        font-size: 0.7rem;
+        color: #4CAF50;
+        /* Mantém o verdinho */
+    }
+
+    /* 5. Ajuste do texto para não quebrar linha */
+    .presence-indicator span {
+        white-space: nowrap;
+    }
+}
+
+/* Modal do Emonji */
+.emoji-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.emoji-modal-content {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    max-width: 400px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--card-shadow);
+}
+
+/* Estilizar o emoji-picker para combinar com seu tema */
+emoji-picker {
+    --background: var(--card-bg);
+    --border-color: var(--glass-border);
+    --input-border-color: var(--glass-border);
+    --input-font-color: var(--text-primary);
+    --outline-color: var(--accent-color);
+    --indicator-color: var(--accent-color);
+    --category-icon-color: var(--text-primary);
+    width: 100%;
+    height: 300px;
 }
