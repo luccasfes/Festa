@@ -1,32 +1,29 @@
 // ====================================================================
 // PLAYER DO YOUTUBE (CORRIGIDO: FILA + SEEK DE ADMIN)
 // ====================================================================
+let localResumeAlreadyUsed = false;
+
 
 function onYouTubeIframeAPIReady() {
-    // Cria o player inicial
     player = new YT.Player('videoPlayer', {
         height: '100%',
         width: '100%',
         playerVars: {
-            'autoplay': 1,
-            'controls': 0, // Começa bloqueado por padrão visual
-            'modestbranding': 1,
-            'rel': 0,
-            'disablekb': 1
+            autoplay: 1,
+            controls: 0,
+            modestbranding: 1,
+            rel: 0,
+            disablekb: 1
         },
         events: {
-            'onReady': (event) => {
-                // AQUI ESTAVA O ERRO: Faltava carregar a fila!
-                loadVideoQueue(); 
-                
+            onReady: (event) => {
+                loadVideoQueue();
                 player.setVolume(50);
                 isPlayerReady = true;
                 startSyncHeartbeat();
-                
-                // Verifica se é Admin para liberar os controles
                 setTimeout(updatePlayerMode, 1000);
             },
-            'onStateChange': onPlayerStateChange
+            onStateChange: onPlayerStateChange
         }
     });
 }
@@ -151,22 +148,68 @@ function recreatePlayer(controlsValue) {
 }
 
 function onPlayerStateChange(event) {
-    // Se acabou o vídeo, remove da fila
-    if (event.data === YT.PlayerState.ENDED) {
-        if (videoQueue.length > 0) {
-             // Pequeno delay para garantir que o vídeo acabou visualmente
-             setTimeout(() => {
-                 if(typeof videoQueueRef !== 'undefined') videoQueueRef.child(videoQueue[0].id).remove();
-             }, 500);
+
+    // =========================================================
+// 🔁 RESUME LOCAL APÓS F5 (SÓ SE ESTIVER SOZINHO NA SALA)
+// =========================================================
+if (
+    event.data === YT.PlayerState.PLAYING &&
+    !localResumeAlreadyUsed &&
+    (typeof onlineUsersCount === 'undefined' || onlineUsersCount <= 1)
+) {
+    const savedVideoId = localStorage.getItem('localPlayerVideoId');
+    const savedTime = parseFloat(localStorage.getItem('localPlayerTime'));
+    const lastSaveTime = parseInt(localStorage.getItem('localPlayerTimestamp') || '0');
+    const now = Date.now();
+
+    if (
+        savedVideoId &&
+        !isNaN(savedTime) &&
+        now - lastSaveTime < 3600000
+    ) {
+        const currentVideoId = player.getVideoData()?.video_id;
+
+        if (currentVideoId === savedVideoId && savedTime > 5) {
+            console.log(`🔄 RESUMINDO LOCAL EM ${savedTime}s`);
+
+            localResumeAlreadyUsed = true; // 🔒 trava pra nunca mais rodar
+            player.seekTo(savedTime, true);
+
+            // Limpa pra não usar de novo
+            localStorage.removeItem('localPlayerTime');
+            localStorage.removeItem('localPlayerVideoId');
+            localStorage.removeItem('localPlayerTimestamp');
         }
     }
-    
-    // SINCRONIA: O Admin é o Mestre. O estado dele é enviado para o Firebase.
+}
+
+    // =========================================================
+    // ⏹️ SE ACABOU O VÍDEO
+    // =========================================================
+    if (event.data === YT.PlayerState.ENDED) {
+        // Limpa qualquer resume pendente
+        localStorage.removeItem('localPlayerTime');
+        localStorage.removeItem('localPlayerVideoId');
+        localStorage.removeItem('localPlayerTimestamp');
+
+        if (videoQueue.length > 0) {
+            // Pequeno delay pra garantir que o vídeo acabou visualmente
+            setTimeout(() => {
+                if (typeof videoQueueRef !== 'undefined') {
+                    videoQueueRef.child(videoQueue[0].id).remove();
+                }
+            }, 500);
+        }
+    }
+
+    // =========================================================
+    // 🔥 SINCRONIA COM FIREBASE (ADMIN É O MESTRE)
+    // =========================================================
     if (isAdminLoggedIn || isBroadcaster) {
         const status = event.data === YT.PlayerState.PLAYING ? 'playing' : 'paused';
         const vidId = player.getVideoData ? player.getVideoData().video_id : null;
-        
-        if(vidId) {
+
+        if (vidId) {
             playerStateRef.set({
                 status: status,
                 videoId: vidId,
@@ -180,16 +223,30 @@ function onPlayerStateChange(event) {
 function startSyncHeartbeat() {
     if (syncInterval) clearInterval(syncInterval);
     
-    // A cada 5 segundos, se for Admin e estiver tocando, força a sincronia do tempo
     syncInterval = setInterval(() => {
-        if ((isAdminLoggedIn || isBroadcaster) && player && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING) {
-            playerStateRef.update({
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                videoTime: player.getCurrentTime()
-            });
-            updateRoomActivity();
+        // Verifica se o player existe e está tocando
+        if (player && typeof player.getPlayerState === 'function' && player.getPlayerState() === YT.PlayerState.PLAYING) {
+            
+            const currentTime = player.getCurrentTime();
+            const currentData = player.getVideoData();
+            
+            // --- SALVAMENTO LOCAL (Para sobreviver ao F5) ---
+            if (currentData && currentData.video_id) {
+                localStorage.setItem('localPlayerVideoId', currentData.video_id);
+                localStorage.setItem('localPlayerTime', currentTime);
+                localStorage.setItem('localPlayerTimestamp', Date.now());
+            }
+
+            // --- SINCRONIA COM FIREBASE (Apenas Admin) ---
+            if (isAdminLoggedIn || isBroadcaster) {
+                playerStateRef.update({
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    videoTime: currentTime
+                });
+                updateRoomActivity();
+            }
         }
-    }, 5000);
+    }, 5000); // Executa a cada 5 segundos
 }
 
 let isSeeking = false;
