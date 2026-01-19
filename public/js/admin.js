@@ -235,3 +235,18 @@ function escapeHtml(text) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
+
+// Este script FORÇA o modal de senha a ficar aberto se alguém clicar fora
+    window.addEventListener('click', function(e) {
+        const modal = document.getElementById('roomPasswordModal');
+        // Se o clique foi no fundo escuro (background) do modal de senha
+        if (e.target === modal) {
+            e.stopPropagation(); // Impede que outros scripts fechem
+            e.preventDefault();  // Cancela a ação
+            
+            // Efeito visual para mostrar que está bloqueado
+            const content = modal.querySelector('.modal-content');
+            content.style.transform = "scale(1.05)";
+            setTimeout(() => content.style.transform = "scale(1)", 150);
+        }
+    }, true); // 'true' garante que este script rode antes de qualquer outro

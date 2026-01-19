@@ -55,7 +55,7 @@ window.updateGlobalUserUI = function(name) {
 // --------------------
 document.addEventListener('DOMContentLoaded', function () {
     
-    // A. Verifica Sala e Senha (PRIORIDADE)
+    // A. Verifica Sala e Senha
     const params = new URLSearchParams(window.location.search);
     window.currentRoomId = params.get("room");
     
@@ -86,6 +86,34 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('toggleAdminUnlockPassword')?.addEventListener('click', function() {
         const input = document.getElementById('adminUnlockPassword');
         input.type = input.type === 'password' ? 'text' : 'password';
+    });
+
+    // === DETECTOR AUTOMÁTICO DE ADMIN Inteligente===
+    // Assim que o Firebase carregar o usuário, se for Admin, libera tudo.
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+            console.log("👑 Sessão Admin recuperada automaticamente.");
+            window.isAdminLoggedIn = true;
+            document.body.classList.remove('non-admin');
+            
+            // Atualiza UI do Admin
+            updateAdminDisplay(user.email.split('@')[0]);
+            const panelBtn = document.getElementById('panelBtn');
+            if(panelBtn) panelBtn.style.display = 'flex';
+            
+            // === A MÁGICA: SE A TELA ESTIVER TRAVADA, DESTRAVA SOZINHO ===
+            if (document.body.classList.contains('locked')) {
+                console.log("🔓 Desbloqueando sala privada para o Admin...");
+                unlockScreen();
+                if(typeof showNotification === 'function') {
+                    showNotification('Bem-vindo, Admin! Sala liberada.', 'success');
+                }
+            }
+        } else {
+            // Se não tiver usuário logado, garante que o modo admin está off
+            window.isAdminLoggedIn = false;
+            document.body.classList.add('non-admin');
+        }
     });
 });
 
@@ -299,6 +327,15 @@ window.loginAdminSession = async function () {
         document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
 
         if(typeof showNotification === 'function') showNotification('Modo Admin ATIVADO.', 'success');
+
+        // ===  LIBERA A SALA SE ESTIVER BLOQUEADA para o admin ===
+        // Se a tela estiver bloqueada pela senha da sala, o Admin libera automaticamente.
+        if (document.body.classList.contains('locked')) {
+            console.log("👑 Admin detectado! Liberando sala privada.");
+            unlockScreen(); // Função que remove o modal de senha
+            if(typeof showNotification === 'function') showNotification('Sala liberada pelo Admin!', 'success');
+        }
+
     } catch (error) {
         console.error(error);
         if(typeof showNotification === 'function') showNotification('Erro de autenticação.', 'error');
