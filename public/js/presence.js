@@ -52,7 +52,7 @@ connectedRef.on('value', (snap) => {
         // Cria nova referência de presença
         window.myPresenceRef = presenceRef.push();
         window.myPresenceRef.onDisconnect().remove();
-
+    
         // Define os dados do usuário
         window.myPresenceRef.set({
             name: userName,
