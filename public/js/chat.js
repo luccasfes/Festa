@@ -21,13 +21,17 @@ function sendChatMessage() {
     const text = input.value.trim();
     if (!text) return;
 
-    const userName = window.currentSessionUser || sessionStorage.getItem('ytSessionUser') || 'Visitante'; // PREFERE window.currentSessionUser
+    const userName = window.currentSessionUser || sessionStorage.getItem('ytSessionUser') || 'Visitante';
     const userId = sessionStorage.getItem('userVoteId');
+
+    // VERIFICAÇÃO ROBUSTA DE ADMIN
+    // Verifica a variável global OU se o usuário está autenticado no Firebase
+    const isReallyAdmin = (window.isAdminLoggedIn === true) || (firebase.auth().currentUser !== null);
 
     const msgData = {
         userId: userId,
         userName: userName,
-        userIsAdmin: isAdminLoggedIn,
+        userIsAdmin: isReallyAdmin, // Agora ele não esquece se der F5
         text: text,
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         isEdited: false
@@ -75,37 +79,39 @@ chatMessagesRef.orderByChild('timestamp').limitToLast(50).on('value', snapshot =
 // Cria o HTML da mensagem
 function createMessageElement(key, msg) {
     const isMine = msg.userId === sessionStorage.getItem('userVoteId');
+    
+    // Adiciona a classe 'admin-king'
     const div = document.createElement('div');
-    div.className = `chat-message ${isMine ? 'mine' : ''} ${msg.userIsAdmin ? 'admin' : ''}`;
+    div.className = `chat-message ${isMine ? 'mine' : ''} ${msg.userIsAdmin ? 'admin-king' : ''}`;
     div.id = 'msg-' + key;
 
     const safeUser = escapeHtml(msg.userName);
     const safeText = escapeHtml(msg.text);
-    // Escapar aspas para usar dentro das funções onclick
     const safeTextForJs = safeText.replace(/'/g, "\\'").replace(/"/g, '&quot;');
     const safeUserForJs = safeUser.replace(/'/g, "\\'");
 
     const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    const color = getUserColor(safeUser);
+    
+    // CORREÇÃO DE COR: Se for Admin, usa PRETO (#000) para destacar no fundo Dourado
+    const color = msg.userIsAdmin ? '#000000' : getUserColor(safeUser);
 
-    // HTML da Resposta (se houver)
+    // CORREÇÃO DA COROA: Coroa escura para ver no fundo claro
+    const crownHtml = msg.userIsAdmin ? '<i class="fas fa-crown" style="margin-right:5px; color:#3e2723; font-size: 0.9em;"></i>' : '';
+
+    // HTML da Resposta
     let replyHtml = '';
     if(msg.replyToId) {
         replyHtml = `<div class="chat-reply-block"><small>${escapeHtml(msg.replyToUser)}</small><div>${escapeHtml(msg.replyToText)}</div></div>`;
     }
 
-    // HTML do Marcador de Editado
     const editedHtml = msg.isEdited ? '<span class="edited-marker" style="font-size:0.7em; opacity:0.7; font-style:italic; margin-left:5px;">(editado)</span>' : '';
 
-    // HTML dos Botões de Ação (Responder e Editar)
-    // Usamos a classe .chat-message-actions que já está no seu CSS
+    // Botões
     let actionsHtml = `
         <button class="chat-reply-btn" title="Responder" onclick="setReplyContext('${key}', '${safeUserForJs}', '${safeTextForJs}')">
             <i class="fas fa-reply"></i>
         </button>
     `;
-
-    // Se a mensagem for minha, adiciona o botão de editar
     if (isMine) {
         actionsHtml += `
             <button class="chat-edit-btn" title="Editar" onclick="startEditing('${key}', '${safeTextForJs}')">
@@ -117,13 +123,15 @@ function createMessageElement(key, msg) {
     div.innerHTML = `
         ${replyHtml}
         <div class="chat-header">
-            <span class="chat-user" style="color:${color}">${msg.userIsAdmin ? '👑 ' : ''}${safeUser}</span>
+            <span class="chat-user" style="color:${color}; font-weight: ${msg.userIsAdmin ? 'bold' : 'normal'}">
+                ${crownHtml}${safeUser}
+            </span>
             <div class="chat-message-actions" style="display:flex; gap:5px;">
                 ${actionsHtml}
             </div>
         </div>
-        <div class="chat-body" id="body-${key}">${safeText}${editedHtml}</div>
-        <div class="chat-time">${time}</div>
+        <div class="chat-body" id="body-${key}" style="color: ${msg.userIsAdmin ? '#2d1a0e' : 'inherit'}">${safeText}${editedHtml}</div>
+        <div class="chat-time" style="color: ${msg.userIsAdmin ? '#5d4037' : 'inherit'}">${time}</div>
     `;
     return div;
 }

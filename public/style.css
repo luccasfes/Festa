@@ -3562,3 +3562,38 @@ emoji-picker {
     font-size: 0.85rem;
 }
 
+/* === VISUAL DO do chat para o admin=== */
+
+/* Aplica o estilo no BALÃO INTEIRO (não só no texto) */
+.chat-message.admin-king {
+    background: linear-gradient(135deg, #ffd700 0%, #ffc107 100%) !important; /* Amarelo Ouro */
+    border: 2px solid #fff9c4 !important; /* Borda clara */
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4) !important; /* Brilho Dourado */
+    color: #3e2723 !important; /* Texto Marrom Escuro (Contraste) */
+}
+
+/* Garante que o texto lá dentro fique escuro */
+.chat-message.admin-king .chat-body,
+.chat-message.admin-king .chat-time,
+.chat-message.admin-king .chat-user {
+    color: #3e2723 !important; 
+    text-shadow: none !important;
+}
+
+/* Estilo especial se a mensagem for MINHA (Alinhada à direita) */
+.chat-message.mine.admin-king {
+    background: linear-gradient(135deg, #ffc107 0%, #ffd700 100%) !important;
+    border-color: #ffe082 !important;
+}
+
+/* Animação da Coroa */
+.chat-message.admin-king .fa-crown {
+    display: inline-block;
+    animation: floatCrown 3s ease-in-out infinite;
+    color: #3e2723 !important; /* Coroa escura */
+}
+
+@keyframes floatCrown {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-3px) rotate(-10deg); }
+}
