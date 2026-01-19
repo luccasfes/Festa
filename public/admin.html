@@ -6,7 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - FlowLink</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -64,20 +65,60 @@
             animation: float 10s infinite alternate;
         }
 
-        .blob-1 { top: 10%; left: 10%; width: 300px; height: 300px; background: var(--primary-color); animation-delay: 0s; }
-        .blob-2 { bottom: 20%; right: 10%; width: 250px; height: 250px; background: var(--accent-color); animation-delay: -2s; }
-        .blob-3 { bottom: 10%; left: 30%; width: 200px; height: 200px; background: #ff0055; animation-delay: -4s; }
+        .blob-1 {
+            top: 10%;
+            left: 10%;
+            width: 300px;
+            height: 300px;
+            background: var(--primary-color);
+            animation-delay: 0s;
+        }
+
+        .blob-2 {
+            bottom: 20%;
+            right: 10%;
+            width: 250px;
+            height: 250px;
+            background: var(--accent-color);
+            animation-delay: -2s;
+        }
+
+        .blob-3 {
+            bottom: 10%;
+            left: 30%;
+            width: 200px;
+            height: 200px;
+            background: #ff0055;
+            animation-delay: -4s;
+        }
 
         @keyframes float {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(30px, 50px); }
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(30px, 50px);
+            }
         }
 
         /* Scrollbar Customization */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1a1a2e; }
-        ::-webkit-scrollbar-thumb { background: #4e54c8; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #00d2ff; }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4e54c8;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00d2ff;
+        }
 
         /* Layout & Containers */
         .container {
@@ -103,14 +144,43 @@
             font-size: 0.9rem;
         }
 
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn.primary { background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); }
-        .btn.primary:hover { box-shadow: 0 0 15px rgba(78, 84, 200, 0.5); transform: translateY(-2px); }
-        .btn.secondary { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--glass-border); }
-        .btn.secondary:hover { background: rgba(255, 255, 255, 0.2); }
-        .btn.danger { background: rgba(220, 53, 69, 0.2); border: 1px solid rgba(220, 53, 69, 0.3); color: #ff6b6b; }
-        .btn.danger:hover { background: rgba(220, 53, 69, 0.4); }
-        .btn.small { padding: 6px 12px; font-size: 0.8rem; }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn.primary {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .btn.primary:hover {
+            box-shadow: 0 0 15px rgba(78, 84, 200, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn.danger {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #ff6b6b;
+        }
+
+        .btn.danger:hover {
+            background: rgba(220, 53, 69, 0.4);
+        }
+
+        .btn.small {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
 
         /* Login View */
         .login-card {
@@ -125,8 +195,18 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
-        .input-group { margin-bottom: 20px; text-align: left; }
-        .input-group label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-secondary); }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
         .input-group input {
             width: 100%;
             padding: 12px;
@@ -137,7 +217,11 @@
             outline: none;
             transition: var(--transition);
         }
-        .input-group input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.1); }
+
+        .input-group input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.1);
+        }
 
         /* Dashboard Stats */
         .stats-container {
@@ -158,9 +242,24 @@
             overflow: hidden;
         }
 
-        .stat-card:hover { transform: translateY(-5px); border-color: var(--accent-color); }
-        .stat-value { font-size: 2.5rem; font-weight: 700; color: white; margin: 10px 0; }
-        .stat-label { color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
         /* Controls & Room List */
         .controls-container {
@@ -175,7 +274,12 @@
             border: 1px solid var(--glass-border);
         }
 
-        .search-box { flex: 1; min-width: 250px; position: relative; }
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
         .search-box input {
             width: 100%;
             padding: 10px 15px 10px 40px;
@@ -184,7 +288,14 @@
             border: 1px solid var(--glass-border);
             color: white;
         }
-        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
 
         .filter-select {
             padding: 10px;
@@ -195,7 +306,10 @@
             cursor: pointer;
         }
 
-        .room-list { list-style: none; }
+        .room-list {
+            list-style: none;
+        }
+
         .room-item {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--glass-border);
@@ -208,12 +322,32 @@
             transition: var(--transition);
         }
 
-        .room-item:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); }
-        
-        .room-info h4 { font-size: 1.1rem; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
-        .room-meta { display: flex; gap: 15px; font-size: 0.85rem; color: var(--text-secondary); margin: 5px 0 10px 0; }
-        
-        .room-stats-badges { display: flex; gap: 8px; }
+        .room-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .room-info h4 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .room-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin: 5px 0 10px 0;
+        }
+
+        .room-stats-badges {
+            display: flex;
+            gap: 8px;
+        }
+
         .badge {
             font-size: 0.75rem;
             padding: 4px 8px;
@@ -221,18 +355,44 @@
             background: rgba(255, 255, 255, 0.05);
             color: var(--text-secondary);
         }
-        .badge i { margin-right: 4px; color: var(--accent-color); }
 
-        .room-actions { display: flex; gap: 8px; }
+        .badge i {
+            margin-right: 4px;
+            color: var(--accent-color);
+        }
 
-        .activity-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-        .dot-high { background: var(--success-color); box-shadow: 0 0 8px var(--success-color); }
-        .dot-med { background: var(--warning-color); }
-        .dot-low { background: var(--danger-color); }
+        .room-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .activity-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot-high {
+            background: var(--success-color);
+            box-shadow: 0 0 8px var(--success-color);
+        }
+
+        .dot-med {
+            background: var(--warning-color);
+        }
+
+        .dot-low {
+            background: var(--danger-color);
+        }
 
         /* Modals */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(5px);
             display: flex;
@@ -243,7 +403,11 @@
             pointer-events: none;
             transition: opacity 0.3s ease;
         }
-        .modal-overlay.active { opacity: 1; pointer-events: all; }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
 
         .modal {
             background: #1e1e2e;
@@ -258,7 +422,10 @@
             display: flex;
             flex-direction: column;
         }
-        .modal-overlay.active .modal { transform: translateY(0); }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
 
         .modal-header {
             padding: 20px;
@@ -267,53 +434,105 @@
             justify-content: space-between;
             align-items: center;
         }
-        .modal-body { padding: 20px; overflow-y: auto; }
-        .modal-footer { padding: 20px; border-top: 1px solid var(--glass-border); display: flex; justify-content: flex-end; gap: 10px; }
 
-        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .detail-row { display: flex; flex-direction: column; }
-        .detail-label { font-size: 0.8rem; color: var(--text-secondary); }
-        .detail-val { font-size: 1rem; color: white; font-weight: 500; }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detail-row {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .detail-val {
+            font-size: 1rem;
+            color: white;
+            font-weight: 500;
+        }
 
         .toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 15px 20px;
-    background: #333;
-    color: white;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    transform: translateX(120%);
-    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    z-index: 2000;
-    /* ADICIONE ESTA LINHA: */
-    display: none;
-}
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #333;
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 2000;
+            /* ADICIONE ESTA LINHA: */
+            display: none;
+        }
 
-.toast.show {
-    transform: translateX(0);
-    /* ADICIONE ESTA LINHA: */
-    display: flex;
-}
+        .toast.show {
+            transform: translateX(0);
+            /* ADICIONE ESTA LINHA: */
+            display: flex;
+        }
 
-.toast.success { background: var(--success-color); }
-.toast.error { background: var(--danger-color); }
-.toast.info { background: var(--primary-color); }
+        .toast.success {
+            background: var(--success-color);
+        }
+
+        .toast.error {
+            background: var(--danger-color);
+        }
+
+        .toast.info {
+            background: var(--primary-color);
+        }
 
         /* Responsividade */
         @media (max-width: 768px) {
-            .room-item { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .room-actions { width: 100%; justify-content: flex-end; }
-            .controls-container { flex-direction: column; align-items: stretch; }
-            .stat-value { font-size: 2rem; }
+            .room-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .room-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .controls-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .stat-value {
+                font-size: 2rem;
+            }
         }
 
         .loading-spinner {
-            border: 3px solid rgba(255,255,255,0.1);
+            border: 3px solid rgba(255, 255, 255, 0.1);
             border-top: 3px solid var(--accent-color);
             border-radius: 50%;
             width: 20px;
@@ -321,7 +540,16 @@
             animation: spin 1s linear infinite;
             display: inline-block;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -337,7 +565,8 @@
     <div class="container">
         <main id="loginView">
             <div class="login-card">
-                <i class="fas fa-shield-alt" style="font-size: 3rem; color: var(--accent-color); margin-bottom: 20px;"></i>
+                <i class="fas fa-shield-alt"
+                    style="font-size: 3rem; color: var(--accent-color); margin-bottom: 20px;"></i>
                 <h2>Admin FlowLink</h2>
                 <p style="color: var(--text-secondary); margin-bottom: 30px;">Acesso restrito a gerenciadores.</p>
 
@@ -350,7 +579,8 @@
                     <input type="password" id="adminPassword" placeholder="••••••••">
                 </div>
 
-                <button class="btn primary" style="width: 100%; justify-content: center;" onclick="adminLogin()" id="btnLogin">
+                <button class="btn primary" style="width: 100%; justify-content: center;" onclick="adminLogin()"
+                    id="btnLogin">
                     <span>Entrar</span>
                 </button>
             </div>
@@ -372,12 +602,14 @@
 
             <div class="stats-container">
                 <div class="stat-card">
-                    <i class="fas fa-door-open" style="color: var(--accent-color); font-size: 1.5rem; margin-bottom: 10px;"></i>
+                    <i class="fas fa-door-open"
+                        style="color: var(--accent-color); font-size: 1.5rem; margin-bottom: 10px;"></i>
                     <div class="stat-value" id="totalRooms">0</div>
                     <div class="stat-label">Salas Ativas</div>
                 </div>
                 <div class="stat-card">
-                    <i class="fas fa-users" style="color: var(--success-color); font-size: 1.5rem; margin-bottom: 10px;"></i>
+                    <i class="fas fa-users"
+                        style="color: var(--success-color); font-size: 1.5rem; margin-bottom: 10px;"></i>
                     <div class="stat-value" id="totalUsers">0</div>
                     <div class="stat-label">Usuários Online</div>
                 </div>
@@ -418,7 +650,8 @@
         <div class="modal" style="max-width: 450px;">
             <div class="modal-header">
                 <h3><i class="fas fa-exclamation-triangle" style="color: var(--warning-color);"></i> Confirmação</h3>
-                <button class="btn secondary small" onclick="closeModal('confirmModal')"><i class="fas fa-times"></i></button>
+                <button class="btn secondary small" onclick="closeModal('confirmModal')"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="modal-body" id="confirmBody">
                 Tem certeza?
@@ -434,7 +667,8 @@
         <div class="modal">
             <div class="modal-header">
                 <h3><i class="fas fa-info-circle"></i> Detalhes da Sala</h3>
-                <button class="btn secondary small" onclick="closeModal('detailsModal')"><i class="fas fa-times"></i></button>
+                <button class="btn secondary small" onclick="closeModal('detailsModal')"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <div class="detail-grid">
@@ -444,7 +678,8 @@
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">ID (Clique para copiar)</span>
-                        <span class="detail-val" id="detId" style="cursor: pointer; color: var(--accent-color);" onclick="copyToClipboard(this.innerText)">-</span>
+                        <span class="detail-val" id="detId" style="cursor: pointer; color: var(--accent-color);"
+                            onclick="copyToClipboard(this.innerText)">-</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Criador</span>
@@ -455,15 +690,18 @@
                         <span class="detail-val" id="detCreated">-</span>
                     </div>
                 </div>
-                
-                <h4 style="margin: 20px 0 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">Usuários</h4>
+
+                <h4 style="margin: 20px 0 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">
+                    Usuários</h4>
                 <div id="detUsersList" style="margin-bottom: 20px;"></div>
 
-                <h4 style="margin: 20px 0 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">Fila de Vídeos</h4>
+                <h4 style="margin: 20px 0 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">Fila
+                    de Vídeos</h4>
                 <div id="detVideoList"></div>
             </div>
             <div class="modal-footer">
-                <a href="#" target="_blank" id="detLinkBtn" class="btn primary"><i class="fas fa-external-link-alt"></i> Entrar</a>
+                <a href="#" target="_blank" id="detLinkBtn" class="btn primary"><i class="fas fa-external-link-alt"></i>
+                    Entrar</a>
                 <button class="btn danger" id="detDeleteBtn"><i class="fas fa-trash"></i> Deletar</button>
             </div>
         </div>
@@ -522,7 +760,7 @@
             } else {
                 els.loginView.style.display = 'block';
                 els.dashboardView.style.display = 'none';
-                if(user) {
+                if (user) {
                     showToast('Acesso negado: Conta não administrativa.', 'error');
                     auth.signOut();
                 }
@@ -534,7 +772,7 @@
             const pass = document.getElementById('adminPassword').value;
             const btn = document.getElementById('btnLogin');
 
-            if(!email || !pass) return showToast('Preencha todos os campos', 'info');
+            if (!email || !pass) return showToast('Preencha todos os campos', 'info');
 
             btn.disabled = true;
             btn.innerHTML = '<div class="loading-spinner"></div>';
@@ -590,17 +828,17 @@
                 });
 
                 updateStats(roomsArray.length, totalUsers, totalVideos);
-                
+
                 // Filtragem e Ordenação
                 const filtered = filterAndSortRooms(roomsArray);
-                
+
                 // Renderização Otimizada com DocumentFragment
                 const fragment = document.createDocumentFragment();
-                
+
                 filtered.forEach(room => {
                     const li = document.createElement('li');
                     li.className = 'room-item';
-                    
+
                     // Lógica de atividade
                     let dotClass = 'dot-low';
                     if (room.userCount > 5) dotClass = 'dot-high';
@@ -615,7 +853,7 @@
                             <div class="room-meta">
                                 <span><i class="fas fa-crown"></i> ${escapeHtml(room.creatorName || '?')}</span>
                                 <span><i class="fas fa-clock"></i> ${formatDate(room.createdAt)}</span>
-                                <span style="cursor:pointer" onclick="copyToClipboard('${room.id}')" title="Copiar ID"><i class="fas fa-fingerprint"></i> ${room.id.substring(0,6)}...</span>
+                                <span style="cursor:pointer" onclick="copyToClipboard('${room.id}')" title="Copiar ID"><i class="fas fa-fingerprint"></i> ${room.id.substring(0, 6)}...</span>
                             </div>
                             <div class="room-stats-badges">
                                 <span class="badge"><i class="fas fa-users"></i> ${room.userCount}</span>
@@ -630,7 +868,7 @@
                     fragment.appendChild(li);
                 });
 
-                if(filtered.length === 0) renderEmptyState("Nenhuma sala encontrada com este filtro.");
+                if (filtered.length === 0) renderEmptyState("Nenhuma sala encontrada com este filtro.");
                 else els.roomList.appendChild(fragment);
             });
         }
@@ -640,7 +878,7 @@
             const sort = els.sortFilter.value;
 
             // Filtro
-            let filtered = rooms.filter(r => 
+            let filtered = rooms.filter(r =>
                 (r.roomName && r.roomName.toLowerCase().includes(term)) ||
                 (r.id && r.id.toLowerCase().includes(term)) ||
                 (r.creatorName && r.creatorName.toLowerCase().includes(term))
@@ -659,41 +897,41 @@
 
         // --- ACTIONS ---
         function askDeleteRoom(roomId) {
-    const room = roomsData[roomId];
-    
-    // 🔴 BLOQUEIO: Se tiver gente online, nem abre o modal
-    if (room && room.presence && Object.keys(room.presence).length > 0) {
-        showToast("Proteção: Não é possível deletar sala com usuários online!", "error");
-        return; 
-    }
+            const room = roomsData[roomId];
 
-    currentAction = () => {
-        database.ref('rooms/' + roomId).remove()
-            .then(() => {
-                showToast('Sala deletada com sucesso!', 'success');
-                // O listener once/on vai atualizar a tela sozinho
-            })
-            .catch(e => {
-                // Aqui pegamos o erro que virá das Regras de Segurança do Firebase
-                console.error(e);
-                showToast("Erro: Você não tem permissão de Admin (Backend).", "error");
-            });
-    };
-    
-    document.getElementById('confirmBody').innerHTML = `
+            // 🔴 BLOQUEIO: Se tiver gente online, nem abre o modal
+            if (room && room.presence && Object.keys(room.presence).length > 0) {
+                showToast("Proteção: Não é possível deletar sala com usuários online!", "error");
+                return;
+            }
+
+            currentAction = () => {
+                database.ref('rooms/' + roomId).remove()
+                    .then(() => {
+                        showToast('Sala deletada com sucesso!', 'success');
+                        // O listener once/on vai atualizar a tela sozinho
+                    })
+                    .catch(e => {
+                        // Aqui pegamos o erro que virá das Regras de Segurança do Firebase
+                        console.error(e);
+                        showToast("Erro: Você não tem permissão de Admin (Backend).", "error");
+                    });
+            };
+
+            document.getElementById('confirmBody').innerHTML = `
         Deletar a sala <strong>${room.roomName || roomId}</strong> permanentemente?<br>
         <small style="color: var(--text-secondary)">Histórico e fila serão perdidos.</small>
     `;
-    
-    // Configura o botão do modal e abre
-    const confirmBtn = document.getElementById('btnConfirmAction');
-    confirmBtn.onclick = () => {
-        currentAction();
-        closeModal('confirmModal');
-    };
-    
-    openModal('confirmModal');
-}
+
+            // Configura o botão do modal e abre
+            const confirmBtn = document.getElementById('btnConfirmAction');
+            confirmBtn.onclick = () => {
+                currentAction();
+                closeModal('confirmModal');
+            };
+
+            openModal('confirmModal');
+        }
         function confirmDeleteAllRooms() {
             currentAction = () => {
                 database.ref('rooms').remove()
@@ -710,15 +948,31 @@
 
         function openDetails(roomId) {
             const room = roomsData[roomId];
-            if(!room) return;
+            if (!room) return;
 
             // Preencher dados
             document.getElementById('detName').textContent = room.roomName || 'Sem nome';
             document.getElementById('detId').textContent = roomId;
             document.getElementById('detCreator').textContent = room.creatorName || '-';
             document.getElementById('detCreated').textContent = new Date(room.createdAt).toLocaleString('pt-BR');
-            document.getElementById('detLinkBtn').href = `index.html?room=${roomId}`;
-            
+
+            const btnLink = document.getElementById('detLinkBtn');
+            btnLink.removeAttribute('href'); // Remove o link direto
+            btnLink.style.cursor = 'pointer'; // Garante o cursor de mãozinha
+            btnLink.onclick = (e) => {
+                e.preventDefault(); // Evita comportamento padrão se ainda tiver href
+                acessarSalaComoAdmin(roomId); // Chama nossa função de bypass
+            };
+
+            function acessarSalaComoAdmin(roomId) {
+                // 1. Cria o bypass no sessionStorage
+                // Isso diz ao session.js: "Eu sou o admin, deixe-me entrar nesta sala sem senha"
+                sessionStorage.setItem(`bypass_pw_${roomId}`, 'true');
+
+                // 2. Redireciona para a sala
+                window.location.href = `index.html?room=${roomId}`;
+            }
+
             // Botão Deletar no Modal
             document.getElementById('detDeleteBtn').onclick = () => {
                 closeModal('detailsModal');
@@ -728,7 +982,7 @@
             // Listar Users
             const usersDiv = document.getElementById('detUsersList');
             usersDiv.innerHTML = '';
-            if(room.presence) {
+            if (room.presence) {
                 Object.values(room.presence).forEach(u => {
                     usersDiv.innerHTML += `<div style="font-size:0.9rem; padding: 4px 0;"><i class="fas fa-user-circle"></i> ${escapeHtml(u.name)}</div>`;
                 });
@@ -739,7 +993,7 @@
             // Listar Vídeos (Top 3)
             const videoDiv = document.getElementById('detVideoList');
             videoDiv.innerHTML = '';
-            if(room.videoQueue) {
+            if (room.videoQueue) {
                 const videos = Object.values(room.videoQueue);
                 videos.slice(0, 3).forEach(v => {
                     videoDiv.innerHTML += `
@@ -749,7 +1003,7 @@
                         </div>
                     `;
                 });
-                if(videos.length > 3) videoDiv.innerHTML += `<small>+ ${videos.length - 3} outros vídeos...</small>`;
+                if (videos.length > 3) videoDiv.innerHTML += `<small>+ ${videos.length - 3} outros vídeos...</small>`;
             } else {
                 videoDiv.innerHTML = '<span style="color:var(--text-secondary); font-size: 0.8rem;">Fila vazia</span>';
             }
@@ -784,7 +1038,7 @@
             }
         };
         document.addEventListener('keydown', (e) => {
-            if(e.key === 'Escape') {
+            if (e.key === 'Escape') {
                 document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
             }
         });
@@ -793,12 +1047,12 @@
         function showToast(msg, type = 'info') {
             const t = document.getElementById('toast');
             let icon = 'info-circle';
-            if(type === 'success') icon = 'check-circle';
-            if(type === 'error') icon = 'times-circle';
+            if (type === 'success') icon = 'check-circle';
+            if (type === 'error') icon = 'times-circle';
 
             t.className = `toast ${type} show`;
             t.innerHTML = `<i class="fas fa-${icon}"></i> ${msg}`;
-            
+
             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
@@ -812,7 +1066,7 @@
         }
 
         function formatDate(timestamp) {
-            if(!timestamp) return '-';
+            if (!timestamp) return '-';
             const date = new Date(timestamp);
             return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
         }
@@ -823,4 +1077,5 @@
 
     </script>
 </body>
+
 </html>
