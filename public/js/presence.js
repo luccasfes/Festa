@@ -1,46 +1,175 @@
 // ====================================================================
-// PRESENÇA E CONTROLE DE VISIBILIDADE (CORRIGIDO E BLINDADO)
+// PRESENÇA, CONTROLE DE MODO E VISIBILIDADE (CORRIGIDO v2.7 - USANDO CONTADOR DA VERSÃO FUNCIONANDO)
 // ====================================================================
 
-// --- 1. O VIGIA (MutationObserver + Verificação Inicial) ---
+// --- Variáveis Globais de Estado ---
+window.currentVideoState = null;
+window.broadcasterId = null;
+window.myUserId = null;
+window.roomId = null;
+
+// NOVO: Definições globais para compatibilidade com player.js
+window.isBroadcaster = false; // Será atualizada dinamicamente
+window.syncInterval = null;   // Para sincronização de tempo
+
+// VARIÁVEL CHAVE: Impede que o player recarregue se o modo não mudar
+let lastAppliedMode = null; // Valores possíveis: 'ADMIN', 'SOLO', 'FESTA'
+
+// --- 1. Lógica Central de Decisão (O CÉREBRO) ---
+function determineAndApplyPlayerMode() {
+    let targetMode = '';
+
+    // 1. Define qual deveria ser o modo atual
+    if (window.isAdminLoggedIn === true) {
+        targetMode = 'ADMIN';
+    } else if (onlineUserCount <= 1) {
+        targetMode = 'SOLO';
+    } else {
+        targetMode = 'FESTA';
+    }
+
+    // 2. Atualiza botões (sempre necessário pois contagens de voto mudam)
+    if (typeof updateAdminButtonsVisibility === 'function') updateAdminButtonsVisibility();
+
+    // 3. O PULO DO GATO: Se o modo é o mesmo, NÃO MEXE NO PLAYER
+    if (targetMode === lastAppliedMode) {
+        // console.log(`Manter modo: ${targetMode} (Nova entrada ignorada pelo player)`);
+        return; 
+    }
+
+    console.log(`🔄 Mudança de Modo Detectada: ${lastAppliedMode || 'Início'} -> ${targetMode}`);
+    lastAppliedMode = targetMode; // Salva o novo modo
+
+    // 4. Aplica as classes CSS no Body
+    if (targetMode === 'FESTA') {
+        document.body.classList.add('festa-mode');
+        document.body.classList.remove('solo-mode');
+    } else {
+        // Tanto Admin quanto Solo usam estilo "livre"
+        document.body.classList.add('solo-mode');
+        document.body.classList.remove('festa-mode');
+    }
+
+    // 5. Executa a troca de Player apropriada
+    if (targetMode === 'ADMIN') {
+        forceAdminPlayer(); 
+    } else if (targetMode === 'SOLO') {
+        forceSoloPlayer();
+    } else if (targetMode === 'FESTA') {
+        forceNormalPlayer();
+    }
+}
+
+// --- 2. Listeners do Firebase (Presença, Conexão e Estado do Vídeo) ---
+
+// NOVO: Inicialize currentVideoRef (assumindo Firebase configurado)
+if (typeof firebase !== 'undefined' && window.roomId) {
+    window.currentVideoRef = firebase.database().ref('rooms/' + window.roomId + '/currentVideo');
+}
+
+// NOVO: Listener para o estado global do vídeo (para sincronização)
+if (typeof currentVideoRef !== 'undefined') {
+    currentVideoRef.on('value', (snap) => {
+        window.currentVideoState = snap.val(); // Ex.: { videoId: 'abc123', currentTime: 45, state: 1 }
+    });
+}
+
+// Monitora Entradas e Saídas (USANDO A VERSÃO FUNCIONANDO DA SUA MENSAGEM)
+if (typeof presenceRef !== 'undefined') {
+    presenceRef.on('value', (snap) => {
+        console.log('🔍 DEBUG: Listener de presenceRef executado!');
+        
+        const oldCount = onlineUserCount;
+        onlineUserCount = snap.numChildren();
+        
+        console.log(`🔍 DEBUG: Contador atualizado: ${oldCount} -> ${onlineUserCount}`);
+
+        // Atualiza UI de contagem
+        const userCountEl = document.getElementById('userCount');
+        if (userCountEl) {
+            userCountEl.textContent = onlineUserCount;
+            console.log(`🔍 DEBUG: UI atualizada para ${onlineUserCount}`);
+        }
+        const onlineCountEl = document.getElementById('onlineCount');
+        if (onlineCountEl) onlineCountEl.textContent = onlineUserCount;
+
+        // Determina Broadcaster (O mais antigo na sala)
+        const users = snap.val();
+        if (users && onlineUserCount > 0) {
+            const userIds = Object.keys(users);
+            window.broadcasterId = userIds[0]; 
+            
+            if (window.myPresenceRef && window.myPresenceRef.key) {
+                window.myUserId = window.myPresenceRef.key;
+            }
+
+            // NOVO: Atualiza isBroadcaster
+            window.isBroadcaster = (window.myUserId === window.broadcasterId);
+            console.log(`🔍 DEBUG: Broadcaster definido: ${window.broadcasterId}, Eu sou: ${window.isBroadcaster}`);
+        }
+
+        // Atualiza meta de votos
+        if (typeof updateVotesNeeded === 'function') updateVotesNeeded();
+
+        // CHAMA O CÉREBRO para decidir o que fazer
+        determineAndApplyPlayerMode();
+    });
+}
+
+// Monitora Estado da Conexão (.info/connected)
+if (typeof connectedRef !== 'undefined') {
+    connectedRef.on('value', (snap) => {
+        if (snap.val() === true) {
+            let userName = sessionStorage.getItem('ytSessionUser') || 'Visitante';
+            if (window.myPresenceRef) window.myPresenceRef.remove();
+            
+            window.myPresenceRef = presenceRef.push();
+            window.myPresenceRef.onDisconnect().remove();
+            
+            window.myPresenceRef.set({
+                name: userName,
+                joinedAt: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                if (window.roomRef) window.roomRef.child('emptySince').remove().catch(() => {});
+            }).catch(() => {}); 
+        }
+    });
+}
+
+// Monitora Dados da Sala (Nome, etc)
+if (typeof roomRef !== 'undefined') {
+    roomRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            const rn = document.getElementById('roomNameDisplay');
+            const rc = document.getElementById('roomCreatorDisplay');
+            if (rn) rn.textContent = data.roomName || 'Sala';
+            if (rc) rc.textContent = data.creatorName || 'Desconhecido';
+        }
+    });
+}
+
+// --- 3. O VIGIA (Admin Login/Logout) ---
 document.addEventListener('DOMContentLoaded', () => {
     const adminBtn = document.getElementById('adminUnlockBtn');
     
-    // Função que aplica os poderes de Admin
     const aplicarEstadoAdmin = (isLogado) => {
         window.isAdminLoggedIn = isLogado;
-        
-        // 1. Atualiza Botões da Interface
-        if(typeof updateAdminButtonsVisibility === 'function') updateAdminButtonsVisibility();
-        
-        // 2. Atualiza a Fila (Checkboxes)
-        if(typeof renderQueue === 'function') renderQueue();
-
-        // 3. Atualiza o Player (O Pulo do Gato)
-        if (isLogado) {
-            // Tenta forçar o player imediatamente
-            forceAdminPlayer();
-            
-            // E garante tentando de novo em 2s e 5s caso a internet esteja lenta
-            setTimeout(forceAdminPlayer, 2000);
-            setTimeout(forceAdminPlayer, 5000);
-        } else {
-            // Se deslogou, volta ao normal
-            const mask = document.getElementById('player-mask');
-            if(mask) mask.style.display = 'block';
-        }
+        // Chama a lógica central para atualizar tudo
+        determineAndApplyPlayerMode();
+        // Atualiza a fila visualmente (checkboxes)
+        if (typeof renderQueue === 'function') renderQueue();
     };
 
-    // A. Configura o Observador para mudanças futuras (Login/Logout manual)
     if (adminBtn) {
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class') {
                     if (adminBtn.classList.contains('admin-logged-in')) {
-                        console.log("VIGIA: Login detectado! Liberando tudo...");
+                        console.log("🔑 Login Admin detectado.");
                         aplicarEstadoAdmin(true);
                     } else {
-                        console.log("VIGIA: Logout detectado! Bloqueando tudo...");
+                        console.log("🔒 Logout Admin detectado.");
                         aplicarEstadoAdmin(false);
                     }
                 }
@@ -48,88 +177,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         observer.observe(adminBtn, { attributes: true });
 
-        // B. VERIFICAÇÃO INICIAL (Corrige o bug de ter que relogar)
-        // Espera um pouquinho para o session.js definir a classe
+        // Verificação Inicial (caso já carregue logado)
         setTimeout(() => {
             if (adminBtn.classList.contains('admin-logged-in') || window.isAdminLoggedIn) {
-                console.log("VIGIA: Admin já estava logado ao entrar. Aplicando poderes...");
                 aplicarEstadoAdmin(true);
             }
         }, 1000);
     }
 });
 
-// --- 2. Lógica de Presença Padrão ---
-if (typeof connectedRef !== 'undefined') {
-    connectedRef.on('value', (snap) => {
-        if (snap.val() === true) {
-            let userName = sessionStorage.getItem('ytSessionUser') || 'Visitante';
-            if (window.myPresenceRef) window.myPresenceRef.remove();
-            window.myPresenceRef = presenceRef.push();
-            window.myPresenceRef.onDisconnect().remove();
-            window.myPresenceRef.set({
-                name: userName,
-                joinedAt: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                if (window.roomRef) window.roomRef.child('emptySince').remove().catch(() => {});
-            }).catch(()=>{}); 
-        }
-    });
-}
-
-if (typeof roomRef !== 'undefined') {
-    roomRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            const rn = document.getElementById('roomNameDisplay');
-            const rc = document.getElementById('roomCreatorDisplay');
-            if(rn) rn.textContent = data.roomName || 'Sala';
-            if(rc) rc.textContent = data.creatorName || 'Desconhecido';
-        }
-    });
-}
-
-if (typeof presenceRef !== 'undefined') {
-    presenceRef.on('value', (snap) => {
-        onlineUserCount = snap.numChildren();
-        const userCountEl = document.getElementById('userCount');
-        if(userCountEl) userCountEl.textContent = onlineUserCount;
-        const onlineCountEl = document.getElementById('onlineCount');
-        if(onlineCountEl) onlineCountEl.textContent = onlineUserCount;
-
-        if (window.isAdminLoggedIn) {
-            if(typeof updateAdminButtonsVisibility === 'function') updateAdminButtonsVisibility();
-        } else {
-            // Lógica de modo solo/festa para visitantes
-            if (onlineUserCount <= 1) {
-                document.body.classList.add('solo-mode');
-                document.body.classList.remove('festa-mode');
-            } else {
-                document.body.classList.add('festa-mode');
-                document.body.classList.remove('solo-mode');
-            }
-            if(typeof updatePlayerMode === 'function') updatePlayerMode();
-            if(typeof updateAdminButtonsVisibility === 'function') updateAdminButtonsVisibility();
-        }
-    });
-}
-
-// --- 3. Visibilidade dos Botões ---
+// --- 4. Visibilidade dos Botões ---
 function updateAdminButtonsVisibility() {
     const souAdmin = (window.isAdminLoggedIn === true);
     const estouSozinho = (onlineUserCount <= 1);
     
-    const elementsToShowAdmin = [
-        '#bulkRemoveBtn', '#clearChatBtn', '#panelBtn', '#btn-auto-sugestao', '.clear-queue-button'
-    ];
-
-    // Mostra/Esconde botões de admin
-    elementsToShowAdmin.forEach(selector => {
+    // Botões só para Admin
+    const elementsToShowAdminOnly = ['#bulkRemoveBtn', '#clearChatBtn', '#panelBtn'];
+    elementsToShowAdminOnly.forEach(selector => {
         const el = document.querySelector(selector);
         if (el) el.style.display = souAdmin ? 'inline-flex' : 'none';
     });
 
-    // Checkboxes da fila
+    // Botões para Admin OU Solo
+    const elementsToShowAdminOrSolo = ['#btn-auto-sugestao', '.clear-queue-button'];
+    elementsToShowAdminOrSolo.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) el.style.display = (souAdmin || estouSozinho) ? 'inline-flex' : 'none';
+    });
+
+    // Checkboxes da fila (só Admin)
     document.querySelectorAll('.bulk-delete-controls').forEach(el => {
         el.style.setProperty('display', souAdmin ? 'block' : 'none', 'important');
     });
@@ -139,102 +215,146 @@ function updateAdminButtonsVisibility() {
         el.style.setProperty('display', (souAdmin || estouSozinho) ? 'block' : 'none', 'important');
     });
 
-    // Texto do botão de Pular
+    // Texto e estado do botão de Pular
     const skipText = document.getElementById('skipVoteBtnText');
     const voteCounter = document.getElementById('voteCounterWrapper');
     const skipBtn = document.getElementById('skipVoteBtn');
 
-    if (skipText) {
+    if (skipText && skipBtn) {
         if (souAdmin) {
             skipText.textContent = 'Pular (Admin)';
-            if(voteCounter) voteCounter.style.display = 'none';
-            if(skipBtn) skipBtn.disabled = false;
+            if (voteCounter) voteCounter.style.display = 'none';
+            skipBtn.disabled = false;
+        } else if (estouSozinho) {
+            skipText.textContent = 'Pular (Solo)';
+            if (voteCounter) voteCounter.style.display = 'none';
+            skipBtn.disabled = false;
         } else {
-            // Lógica normal de votação...
-            const isVoted = skipBtn && skipBtn.classList.contains('voted');
-            if(!isVoted) skipText.textContent = 'Votar para Pular';
-            if(voteCounter) voteCounter.style.display = 'inline';
+            // Modo Festa: Votação
+            const isVoted = skipBtn.classList.contains('voted');
+            skipText.textContent = isVoted ? 'Voto Registrado' : 'Votar para Pular';
+            if (voteCounter) voteCounter.style.display = 'inline';
+            skipBtn.disabled = false;
         }
     }
 }
 
-// --- 4. CORREÇÃO DEFINITIVA DO PLAYER ADMIN (The Fix) ---
-function forceAdminPlayer() {
-    // Só roda se for admin mesmo
-    if (!window.isAdminLoggedIn) return;
+// --- 5. Funções de Forçar Player (ADMIN, SOLO, FESTA) ---
 
-    console.log("👑 Admin: Tentando habilitar controles do Player...");
+// MODIFICADO: Helper para pegar vídeo atual (prioriza estado global para sincronização)
+function getCurrentVideoIdAndState() {
+    // NOVO: Prioriza estado global (do broadcaster) para sincronização de novos usuários
+    if (window.currentVideoState && window.currentVideoState.videoId) {
+        return {
+            videoId: window.currentVideoState.videoId,
+            currentTime: window.currentVideoState.currentTime || 0
+        };
+    }
 
-    // 1. Remove máscaras visuais
-    const mask = document.getElementById('player-mask');
-    const overlay = document.querySelector('.player-overlay-controls');
-    if (mask) mask.style.display = 'none';
-    if (overlay) overlay.style.display = 'none';
-
-    // 2. Tenta descobrir qual vídeo tocar
-    let currentVideoId = null;
-    let currentTime = 0;
-
-    // Tenta ler do player atual (se existir)
+    // Fallback: Tenta pegar do player local
+    let vidId = null;
+    let time = 0;
     if (typeof player !== 'undefined' && player && typeof player.getVideoData === 'function') {
         try {
-            currentVideoId = player.getVideoData().video_id;
-            currentTime = player.getCurrentTime();
-        } catch(e) {}
+            vidId = player.getVideoData().video_id;
+            time = player.getCurrentTime();
+        } catch (e) {}
     }
 
-    // Se falhou, tenta ler da Fila (Backup vital!)
-    if (!currentVideoId && typeof videoQueue !== 'undefined' && videoQueue.length > 0) {
+    // Se falhar, tenta pegar da fila
+    if (!vidId && typeof videoQueue !== 'undefined' && videoQueue.length > 0) {
         try {
-            // Extrai ID da URL do primeiro vídeo da fila
             let url = videoQueue[0].videoUrl;
             let match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/)([^#&?]*))/);
-            if (match) currentVideoId = match[1];
-        } catch(e) {}
+            if (match) vidId = match[1];
+        } catch (e) {}
     }
+    return { videoId: vidId, currentTime: time };
+}
 
-    // Se ainda não temos vídeo, aborta mas tenta de novo em 2s
-    if (!currentVideoId) {
-        console.log("⚠️ Nenhum vídeo encontrado ainda. Tentando novamente em 2s...");
-        // setTimeout(forceAdminPlayer, 2000); // Opcional: loop de retry
+function forceAdminPlayer() {
+    if (!window.isAdminLoggedIn) return;
+    console.log("👑 Ativando Player ADMIN (Com Controles)");
+    recreatePlayerSafe(1); // 1 = Com controles
+}
+
+function forceSoloPlayer() {
+    if (window.isAdminLoggedIn || onlineUserCount > 1) return;
+    console.log("👤 Ativando Player SOLO (Com Controles - Liberado como Admin)");
+    recreatePlayerSafe(1); // 1 = Com controles (já garante liberação)
+}
+
+function forceNormalPlayer() {
+    if (window.isAdminLoggedIn || onlineUserCount <= 1) return;
+    console.log("🎉 Ativando Player FESTA (Sem Controles - Sincronizado)");
+    recreatePlayerSafe(0); // 0 = Sem controles
+}
+
+// Função unificada para recriar o player
+function recreatePlayerSafe(controlsValue) {
+    // 1. Limpa visuais
+    const mask = document.getElementById('player-mask');
+    const overlay = document.querySelector('.player-overlay-controls');
+    
+    if (mask) {
+        mask.style.display = (controlsValue === 0) ? 'block' : 'none'; // CORREÇÃO: Máscara escondida no Solo (controlsValue=1)
+        if (controlsValue === 0) {
+            // Configurações da máscara
+            mask.style.position = 'absolute';
+            mask.style.top = '0';
+            mask.style.left = '0';
+            mask.style.width = '100%';
+            mask.style.height = '100%';
+            mask.style.zIndex = '10';
+            mask.style.background = 'transparent';
+        }
+    }
+    if (overlay) overlay.style.display = (controlsValue === 0) ? 'block' : 'none';
+
+    // 2. Dados atuais (agora sincronizados via estado global)
+    const data = getCurrentVideoIdAndState();
+    if (!data.videoId) {
+        console.log("⚠️ Nenhum vídeo para tocar ao trocar modo.");
         return;
     }
 
-    console.log(`🎬 Recriando player com controles para: ${currentVideoId}`);
-
-    // 3. LIMPEZA TOTAL (O Segredo para não bugar)
-    // Removemos o elemento antigo completamente do DOM
+    // 3. Destruição e Limpeza
     const container = document.getElementById('player-container');
     if (!container) return;
     
-    // Limpa o container mantendo apenas a máscara (que já está oculta)
-    // Isso mata qualquer iframe zumbi do YouTube
-    container.innerHTML = '<div id="player-mask" style="display:none;"></div><div id="videoPlayer"></div>';
+    // Mantém a estrutura HTML básica
+    const maskHtml = (controlsValue === 0) 
+        ? '<div id="player-mask" style="display:block; position:absolute; top:0; left:0; width:100%; height:100%; z-index:10; background:transparent;"></div>' 
+        : '<div id="player-mask" style="display:none;"></div>';
+        
+    container.innerHTML = maskHtml + '<div id="videoPlayer"></div>';
 
-    // 4. CRIAÇÃO DO NOVO PLAYER
-    // Delay minúsculo para o navegador processar a limpeza do HTML
+    // 4. Recriação (com delay seguro)
     setTimeout(() => {
         if (typeof YT === 'undefined' || !YT.Player) return;
 
         player = new YT.Player('videoPlayer', {
             height: '100%',
             width: '100%',
-            videoId: currentVideoId,
+            videoId: data.videoId,
             playerVars: {
                 'autoplay': 1,
-                'controls': 1,       // <--- ISSO TRAZ A BARRA DE VOLTA
-                'disablekb': 0,      // Teclado funciona
-                'fs': 1,             // Fullscreen funciona
+                'controls': controlsValue,
+                'disablekb': (controlsValue === 0) ? 1 : 0,
+                'fs': (controlsValue === 0) ? 0 : 1,
                 'modestbranding': 1,
                 'rel': 0,
-                'start': Math.max(0, Math.floor(currentTime))
+                'start': Math.max(0, Math.floor(data.currentTime))  // Sincroniza tempo
             },
             events: {
                 'onReady': (event) => {
                     event.target.playVideo();
+                    if (controlsValue === 0) {
+                        const iframe = event.target.getIframe();
+                        if (iframe) iframe.style.pointerEvents = 'none';
+                    }
                 },
                 'onStateChange': (event) => {
-                    // Reconecta com a lógica do site se existir
                     if (typeof onPlayerStateChange === 'function') {
                         onPlayerStateChange(event);
                     }
@@ -246,6 +366,20 @@ function forceAdminPlayer() {
 
 function updateRoomActivity() {
     if (window.isAdminLoggedIn && window.roomRef) {
-        window.roomRef.update({ lastActivity: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
+        window.roomRef.update({ lastActivity: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
     }
 }
+
+// FORÇA ATUALIZAÇÃO INICIAL DO CONTADOR (DEBUG)
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        console.log(`🔍 DEBUG: Contador inicial: ${onlineUserCount}`);
+        if (typeof presenceRef !== 'undefined') {
+            presenceRef.once('value', (snap) => {
+                onlineUserCount = snap.numChildren();
+                console.log(`🔍 DEBUG: Contador forçado para ${onlineUserCount}`);
+                determineAndApplyPlayerMode();
+            });
+        }
+    }, 2000); // Delay para garantir que Firebase esteja carregado
+});
