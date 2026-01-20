@@ -190,51 +190,39 @@ document.addEventListener('DOMContentLoaded', () => {
 function updateAdminButtonsVisibility() {
     const souAdmin = (window.isAdminLoggedIn === true);
     const estouSozinho = (onlineUserCount <= 1);
+    // Modo Festa é quando não sou admin E tem mais gente na sala
+    const emModoFesta = (!souAdmin && !estouSozinho);
+
+    // --- CONTROLE DO OVERLAY E MÁSCARA ---
+    const mask = document.getElementById('player-mask');
+    const overlay = document.querySelector('.player-overlay-controls');
     
-    // Botões só para Admin
+    if (mask) mask.style.display = emModoFesta ? 'block' : 'none';
+    if (overlay) overlay.style.display = emModoFesta ? 'flex' : 'none';
+
+    // --- CONTROLE DE BOTÕES DE ADMIN ---
     const elementsToShowAdminOnly = ['#bulkRemoveBtn', '#clearChatBtn', '#panelBtn'];
     elementsToShowAdminOnly.forEach(selector => {
         const el = document.querySelector(selector);
         if (el) el.style.display = souAdmin ? 'inline-flex' : 'none';
     });
 
-    // Botões para Admin OU Solo
     const elementsToShowAdminOrSolo = ['#btn-auto-sugestao', '.clear-queue-button'];
     elementsToShowAdminOrSolo.forEach(selector => {
         const el = document.querySelector(selector);
         if (el) el.style.display = (souAdmin || estouSozinho) ? 'inline-flex' : 'none';
     });
 
-    // Checkboxes da fila (só Admin)
-    document.querySelectorAll('.bulk-delete-controls').forEach(el => {
-        el.style.setProperty('display', souAdmin ? 'block' : 'none', 'important');
-    });
-
-    // Botão X da fila (Admin ou Solo)
-    document.querySelectorAll('.remove-button').forEach(el => {
-        el.style.setProperty('display', (souAdmin || estouSozinho) ? 'block' : 'none', 'important');
-    });
-
-    // Texto e estado do botão de Pular
+    // Texto do botão de Pular (Diferencia Solo de Festa)
     const skipText = document.getElementById('skipVoteBtnText');
-    const voteCounter = document.getElementById('voteCounterWrapper');
     const skipBtn = document.getElementById('skipVoteBtn');
-
     if (skipText && skipBtn) {
         if (souAdmin) {
             skipText.textContent = 'Pular (Admin)';
-            if (voteCounter) voteCounter.style.display = 'none';
-            skipBtn.disabled = false;
         } else if (estouSozinho) {
             skipText.textContent = 'Pular (Solo)';
-            if (voteCounter) voteCounter.style.display = 'none';
-            skipBtn.disabled = false;
         } else {
-            // Modo Festa: Votação
-            const isVoted = skipBtn.classList.contains('voted');
-            skipText.textContent = isVoted ? 'Voto Registrado' : 'Votar para Pular';
-            if (voteCounter) voteCounter.style.display = 'inline';
-            skipBtn.disabled = false;
+            skipText.textContent = skipBtn.classList.contains('voted') ? 'Voto Registrado' : 'Votar para Pular';
         }
     }
 }
@@ -292,46 +280,50 @@ function forceNormalPlayer() {
 
 // Função unificada para recriar o player
 function recreatePlayerSafe(controlsValue) {
-    // 1. Limpa visuais
+    const data = getCurrentVideoIdAndState();
+    
+    // 1. Atualiza o Estado Global
+    window.currentPlayerMode = (controlsValue === 1) ? 'SOLO' : 'FESTA';
+
+    // 2. Tenta encontrar os elementos visuais
     const mask = document.getElementById('player-mask');
     const overlay = document.querySelector('.player-overlay-controls');
     
+    // 3. Aplica a visibilidade (isso garante que apareçam/sumam)
     if (mask) {
-        mask.style.display = (controlsValue === 0) ? 'block' : 'none'; // CORREÇÃO: Máscara escondida no Solo (controlsValue=1)
+        mask.style.display = (controlsValue === 0) ? 'block' : 'none'; 
         if (controlsValue === 0) {
-            // Configurações da máscara
-            mask.style.position = 'absolute';
-            mask.style.top = '0';
-            mask.style.left = '0';
-            mask.style.width = '100%';
-            mask.style.height = '100%';
-            mask.style.zIndex = '10';
-            mask.style.background = 'transparent';
+            mask.style.zIndex = "10"; // Garante que fique na frente do vídeo
         }
     }
-    if (overlay) overlay.style.display = (controlsValue === 0) ? 'block' : 'none';
 
-    // 2. Dados atuais (agora sincronizados via estado global)
-    const data = getCurrentVideoIdAndState();
+    if (overlay) {
+        overlay.style.display = (controlsValue === 0) ? 'flex' : 'none';
+        overlay.style.zIndex = "11"; // Garante que os botões fiquem clicáveis
+    }
+
+    if (typeof updateAdminButtonsVisibility === 'function') updateAdminButtonsVisibility();
+
+    // 4. Proteção contra fila vazia
     if (!data.videoId) {
-        console.log("⚠️ Nenhum vídeo para tocar ao trocar modo.");
+        console.warn("⚠️ UI atualizada para " + window.currentPlayerMode + ", mas player não recriado: Sem vídeo.");
         return;
     }
 
-    // 3. Destruição e Limpeza
-    const container = document.getElementById('player-container');
-    if (!container) return;
-    
-    // Mantém a estrutura HTML básica
-    const maskHtml = (controlsValue === 0) 
-        ? '<div id="player-mask" style="display:block; position:absolute; top:0; left:0; width:100%; height:100%; z-index:10; background:transparent;"></div>' 
-        : '<div id="player-mask" style="display:none;"></div>';
-        
-    container.innerHTML = maskHtml + '<div id="videoPlayer"></div>';
+    // 5. RECONSTRUÇÃO SEGURA (O PONTO CHAVE)
+    const oldPlayerDiv = document.getElementById('videoPlayer');
+    if (oldPlayerDiv) {
+        // Em vez de limpar o container.innerHTML, criamos um novo elemento e substituímos o antigo
+        const newPlayerDiv = document.createElement('div');
+        newPlayerDiv.id = 'videoPlayer';
+        oldPlayerDiv.replaceWith(newPlayerDiv);
+    }
 
-    // 4. Recriação (com delay seguro)
+    // 6. Recria o Player do YouTube
     setTimeout(() => {
         if (typeof YT === 'undefined' || !YT.Player) return;
+        
+        console.log(`🎬 [${window.currentPlayerMode}] Renderizando vídeo: ${data.videoId}`);
 
         player = new YT.Player('videoPlayer', {
             height: '100%',
@@ -341,10 +333,10 @@ function recreatePlayerSafe(controlsValue) {
                 'autoplay': 1,
                 'controls': controlsValue,
                 'disablekb': (controlsValue === 0) ? 1 : 0,
-                'fs': (controlsValue === 0) ? 0 : 1,
+                'fs': 1,
                 'modestbranding': 1,
                 'rel': 0,
-                'start': Math.max(0, Math.floor(data.currentTime))  // Sincroniza tempo
+                'start': Math.max(0, Math.floor(data.currentTime))
             },
             events: {
                 'onReady': (event) => {
@@ -355,13 +347,11 @@ function recreatePlayerSafe(controlsValue) {
                     }
                 },
                 'onStateChange': (event) => {
-                    if (typeof onPlayerStateChange === 'function') {
-                        onPlayerStateChange(event);
-                    }
+                    if (typeof onPlayerStateChange === 'function') onPlayerStateChange(event);
                 }
             }
         });
-    }, 100);
+    }, 150);
 }
 
 function updateRoomActivity() {

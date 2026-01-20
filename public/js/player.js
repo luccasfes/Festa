@@ -5,12 +5,14 @@
 // Variáveis Globais de Controle do Player (INTEGRADAS COM PRESENCE.JS)
 var syncInterval = null; // Resolve o erro "syncInterval is not defined"
 window.isBroadcaster = false; // Valor padrão para evitar erro antes do presence.js carregar
+var currentPlayerMode = null; // 'SOLO' ou 'FESTA'
 window.isAdminLoggedIn = false; // Valor padrão
 window.currentVideoRef = null; // Será definido como playerStateRef para compatibilidade
 
 let localResumeAlreadyUsed = false;
 
 function onYouTubeIframeAPIReady() {
+    window.currentPlayerMode = 'INICIANDO';
     player = new YT.Player('videoPlayer', {
         height: '100%',
         width: '100%',

@@ -1435,6 +1435,7 @@ body.festa-mode.non-admin .bulk-delete-controls {
     z-index: 5;
     pointer-events: none;
     /* deixa o restante do player clicável */
+    
 }
 
 /* Bloqueia apenas a área da barra de progresso para usuários comuns */
@@ -3597,3 +3598,4 @@ emoji-picker {
     0%, 100% { transform: translateY(0) rotate(0deg); }
     50% { transform: translateY(-3px) rotate(-10deg); }
 }
+
