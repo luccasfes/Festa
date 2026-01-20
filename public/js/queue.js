@@ -1,5 +1,5 @@
 // ====================================================================
-// FILA DE VÍDEOS (AJUSTADA)
+// FILA DE VÍDEOS (AJUSTADA - MODO SOLO & VOTAÇÃO 50%+1)
 // ====================================================================
 
 let lastVoteCount = 0; 
@@ -167,7 +167,7 @@ function checkCurrentVideo() {
             try { pid = player.getVideoData().video_id; } catch(e){}
             if (pid !== queueVideoId && queueVideoId) {
                 player.loadVideoById(queueVideoId);
-                if(typeof playedVideoHistory !== 'undefined') playedVideoHistory.add(queueVideoId);
+                if(typeof playedVideoHistory !== '') playedVideoHistory.add(queueVideoId);
             }
         }
     } else {
@@ -179,8 +179,11 @@ function checkCurrentVideo() {
     }
 }
 
+// Agora verifica explicitamente se onlineUserCount <= 1 para liberar sem senha
 function handleRemoveVideo(id) {
-    if (window.isAdminLoggedIn || onlineUserCount <= 1) {
+    const isSolo = (typeof onlineUserCount !== 'undefined' && onlineUserCount <= 1);
+    
+    if (window.isAdminLoggedIn || isSolo) {
         videoQueueRef.child(id).remove()
             .then(() => showNotification('Vídeo removido!', 'success'))
             .catch((error) => showNotification('Erro ao remover.', 'error'));
@@ -189,16 +192,35 @@ function handleRemoveVideo(id) {
     }
 }
 
+// === CORREÇÃO: Botão de Pular ===
 function handleSkipOrVote() {
-    if (window.isAdminLoggedIn || onlineUserCount <= 1) {
-        if (videoQueue.length > 0) videoQueueRef.child(videoQueue[0].id).remove();
+    // Verifica se é Admin OU se está Sozinho na sala
+    const isSolo = (typeof onlineUserCount !== 'undefined' && onlineUserCount <= 1);
+
+    if (window.isAdminLoggedIn || isSolo) {
+        // PULA DIRETO
+        if (videoQueue.length > 0) {
+            toggleLoading('skipVoteBtn', true); // Mostra loading
+            videoQueueRef.child(videoQueue[0].id).remove()
+                .then(() => {
+                    showNotification(window.isAdminLoggedIn ? 'Pulado pelo Admin!' : 'Pulado (Modo Solo)!', 'success');
+                })
+                .finally(() => toggleLoading('skipVoteBtn', false));
+        } else {
+            showNotification('Fila vazia.', 'info');
+        }
     } else {
+        // MODO FESTA: Registra Voto
         castVoteToSkip();
     }
 }
 
+// === Limpar Fila ===
+// Agora verifica explicitamente se onlineUserCount <= 1 para liberar sem senha
 function handleClearQueue() {
-    if (window.isAdminLoggedIn || onlineUserCount <= 1) {
+    const isSolo = (typeof onlineUserCount !== 'undefined' && onlineUserCount <= 1);
+
+    if (window.isAdminLoggedIn || isSolo) {
         if(confirm('Limpar toda a fila?')) {
             videoQueueRef.remove();
             showNotification('Fila limpa!', 'success');
@@ -237,20 +259,39 @@ function castVoteToSkip() {
     }).finally(() => toggleLoading('skipVoteBtn', false));
 }
 
+// === Função para Atualizar Votos Necessários ===
+function updateVotesNeeded() {
+    const safeUserCount = (typeof onlineUserCount !== 'undefined' && onlineUserCount > 0) ? onlineUserCount : 1;
+    let needed = Math.floor(safeUserCount / 2) + 1;
+    if (needed < 2) needed = 2; // Mínimo 2 para mais de 1 pessoa
+
+    const nEl = document.getElementById('votesNeeded');
+    if (nEl) nEl.textContent = needed;
+}
+
+// === Lógica de Votação (50% + 1) ===
 roomRef.child('currentSong/votes').on('value', snap => {
     const votes = snap.val() || {};
     const count = Object.keys(votes).length;
-    const needed = Math.max(2, Math.ceil(onlineUserCount * 0.5));
+    
+    // Atualiza votos necessários sempre (caso o número de usuários tenha mudado)
+    updateVotesNeeded();
+    
+    const safeUserCount = (typeof onlineUserCount !== 'undefined' && onlineUserCount > 0) ? onlineUserCount : 1;
+    let needed = Math.floor(safeUserCount / 2) + 1;
+    if (needed < 2) needed = 2;
+
     const cEl = document.getElementById('voteCount');
     if(cEl) cEl.textContent = count;
-    const nEl = document.getElementById('votesNeeded');
-    if(nEl) nEl.textContent = needed;
-    if (count > lastVoteCount && count > 0 && onlineUserCount > 1) {
+    
+    if (count > lastVoteCount && count > 0 && safeUserCount > 1) {
         if (count < needed) showNotification(`Voto registrado (${count}/${needed})`, 'info');
     }
     lastVoteCount = count;
+    
     const btn = document.getElementById('skipVoteBtn');
     const txt = document.getElementById('skipVoteBtnText');
+    
     if (btn) {
         if (votes[userVoteId]) {
             btn.disabled = true;
@@ -259,9 +300,13 @@ roomRef.child('currentSong/votes').on('value', snap => {
         } else {
             btn.disabled = false;
             btn.classList.remove('voted');
-            if(txt && !window.isAdminLoggedIn && onlineUserCount > 1) txt.textContent = 'Votar para Pular';
+            // Verifica Admin ou Modo Solo para definir texto
+            const isSolo = safeUserCount <= 1;
+            if(txt && !window.isAdminLoggedIn && !isSolo) txt.textContent = 'Votar para Pular';
         }
     }
+    
+    // Executa o Pulo se atingiu a meta
     if (count >= needed && videoQueue.length > 0) {
         videoQueueRef.child(videoQueue[0].id).remove().then(() => {
             roomRef.child('currentSong/votes').remove();
