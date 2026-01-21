@@ -1435,7 +1435,6 @@ body.festa-mode.non-admin .bulk-delete-controls {
     z-index: 5;
     pointer-events: none;
     /* deixa o restante do player clicável */
-    
 }
 
 /* Bloqueia apenas a área da barra de progresso para usuários comuns */
@@ -1585,11 +1584,26 @@ body:not(.non-admin) .player-overlay-controls {
     transform: translateY(-20px);
 }
 
+/* ==========================================================================
+   SEÇÃO DE CHAT - RESPONSIVO COMPLETO
+   ========================================================================== */
+
 .chat-section {
     margin-top: 30px;
     grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    height: 500px;
+    max-height: 500px;
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--card-shadow);
+    position: relative;
 }
 
+/* Cabeçalho do chat */
 .chat-users-online {
     display: flex;
     align-items: center;
@@ -1597,123 +1611,134 @@ body:not(.non-admin) .player-overlay-controls {
     margin-bottom: 15px;
     font-size: 0.9rem;
     color: var(--text-secondary);
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--glass-border);
 }
 
 .online-indicator {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+    font-weight: 500;
 }
 
 .online-dot {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: var(--success-color);
     animation: pulse 2s infinite;
+    box-shadow: 0 0 8px var(--success-color);
 }
 
+/* Informação do usuário */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+#userNameDisplay {
+    font-weight: 600;
+    color: var(--text-primary);
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px 12px;
+    border-radius: 15px;
+    border: 1px solid var(--glass-border);
+}
+
+/* Área de mensagens */
 .chat-messages-list {
-    height: 450px;
-    /* Aumentei a altura um pouco */
+    flex: 1;
     overflow-y: auto;
-    background: var(--chat-bg-color);
-    /* Usa a variável de cor */
+    background: rgba(0, 0, 0, 0.2);
     border-radius: 12px;
     padding: 15px;
     margin-bottom: 15px;
     border: 1px solid var(--glass-border);
     display: flex;
     flex-direction: column;
-    /* Necessário para as bolhas */
     gap: 12px;
-    /* Espaço entre as bolhas */
-     /* Scroll suave */
-     scroll-behavior: smooth;
+    scroll-behavior: smooth;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
     
-    /* Estilo da scrollbar mais consistente */
+    /* Scrollbar visível apenas no hover em desktop */
     scrollbar-width: thin;
-    scrollbar-color: var(--accent-color) transparent;
-}
-@media (min-width: 769px) {
-    .chat-messages-list {
-        scrollbar-color: transparent transparent;
-    }
-    
-    .chat-messages-list:hover {
-        scrollbar-color: var(--accent-color) #2a2a2a;
-    }
-}
-/* Ajustar cores das bolhas no tema light */
-[data-theme="light"] .chat-message {
-    --bubble-theirs-bg: #f0f0f0;
-    --text-theirs-color: #333;
+    scrollbar-color: transparent transparent;
 }
 
-[data-theme="light"] .chat-message.mine {
-    --bubble-mine-bg: var(--accent-color);
-    --text-mine-color: white;
-}
-
+/* Scrollbar visível sempre no mobile, apenas no hover em desktop */
 .chat-messages-list::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
+}
+
+.chat-messages-list::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.chat-messages-list::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 3px;
+    transition: background 0.3s;
+}
+
+.chat-messages-list:hover::-webkit-scrollbar-thumb,
+.chat-messages-list:active::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
 }
 
 /* ESTILO DA BOLHA DE MENSAGEM */
 .chat-message {
-    padding: 10px 14px;
+    padding: 12px 15px;
     border-radius: 18px;
-    /* Mais arredondado */
-    max-width: 75%;
-    /* Bolhas não ocupam a tela toda */
+    max-width: 85%;
     word-break: break-word;
-    /* Quebra de linha */
     animation: messageSlideIn 0.3s ease-out;
     line-height: 1.4;
+    position: relative;
+    backdrop-filter: blur(5px);
+    border: 1px solid transparent;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
 
-    /* === Estilo "Eles" (Padrão) === */
-    background: var(--bubble-theirs-bg);
-    color: var(--text-theirs-color);
+/* Mensagens dos outros */
+.chat-message:not(.mine) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    color: var(--text-primary);
     align-self: flex-start;
-    /* Alinha à esquerda */
-    border-bottom-left-radius: 4px;
-    /* "Rabicho" da bolha */
+    border-bottom-left-radius: 6px;
+    border-left: 3px solid var(--accent-color);
 }
 
-/* Remove a barra lateral antiga */
-.chat-message::before {
-    display: none;
-}
-
-/* === Estilo "Minha" Bolha === */
+/* Minhas mensagens */
 .chat-message.mine {
-    background: var(--bubble-mine-bg);
-    color: var(--text-mine-color);
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    color: white;
     align-self: flex-end;
-    /* ALINHA À DIREITA */
-    border-bottom-left-radius: 18px;
-    /* Reseta o rabicho esquerdo */
-    border-bottom-right-radius: 4px;
-    /* Adiciona "rabicho" à direita */
+    border-bottom-right-radius: 6px;
+    border-right: 3px solid rgba(255, 255, 255, 0.2);
 }
 
-/* === Estilo "Admin" === */
-.chat-message.admin {
-    background: var(--bubble-admin-bg);
-    color: var(--text-admin-color);
-    border: 1px solid #fbc02d;
+/* Mensagem de Admin */
+.chat-message.admin-king {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #000 !important;
+    border: 2px solid #ffcc00;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
 }
 
-/* === Mensagem de Sistema === */
-.chat-message.system {
-    background: rgba(243, 156, 18, 0.15);
-    border-color: rgba(243, 156, 18, 0.3);
-    text-align: center;
-    font-style: italic;
-    align-self: center;
-    /* Fica no meio */
-    max-width: 90%;
-    border-radius: 8px;
+.chat-message.admin-king .chat-user {
+    color: #000 !important;
+    font-weight: 800;
+}
+
+.chat-message.admin-king .chat-time {
+    color: #333 !important;
 }
 
 /* ESTRUTURA DENTRO DA BOLHA */
@@ -1721,17 +1746,21 @@ body:not(.non-admin) .player-overlay-controls {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 4px;
-    position: relative;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .chat-user {
     font-weight: 700;
-
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Esconde o nome do usuário nas próprias mensagens */
@@ -1739,101 +1768,90 @@ body:not(.non-admin) .player-overlay-controls {
     display: none;
 }
 
-.chat-message.admin .chat-user {
-    color: #d32f2f;
-    /* Nome do admin em vermelho */
-}
-
-.chat-text {
-    /* Melhorar legibilidade */
+.chat-body {
+    font-size: 0.95rem;
     line-height: 1.5;
     word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
+    overflow-wrap: anywhere;
 }
-
-/* Limitar altura máxima da bolha com scroll interno */
-.chat-message.long {
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-/* Melhorar os estados de foco (acessibilidade) */
-.chat-reply-btn:focus,
-.chat-edit-btn:focus {
-    outline: 2px solid var(--accent-color);
-    outline-offset: 2px;
-}
-
-/* Adicionar "novas mensagens" indicator */
-.new-messages-indicator {
-    position: sticky;
-    bottom: 10px;
-    background: var(--accent-color);
-    color: white;
-    padding: 8px 15px;
-    border-radius: 20px;
-    margin: 0 auto;
-    width: fit-content;
-    cursor: pointer;
-    animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
-}
-
 
 .chat-time {
-    color: inherit;
-    /* Herda a cor da bolha */
-    opacity: 0.7;
     font-size: 0.7rem;
+    opacity: 0.8;
     text-align: right;
     margin-top: 5px;
     display: block;
-    /* Garante que fique abaixo */
     position: relative;
+    cursor: help;
 }
 
+.chat-message:not(.mine) .chat-time {
+    text-align: left;
+    color: var(--text-secondary);
+}
+
+.chat-message.mine .chat-time {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Tooltip para horário completo */
 .chat-time:hover::after {
     content: attr(data-full);
     position: absolute;
     bottom: 100%;
     right: 0;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0, 0, 0, 0.9);
     color: white;
-    padding: 5px;
-    border-radius: 4px;
+    padding: 6px 10px;
+    border-radius: 6px;
     font-size: 0.8rem;
     white-space: nowrap;
     z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* RESTANTE DA INTERFACE DO CHAT */
+.chat-message:not(.mine) .chat-time:hover::after {
+    right: auto;
+    left: 0;
+}
+
+/* =================================== */
+/* ÁREA DE INPUT E CONTROLES          */
+/* =================================== */
+
 .chat-input-group {
     display: flex;
     gap: 10px;
     align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid var(--glass-border);
 }
 
 .chat-input-group input {
     flex: 1;
     border: 1px solid var(--glass-border);
     transition: var(--transition);
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.3);
     color: var(--light-color);
     font-family: 'Poppins', sans-serif;
-    font-size: 16px; /* Evita zoom no iOS */
-    min-height: 44px; /* Tamanho mínimo de toque */
-
+    font-size: 16px;
+    min-height: 44px;
+    
     height: 48px;
     border-radius: 24px;
-    font-size: 1rem;
     padding: 0 20px;
+    font-size: 1rem;
 }
 
+.chat-input-group input:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* Botão de enviar */
 .chat-input-group button.btn.primary {
     width: 48px;
     height: 48px;
@@ -1842,84 +1860,253 @@ body:not(.non-admin) .player-overlay-controls {
     min-width: 0;
     flex-shrink: 0;
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
 }
 
-.chat-input-group input:focus {
-    border-color: var(--accent-color);
-    outline: none;
-    box-shadow: 0 0 0 3px var(--accent-glow), 0 0 0 1px var(--accent-color);
-    background: rgba(0, 0, 0, 0.6);
+/* Botão de emoji */
+#emojiBtn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: var(--transition);
+    flex-shrink: 0;
 }
 
+#emojiBtn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
 
+/* =================================== */
+/* FUNÇÕES DE RESPOSTA E EDIÇÃO       */
+/* =================================== */
 
-.empty-chat {
-    text-align: center;
-    padding: 40px 20px;
+/* Botões de ação */
+.chat-message-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 2;
+    flex-shrink: 0;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.chat-message:hover .chat-message-actions {
+    opacity: 1;
+}
+
+.chat-reply-btn,
+.chat-edit-btn {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-secondary);
-    font-style: italic;
+    border-radius: 5px;
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
 }
 
-.empty-chat i {
-    font-size: 2rem;
-    margin-bottom: 15px;
-    opacity: 0.5;
+.chat-reply-btn:hover,
+.chat-edit-btn:hover {
+    background: var(--accent-color);
+    color: white;
+    transform: scale(1.1);
 }
 
-@keyframes messageSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Indicador de usuários online no chat */
-.chat-users-online {
+/* Contexto de resposta */
+.chat-reply-context {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: var(--bubble-theirs-bg);
+    color: var(--text-theirs-color);
+    border-radius: 8px 8px 0 0;
+    margin-bottom: -10px;
+    border: 1px solid var(--glass-border);
+    border-bottom: none;
+    animation: messageSlideIn 0.2s ease-out;
     font-size: 0.9rem;
-    color: var(--text-secondary);
 }
 
-.online-indicator {
+.chat-reply-info {
+    flex: 1;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.chat-reply-user {
+    display: block;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--accent-color);
+    margin-bottom: 2px;
+}
+
+.chat-reply-text {
+    display: block;
+    font-size: 0.85rem;
+    opacity: 0.8;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.chat-reply-cancel {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-theirs-color);
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0 8px;
+    flex-shrink: 0;
+}
+
+.chat-reply-cancel:hover {
+    opacity: 1;
+}
+
+/* Bloco de resposta */
+.chat-reply-block {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--accent-color);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.chat-message.mine .chat-reply-block {
+    background: rgba(255, 255, 255, 0.1);
+    border-left-color: rgba(255, 255, 255, 0.5);
+}
+
+.chat-reply-block:hover {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.chat-reply-block-user {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-bottom: 2px;
+}
+
+.chat-message.mine .chat-reply-block-user {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.chat-reply-block-text {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Edição de mensagem */
+.chat-edit-container {
+    margin-top: 10px;
     display: flex;
-    align-items: center;
-    gap: 5px;
+    flex-direction: column;
+    gap: 10px;
+    animation: fadeIn 0.2s ease-out;
 }
 
-.online-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--success-color);
-    animation: pulse 2s infinite;
+.chat-edit-input {
+    width: 100%;
+    min-height: 80px;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    resize: vertical;
+    line-height: 1.5;
+    transition: var(--transition);
 }
 
-/* Efeito de digitação */
+.chat-edit-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.chat-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.edited-marker {
+    font-style: italic;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-left: 6px;
+}
+
+/* =================================== */
+/* INDICADORES                         */
+/* =================================== */
+
+/* Indicador de digitação */
 .typing-indicator {
     display: none;
     padding: 8px 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    margin-top: 5px;
+    align-self: flex-start;
+    font-size: 0.85rem;
     color: var(--text-secondary);
     font-style: italic;
-    font-size: 0.9rem;
 }
 
 .typing-indicator.active {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .typing-dots {
-    display: inline-block;
+    display: flex;
+    gap: 2px;
 }
 
 .typing-dots span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-secondary);
     animation: typing 1.4s infinite;
     opacity: 0.6;
 }
@@ -1933,168 +2120,363 @@ body:not(.non-admin) .player-overlay-controls {
 }
 
 @keyframes typing {
-    0%, 60%, 100% {
-        opacity: 0.6;
-    }
-
-    30% {
-        opacity: 1;
-    }
+    0%, 60%, 100% { opacity: 0.6; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-2px); }
 }
 
-/* Responsividade para o chat */
-/* Mostrar ações em mobile mesmo sem hover */
-@media (max-width: 768px) {
-    .chat-message-actions {
-        opacity: 1 !important;
-        position: relative !important;
-        top: auto !important;
-        right: auto !important;
-        margin-top: 5px;
-        justify-content: flex-end;
-    }
-}
-
-/* =================================== */
-/* === CSS PARA FUNÇÃO "RESPONDER" === */
-/* =================================== */
-
-/* 1. Botão de Resposta (que aparece na bolha) */
-.chat-message {
-    max-width: 80%; /* Aumentado um pouco para melhor uso de espaço */
-    word-wrap: break-word;
-    overflow-wrap: anywhere; /* Força quebra de links longos ou emails */
-    word-break: break-word;
-}
-
-.chat-reply-btn {
-    background: var(--dark-3);
-    border: 1px solid var(--dark-3);
-    color: var(--text-secondary);
-    border-radius: 5px;
-    width: 28px;
-    height: 28px;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    /* Adicionado para garantir o alinhamento */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.chat-reply-btn:hover {
-    background: var(--primary-color);
+/* Indicador de novas mensagens */
+.new-messages-indicator {
+    position: sticky;
+    bottom: 10px;
+    background: var(--accent-color);
     color: white;
-}
-
-/* 2. Contexto de Resposta (acima da caixa de input) */
-.chat-reply-context {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    background: var(--bubble-theirs-bg);
-    /* Reutiliza a cor da bolha */
-    color: var(--text-theirs-color);
-    border-radius: 8px 8px 0 0;
-    margin-bottom: -10px;
-    /* Gruda no input */
-    border: 1px solid var(--glass-border);
-    border-bottom: none;
-    animation: messageSlideIn 0.2s ease-out;
-}
-
-.chat-reply-info {
-    overflow: hidden;
-    white-space: nowrap;
-}
-
-.chat-reply-user {
-    display: block;
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: var(--accent-color);
-}
-
-.chat-reply-text {
-    display: block;
-    font-size: 0.8rem;
-    opacity: 0.8;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-
-.chat-reply-cancel {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: var(--text-theirs-color);
-    opacity: 0.5;
+    padding: 10px 18px;
+    border-radius: 20px;
+    margin: 10px auto;
+    width: fit-content;
     cursor: pointer;
-    padding: 0 5px;
+    z-index: 10;
+    animation: bounce 2s infinite;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    font-size: 0.9rem;
+    display: none;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.chat-reply-cancel:hover {
-    opacity: 1;
+.new-messages-indicator:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
-/* 3. Bloco de Resposta (Dentro da bolha de chat) */
-.chat-reply-block {
-    background: rgba(0, 0, 0, 0.08);
-    padding: 8px 10px;
-    border-radius: 6px;
-    margin-bottom: 6px;
-    border-left: 3px solid var(--accent-color);
-    cursor: pointer;
-    /* Para o scroll */
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
 }
 
-.chat-message.mine .chat-reply-block {
-    /* Ajusta cor para a bolha escura */
-    background: rgba(255, 255, 255, 0.1);
-    border-left-color: var(--light-color);
+/* Destaque para mensagem */
+.message-highlighted {
+    animation: highlight-message 1.5s ease-out;
 }
 
-.chat-reply-block-user {
-    font-weight: 700;
-    font-size: 0.8rem;
-    color: var(--accent-color);
-}
-
-.chat-message.mine .chat-reply-block-user {
-    color: var(--light-color);
-}
-
-.chat-reply-block-text {
-    font-size: 0.85rem;
-    opacity: 0.8;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* 4. Destaque para mensagem "scrollada" */
 @keyframes highlight-message {
     0% {
         background-color: rgba(25, 118, 210, 0.4);
+        border-color: var(--accent-color);
     }
-
     100% {
         background-color: transparent;
+        border-color: transparent;
     }
 }
 
-.message-highlighted {
-    /* No 'mine', precisamos forçar a cor, senão a da bolha sobrescreve */
-    background-color: var(--bubble-mine-bg);
+.chat-message.mine.message-highlighted {
     animation: highlight-message 1.5s ease-out;
 }
 
-.chat-message.message-highlighted {
-    background-color: var(--bubble-theirs-bg);
-    animation: highlight-message 1.5s ease-out;
+/* =================================== */
+/* ESTADOS VAZIOS                      */
+/* =================================== */
+
+.empty-chat {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    font-style: italic;
+}
+
+.empty-chat i {
+    font-size: 3rem;
+    opacity: 0.3;
+}
+
+.empty-chat p {
+    font-size: 1.1rem;
+    max-width: 300px;
+    line-height: 1.5;
+}
+
+/* =================================== */
+/* RESPONSIVIDADE COMPLETA             */
+/* =================================== */
+
+/* Tablet (768px) */
+@media (max-width: 768px) {
+    .chat-section {
+        height: auto;
+        max-height: none;
+        min-height: 400px;
+        margin-top: 20px;
+        padding: 15px;
+    }
+    
+    .chat-users-online {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        padding-bottom: 15px;
+    }
+    
+    .user-info {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .chat-messages-list {
+        height: 300px;
+        min-height: 250px;
+        max-height: 350px;
+        padding: 12px;
+    }
+    
+    /* Mostrar scrollbar sempre em mobile */
+    .chat-messages-list {
+        scrollbar-color: var(--accent-color) transparent;
+    }
+    
+    .chat-messages-list::-webkit-scrollbar-thumb {
+        background: var(--accent-color);
+        opacity: 0.5;
+    }
+    
+    .chat-message {
+        max-width: 90%;
+        padding: 10px 12px;
+    }
+    
+    .chat-message-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .chat-user {
+        font-size: 0.8rem;
+    }
+    
+    .chat-body {
+        font-size: 0.9rem;
+    }
+    
+    .chat-time {
+        font-size: 0.65rem;
+        align-self: flex-end;
+    }
+    
+    .chat-message:not(.mine) .chat-time {
+        align-self: flex-start;
+    }
+    
+    .chat-input-group {
+        gap: 8px;
+    }
+    
+    .chat-input-group input {
+        height: 46px;
+        font-size: 16px;
+        padding: 0 16px;
+    }
+    
+    .chat-input-group button.btn.primary,
+    #emojiBtn {
+        width: 46px;
+        height: 46px;
+    }
+    
+    /* Mostrar botões de ação sempre em mobile */
+    .chat-message-actions {
+        opacity: 1;
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-top: 8px;
+        justify-content: flex-end;
+    }
+    
+    /* Ajustar contexto de resposta */
+    .chat-reply-context {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+    }
+    
+    .chat-reply-user {
+        font-size: 0.8rem;
+    }
+    
+    .chat-reply-text {
+        font-size: 0.8rem;
+    }
+}
+
+/* Mobile pequeno (480px) */
+@media (max-width: 480px) {
+    .chat-section {
+        padding: 12px;
+        min-height: 350px;
+    }
+    
+    .chat-messages-list {
+        height: 250px;
+        max-height: 300px;
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .chat-message {
+        max-width: 95%;
+        padding: 8px 10px;
+    }
+    
+    .chat-body {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    
+    .chat-user {
+        font-size: 0.75rem;
+    }
+    
+    .chat-time {
+        font-size: 0.6rem;
+    }
+    
+    .chat-input-group {
+        flex-wrap: wrap;
+    }
+    
+    .chat-input-group input {
+        width: 100%;
+        order: 1;
+        margin-bottom: 8px;
+    }
+    
+    .chat-input-group #emojiBtn,
+    .chat-input-group button.btn.primary {
+        width: 44px;
+        height: 44px;
+        order: 2;
+        flex: 0 0 auto;
+    }
+    
+    /* Tooltip menor em mobile */
+    .chat-time:hover::after {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+        white-space: normal;
+        max-width: 150px;
+    }
+    
+    .new-messages-indicator {
+        font-size: 0.8rem;
+        padding: 8px 14px;
+    }
+}
+
+/* Mobile muito pequeno (360px) */
+@media (max-width: 360px) {
+    .chat-section {
+        padding: 10px;
+    }
+    
+    .chat-messages-list {
+        height: 220px;
+        padding: 8px;
+    }
+    
+    .chat-message {
+        max-width: 98%;
+    }
+    
+    .chat-input-group input {
+        font-size: 15px;
+        padding: 0 12px;
+    }
+    
+    .chat-input-group #emojiBtn,
+    .chat-input-group button.btn.primary {
+        width: 42px;
+        height: 42px;
+    }
+}
+
+/* Quando o teclado está aberto (altura reduzida) */
+@media (max-height: 600px) {
+    .chat-section {
+        height: 55vh;
+        min-height: 300px;
+    }
+    
+    .chat-messages-list {
+        height: calc(55vh - 150px);
+        max-height: none;
+    }
+}
+
+/* =================================== */
+/* ANIMAÇÕES                           */
+/* =================================== */
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+/* =================================== */
+/* BOTÃO LIMPAR CHAT                   */
+/* =================================== */
+
+#clearChatBtn {
+    background: rgba(211, 47, 47, 0.1);
+    border: 1px solid var(--danger-color);
+    color: var(--danger-color);
+    transition: var(--transition);
+    margin-left: auto;
+}
+
+#clearChatBtn:hover {
+    background: var(--danger-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    #clearChatBtn {
+        margin: 10px 0 0 auto;
+        align-self: flex-end;
+    }
 }
 
 /* 1. Estiliza o novo container que segura os botões */
@@ -2459,151 +2841,7 @@ body:not(.non-admin) .player-overlay-controls {
     font-weight: 500;
 }
 
-/* ====================================================================
-   ESTILOS DE EDIÇÃO DE MENSAGEM DO CHAT
-   ==================================================================== */
 
-/* Contêiner para os botões de ação (Reply, Edit) */
-.chat-message-actions {
-    /* position: absolute; (REMOVIDO) */
-    /* top: 4px; (REMOVIDO) */
-    /* right: 8px; (REMOVIDO) */
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    /* Escondido por padrão */
-    transition: opacity 0.2s ease;
-    z-index: 2;
-    /* Garante que fique sobre o nome se ele for longo */
-    flex-shrink: 0;
-    /* Impede que os botões quebrem a linha */
-}
-
-/* Mostra os botões quando o mouse passa sobre a mensagem */
-.chat-message:hover .chat-message-actions {
-    opacity: 1;
-}
-
-/* Botão de Editar */
-.chat-edit-btn {
-    background: var(--dark-3);
-    border: 1px solid var(--dark-3);
-    color: var(--text-secondary);
-    border-radius: 5px;
-    width: 28px;
-    height: 28px;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.chat-edit-btn:hover {
-    background: var(--primary-color);
-    color: white;
-}
-
-/* O marcador '(editado)' */
-.edited-marker {
-    font-style: italic;
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-    opacity: 0.8;
-    margin-left: 6px;
-}
-
-/* O contêiner da caixa de edição */
-.chat-edit-container {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    animation: fadeIn 0.2s ease-out;
-}
-
-/* O textarea de edição */
-.chat-edit-input {
-    width: 100%;
-    max-width: 100%;
-    min-height: 60px;
-    padding: 10px 12px;
-    background: var(--dark-2);
-    border: 1px solid var(--dark-4);
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.9rem;
-    resize: vertical;
-    box-sizing: border-box;
-    line-height: 1.4;
-    transition: all 0.15s ease;
-}
-
-.chat-edit-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    background: var(--dark-1);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
-}
-
-/* Botões de Salvar/Cancelar */
-.chat-edit-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-}
-
-.chat-edit-actions .btn {
-    padding: 6px 16px;
-    font-size: 0.85rem;
-    border-radius: 6px;
-    min-width: 70px;
-    transition: all 0.15s ease;
-    cursor: pointer;
-    font-weight: 500;
-}
-
-/* Botão Cancelar - VERMELHO */
-.chat-edit-actions .btn.danger {
-    background-color: var(--error-color);
-    border: 1px solid var(--error-color);
-    color: white;
-}
-
-.chat-edit-actions .btn.danger:hover {
-    background-color: var(--error-color-dark);
-    border-color: var(--error-color-dark);
-}
-
-/* Botão Salvar */
-.chat-edit-actions .btn.primary {
-    background-color: var(--primary-color);
-    border: 1px solid var(--primary-color);
-    color: white;
-}
-
-.chat-edit-actions .btn.primary:hover {
-    background-color: var(--primary-color-dark);
-    border-color: var(--primary-color-dark);
-}
-
-/* Animação suave */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-5px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.chat-edit-actions .btn.danger:hover {
-    background-color: #dc2626;
-    /* Vermelho mais escuro */
-    border-color: #dc2626;
-}
 
 /* Corrige centralização e UX do modal */
 #roomDetailsModal.active,
@@ -3255,13 +3493,6 @@ body:not(.non-admin) .player-overlay-controls {
 /* ======================================================= */
 
 @media (max-width: 768px) {
-    .chat-section {
-        height: 50dvh; /* Ou a altura que preferir para o chat no celular */
-        display: flex;
-        flex-direction: column;
-        border-left: none;
-        border-top: 1px solid var(--border-color);
-    }
 
     /* 1. Organiza os botões em linha horizontal no topo */
     .header-controls-left {
@@ -3574,104 +3805,33 @@ emoji-picker {
 
 /* === VISUAL DO do chat para o admin=== */
 
-/* =========================================
-   ESTILO SUPREMO: ADMIN DOURADO (VISÍVEL PARA TODOS)
-   ========================================= */
-
-/* O Balão de Mensagem */
+/* Aplica o estilo no BALÃO INTEIRO (não só no texto) */
 .chat-message.admin-king {
-    position: relative;
-    background: linear-gradient(135deg, #FFD700, #FFEB7A) !important;
-    border: 2px solid #d4af37 !important;
-    box-shadow: 0 0 15px rgba(212,175,55,0.4) !important;
-    color: #1a1a1a !important; /* Força cor escura */
+    background: linear-gradient(135deg, #ffd700 0%, #ffc107 100%) !important; /* Amarelo Ouro */
+    border: 2px solid #fff9c4 !important; /* Borda clara */
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4) !important; /* Brilho Dourado */
+    color: #3e2723 !important; /* Texto Marrom Escuro (Contraste) */
 }
 
-/* Força TODOS os elementos internos a serem escuros no modo Admin */
-.chat-message.admin-king,
-.chat-message.admin-king * {
-    color: #1a1a1a !important; 
-    text-shadow: none !important;
-}
-
-
-/* Garante que o texto dentro do balão seja legível */
-.chat-message.admin-king .chat-text, 
+/* Garante que o texto lá dentro fique escuro */
 .chat-message.admin-king .chat-body,
-.chat-message.admin-king .chat-time {
-    color: #2C1E00 !important;
+.chat-message.admin-king .chat-time,
+.chat-message.admin-king .chat-user {
+    color: #3e2723 !important; 
     text-shadow: none !important;
-    opacity: 1 !important;
 }
 
-/* O Nome do Usuário no topo do balão */
-.chat-message.admin-king .chat-user {
-    color: #000 !important;
-    font-weight: 900 !important;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
-    margin-bottom: 5px;
-    padding-bottom: 2px;
+/* Estilo especial se a mensagem for MINHA (Alinhada à direita) */
+.chat-message.mine.admin-king {
+    background: linear-gradient(135deg, #ffc107 0%, #ffd700 100%) !important;
+    border-color: #ffe082 !important;
 }
 
 /* Animação da Coroa */
 .chat-message.admin-king .fa-crown {
-    color: #000000 !important;
-    filter: drop-shadow(0 0 2px rgba(255,255,255,0.8));
-    animation: crownWobble 2s infinite ease-in-out;
-}
-
-@keyframes crownWobble {
-    0%, 100% { transform: rotate(-5deg) scale(1.1); }
-    50% { transform: rotate(5deg) scale(1.2); }
-}
-
-/* Efeito de brilho passando pelo balão (opcional, mas fica lindo) */
-.chat-message.admin-king::after {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    background: linear-gradient(
-        120deg,
-        transparent 20%,
-        rgba(255,215,100,0.8),
-        transparent 80%
-    );
-    opacity: 0.3 !important;
-    animation: goldGlow 3s ease-in-out infinite;
-    pointer-events: none;
-}
-
-
-.chat-message.admin-king::before {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border-radius: inherit;
-    background: radial-gradient(circle, rgba(255,215,100,0.4), transparent 70%);
-    filter: blur(12px);
-    opacity: 0.6;
-    animation: goldPulse 2.5s ease-in-out infinite;
-    pointer-events: none;
-}
-
-@media (max-width: 768px) {
-    .chat-section {
-        width: 100%;
-        margin-top: 20px;
-        padding: 0;
-    }
-}
-
-
-@keyframes goldGlow {
-    0%   { transform: translateX(-100%); }
-    50%  { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
-}
-
-@keyframes goldPulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 0.8; }
+    display: inline-block;
+    animation: floatCrown 3s ease-in-out infinite;
+    color: #3e2723 !important; /* Coroa escura */
 }
 
 @keyframes floatCrown {
@@ -3679,33 +3839,6 @@ emoji-picker {
     50% { transform: translateY(-3px) rotate(-10deg); }
 }
 
-/* Garante que o container principal ocupe a tela inteira sem sobrar */
-.main-container {
-    height: 100vh; /* Fallback */
-    height: 100dvh; /* Altura dinâmica real do celular */
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Impede scroll na página toda, apenas dentro das seções */
-}
-
-#chatMessages {
-        flex: 1; /* Faz as mensagens ocuparem todo o espaço restante */
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .chat-input-group {
-        flex-shrink: 0; /* Garante que o campo de texto nunca diminua */
-        padding-bottom: env(safe-area-inset-bottom); /* Suporte para iPhone (notch/barra) */
-    }
-
-    /* No Modo Festa, ajuste a visibilidade e o espaço */
-body.festa-mode .player-section {
-    max-height: 40dvh; /* Limita o player para sobrar espaço para o chat */
-}
-
-/* Se os botões de busca/fila estiverem cortando o chat */
-.queue-section {
-    max-height: 30dvh;
-    overflow-y: auto;
-}
+/* ==========================================================================
+   SEÇÃO DE CHAT
+   ========================================================================== */
