@@ -3255,6 +3255,13 @@ body:not(.non-admin) .player-overlay-controls {
 /* ======================================================= */
 
 @media (max-width: 768px) {
+    .chat-section {
+        height: 50dvh; /* Ou a altura que preferir para o chat no celular */
+        display: flex;
+        flex-direction: column;
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+    }
 
     /* 1. Organiza os botões em linha horizontal no topo */
     .header-controls-left {
@@ -3574,13 +3581,17 @@ emoji-picker {
 /* O Balão de Mensagem */
 .chat-message.admin-king {
     position: relative;
-    background: linear-gradient(135deg, #FFD700, #FFEB7A);
-    border: 2px solid #d4af37;
-    box-shadow: 
-        0 0 10px rgba(212,175,55,0.4),
-        0 0 25px rgba(212,175,55,0.2);
-    overflow: hidden;
-    color: #2C1E00;
+    background: linear-gradient(135deg, #FFD700, #FFEB7A) !important;
+    border: 2px solid #d4af37 !important;
+    box-shadow: 0 0 15px rgba(212,175,55,0.4) !important;
+    color: #1a1a1a !important; /* Força cor escura */
+}
+
+/* Força TODOS os elementos internos a serem escuros no modo Admin */
+.chat-message.admin-king,
+.chat-message.admin-king * {
+    color: #1a1a1a !important; 
+    text-shadow: none !important;
 }
 
 
@@ -3595,14 +3606,11 @@ emoji-picker {
 
 /* O Nome do Usuário no topo do balão */
 .chat-message.admin-king .chat-user {
-    color: #000000 !important;
+    color: #000 !important;
     font-weight: 900 !important;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    margin-bottom: 5px;
+    padding-bottom: 2px;
 }
 
 /* Animação da Coroa */
@@ -3628,10 +3636,11 @@ emoji-picker {
         rgba(255,215,100,0.8),
         transparent 80%
     );
-    opacity: 0.6;
+    opacity: 0.3 !important;
     animation: goldGlow 3s ease-in-out infinite;
     pointer-events: none;
 }
+
 
 .chat-message.admin-king::before {
     content: '';
@@ -3670,3 +3679,33 @@ emoji-picker {
     50% { transform: translateY(-3px) rotate(-10deg); }
 }
 
+/* Garante que o container principal ocupe a tela inteira sem sobrar */
+.main-container {
+    height: 100vh; /* Fallback */
+    height: 100dvh; /* Altura dinâmica real do celular */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Impede scroll na página toda, apenas dentro das seções */
+}
+
+#chatMessages {
+        flex: 1; /* Faz as mensagens ocuparem todo o espaço restante */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .chat-input-group {
+        flex-shrink: 0; /* Garante que o campo de texto nunca diminua */
+        padding-bottom: env(safe-area-inset-bottom); /* Suporte para iPhone (notch/barra) */
+    }
+
+    /* No Modo Festa, ajuste a visibilidade e o espaço */
+body.festa-mode .player-section {
+    max-height: 40dvh; /* Limita o player para sobrar espaço para o chat */
+}
+
+/* Se os botões de busca/fila estiverem cortando o chat */
+.queue-section {
+    max-height: 30dvh;
+    overflow-y: auto;
+}

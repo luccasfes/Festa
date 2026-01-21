@@ -81,48 +81,39 @@ function createMessageElement(key, msg) {
     const isMine = msg.userId === sessionStorage.getItem('userVoteId');
     const div = document.createElement('div');
     
+    // Adiciona a classe admin-king se for admin
     div.className = `chat-message ${isMine ? 'mine' : ''} ${msg.userIsAdmin ? 'admin-king' : ''}`;
     div.id = 'msg-' + key;
 
     const safeUser = escapeHtml(msg.userName);
     const safeText = escapeHtml(msg.text);
-    const safeTextForJs = safeText.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    const safeUserForJs = safeUser.replace(/'/g, "\\'");
-    const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     
-    const color = msg.userIsAdmin ? '#000000' : getUserColor(safeUser);
-    const crownHtml = msg.userIsAdmin ? '<i class="fas fa-crown" style="margin-right:8px; color:#000;"></i>' : '';
-
-    let replyHtml = '';
-    if(msg.replyToId) {
-        replyHtml = `<div class="chat-reply-block"><small>${escapeHtml(msg.replyToUser)}</small><div>${escapeHtml(msg.replyToText)}</div></div>`;
-    }
+    // Se for admin, não usamos a cor dinâmica do getUserColor para não quebrar o visual dourado
+    const colorStyle = msg.userIsAdmin ? 'color: #000 !important;' : `color: ${getUserColor(safeUser)};`;
 
     div.innerHTML = `
-        ${replyHtml}
-        <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="chat-user" style="color:${color} !important; font-weight: bold;">
-                ${crownHtml}${safeUser}
+        <div class="chat-header">
+            <span class="chat-user" style="${colorStyle}">
+                ${msg.userIsAdmin ? '<i class="fas fa-crown"></i> ' : ''}${safeUser}
             </span>
-            <div class="chat-message-actions">
-                <button class="chat-reply-btn" onclick="setReplyContext('${key}', '${safeUserForJs}', '${safeTextForJs}')">
-                    <i class="fas fa-reply"></i>
-                </button>
-            </div>
         </div>
-        <div class="chat-body" id="body-${key}" style="
-            overflow-wrap: anywhere; 
-            word-break: break-word; 
-            white-space: normal;
-            color: ${msg.userIsAdmin ? '#2d1a0e' : 'inherit'} !important;">
+        <div class="chat-body">
             ${safeText}
         </div>
-        <div class="chat-time" style="text-align: right; font-size: 0.7rem; opacity: 0.8;">
-            ${time}
-        </div>
+        <div class="chat-time">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
     `;
     
     return div;
+}
+// abrir (evento focus no input):
+const chatInput = document.querySelector('.chat-input');
+if (chatInput) {
+    chatInput.addEventListener('focus', () => {
+        setTimeout(() => {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 300); // Aguarda o teclado subir
+    });
 }
 
 // ===================================
