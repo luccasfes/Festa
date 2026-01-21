@@ -190,6 +190,15 @@ document.addEventListener('DOMContentLoaded', () => {
 function updateAdminButtonsVisibility() {
     const souAdmin = (window.isAdminLoggedIn === true);
     const estouSozinho = (onlineUserCount <= 1);
+    // Seleciona todos os botões "X" da fila
+    document.querySelectorAll('.remove-button').forEach(el => {
+        // O botão aparece se for Admin OU se estiver sozinho na sala
+        if (souAdmin || estouSozinho) {
+            el.style.display = 'block';
+        } else {
+            el.style.display = 'none';
+        }
+    });
     // Modo Festa é quando não sou admin E tem mais gente na sala
     const emModoFesta = (!souAdmin && !estouSozinho);
 
