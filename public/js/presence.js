@@ -1,386 +1,358 @@
 // ====================================================================
-// PRESENÇA, CONTROLE DE MODO E VISIBILIDADE (CORRIGIDO v2.8 - MASK SEMPRE VISÍVEL, SEEK BLOQUEADO NO FESTA)
+// SISTEMA DE PLAYER SINCRONIZADO — VERSÃO FINAL (CORRIGIDA)
 // ====================================================================
 
-// --- Variáveis Globais de Estado ---
+// --- ESTADO GLOBAL ---
 window.currentVideoState = null;
 window.broadcasterId = null;
 window.myUserId = null;
 window.roomId = null;
 
-// NOVO: Definições globais para compatibilidade com player.js
-window.isBroadcaster = false; // Será atualizada dinamicamente
-window.syncInterval = null;   // Para sincronização de tempo
+window.isBroadcaster = false;
+window.syncInterval = null;
 
-// VARIÁVEL CHAVE: Impede que o player recarregue se o modo não mudar
-let lastAppliedMode = null; // Valores possíveis: 'ADMIN', 'SOLO', 'FESTA'
+let lastAppliedMode = null;
 
-// --- 1. Lógica Central de Decisão (O CÉREBRO) ---
+// ====================================================================
+// 1. DETERMINAÇÃO DE MODO (ADMIN / SOLO / FESTA)
+// ====================================================================
+
 function determineAndApplyPlayerMode() {
-    let targetMode = '';
+    let targetMode = "";
 
-    // 1. Define qual deveria ser o modo atual
     if (window.isAdminLoggedIn === true) {
-        targetMode = 'ADMIN';
+        targetMode = "ADMIN";
     } else if (onlineUserCount <= 1) {
-        targetMode = 'SOLO';
+        targetMode = "SOLO";
     } else {
-        targetMode = 'FESTA';
+        targetMode = "FESTA";
     }
 
-    // 2. Atualiza botões (sempre necessário pois contagens de voto mudam)
-    if (typeof updateAdminButtonsVisibility === 'function') updateAdminButtonsVisibility();
+    if (typeof updateAdminButtonsVisibility === "function") {
+        updateAdminButtonsVisibility();
+    }
 
-    // 3. O PULO DO GATO: Se o modo é o mesmo, NÃO MEXE NO PLAYER
+    // Evita recriar o player se o modo não mudou
     if (targetMode === lastAppliedMode) {
-        // console.log(`Manter modo: ${targetMode} (Nova entrada ignorada pelo player)`);
-        return; 
+        // Se o player já existe e tem vídeo, não faz nada
+        if (typeof player !== "undefined" && player?.getVideoData) {
+            try {
+                const vid = player.getVideoData().video_id;
+                if (vid) return; 
+            } catch(e) {}
+        }
     }
 
-    console.log(`🔄 Mudança de Modo Detectada: ${lastAppliedMode || 'Início'} -> ${targetMode}`);
-    lastAppliedMode = targetMode; // Salva o novo modo
+    lastAppliedMode = targetMode;
 
-    // 4. Aplica as classes CSS no Body
-    if (targetMode === 'FESTA') {
-        document.body.classList.add('festa-mode');
-        document.body.classList.remove('solo-mode');
+    // Atualiza CSS do Body
+    if (targetMode === "FESTA") {
+        document.body.classList.add("festa-mode");
+        document.body.classList.remove("solo-mode");
     } else {
-        // Tanto Admin quanto Solo usam estilo "livre"
-        document.body.classList.add('solo-mode');
-        document.body.classList.remove('festa-mode');
+        document.body.classList.add("solo-mode");
+        document.body.classList.remove("festa-mode");
     }
 
-    // 5. Executa a troca de Player apropriada
-    if (targetMode === 'ADMIN') {
-        forceAdminPlayer(); 
-    } else if (targetMode === 'SOLO') {
+    console.log(`🔄 Aplicando modo: ${targetMode}`);
+
+    if (targetMode === "ADMIN") {
+        forceAdminPlayer();
+    } else if (targetMode === "SOLO") {
         forceSoloPlayer();
-    } else if (targetMode === 'FESTA') {
+    } else {
         forceNormalPlayer();
     }
 }
 
-// --- 2. Listeners do Firebase (Presença, Conexão e Estado do Vídeo) ---
+// ====================================================================
+// 2. LISTENERS FIREBASE (PRESENÇA, ESTADO DO VÍDEO)
+// ====================================================================
 
-// NOVO: Inicialize currentVideoRef (assumindo Firebase configurado)
-if (typeof firebase !== '' && window.roomId) {
-    window.currentVideoRef = firebase.database().ref('rooms/' + window.roomId + '/currentVideo');
-}
+// Listener do estado do vídeo (CORRIGIDO PARA playerState)
+if (typeof firebase !== "undefined" && window.roomId) {
+    // CORREÇÃO 1: Aponta para 'playerState', onde o player.js realmente salva os dados
+    window.currentVideoRef = firebase.database().ref(`rooms/${window.roomId}/playerState`);
 
-// NOVO: Listener para o estado global do vídeo (para sincronização)
-if (typeof currentVideoRef !== 'undefined') {
-    currentVideoRef.on('value', (snap) => {
-        window.currentVideoState = snap.val(); // Ex.: { videoId: 'abc123', currentTime: 45, state: 1 }
+    currentVideoRef.on("value", (snap) => {
+        window.currentVideoState = snap.val();
+        // Se chegou dado novo e o player não existe, tenta criar agora
+        if (!player && window.currentVideoState) {
+            determineAndApplyPlayerMode();
+        }
     });
 }
 
-// Monitora Entradas e Saídas (USANDO A VERSÃO FUNCIONANDO DA SUA MENSAGEM)
-if (typeof presenceRef !== 'undefined') {
-    presenceRef.on('value', (snap) => {
-        console.log('🔍 DEBUG: Listener de presenceRef executado!');
-        
-        const oldCount = onlineUserCount;
-        onlineUserCount = snap.numChildren();
-        
-        console.log(`🔍 DEBUG: Contador atualizado: ${oldCount} -> ${onlineUserCount}`);
-
-        // Atualiza UI de contagem
-        const userCountEl = document.getElementById('userCount');
-        if (userCountEl) {
-            userCountEl.textContent = onlineUserCount;
-            console.log(`🔍 DEBUG: UI atualizada para ${onlineUserCount}`);
-        }
-        const onlineCountEl = document.getElementById('onlineCount');
-        if (onlineCountEl) onlineCountEl.textContent = onlineUserCount;
-
-        // Determina Broadcaster (O mais antigo na sala)
+// Listener de presença
+if (typeof presenceRef !== "undefined") {
+    presenceRef.on("value", (snap) => {
         const users = snap.val();
+        onlineUserCount = snap.numChildren();
+
+        // UI
+        const elA = document.getElementById("userCount");
+        if (elA) elA.textContent = onlineUserCount;
+
+        const elB = document.getElementById("onlineCount");
+        if (elB) elB.textContent = onlineUserCount;
+
+        // Broadcaster
         if (users && onlineUserCount > 0) {
-            const userIds = Object.keys(users);
-            window.broadcasterId = userIds[0]; 
-            
-            if (window.myPresenceRef && window.myPresenceRef.key) {
+            const ids = Object.keys(users);
+            window.broadcasterId = ids[0];
+
+            if (window.myPresenceRef) {
                 window.myUserId = window.myPresenceRef.key;
             }
 
-            // NOVO: Atualiza isBroadcaster
-            window.isBroadcaster = (window.myUserId === window.broadcasterId);
-            console.log(`🔍 DEBUG: Broadcaster definido: ${window.broadcasterId}, Eu sou: ${window.isBroadcaster}`);
+            window.isBroadcaster = window.myUserId === window.broadcasterId;
         }
 
-        // Atualiza meta de votos
-        if (typeof updateVotesNeeded === 'function') updateVotesNeeded();
+        if (typeof updateVotesNeeded === "function") updateVotesNeeded();
 
-        // CHAMA O CÉREBRO para decidir o que fazer
         determineAndApplyPlayerMode();
     });
 }
 
-// Monitora Estado da Conexão (.info/connected)
-if (typeof connectedRef !== 'undefined') {
-    connectedRef.on('value', (snap) => {
+// Listener de conexão
+if (typeof connectedRef !== "undefined") {
+    connectedRef.on("value", (snap) => {
         if (snap.val() === true) {
-            let userName = sessionStorage.getItem('ytSessionUser') || 'Visitante';
+            const name = sessionStorage.getItem("ytSessionUser") || "Visitante";
+
             if (window.myPresenceRef) window.myPresenceRef.remove();
-            
+
             window.myPresenceRef = presenceRef.push();
             window.myPresenceRef.onDisconnect().remove();
-            
-            window.myPresenceRef.set({
-                name: userName,
-                joinedAt: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                if (window.roomRef) window.roomRef.child('emptySince').remove().catch(() => {});
-            }).catch(() => {}); 
+
+            window.myPresenceRef
+                .set({
+                    name,
+                    joinedAt: firebase.database.ServerValue.TIMESTAMP,
+                })
+                .then(() => {
+                    if (roomRef)
+                        roomRef.child("emptySince").remove().catch(() => {});
+                })
+                .catch(() => {});
         }
     });
 }
 
-// Monitora Dados da Sala (Nome, etc)
-if (typeof roomRef !== 'undefined') {
-    roomRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            const rn = document.getElementById('roomNameDisplay');
-            const rc = document.getElementById('roomCreatorDisplay');
-            if (rn) rn.textContent = data.roomName || 'Sala';
-            if (rc) rc.textContent = data.creatorName || 'Desconhecido';
-        }
+// Dados da sala (UI)
+if (typeof roomRef !== "undefined") {
+    roomRef.on("value", (snap) => {
+        const data = snap.val();
+        if (!data) return;
+        const rn = document.getElementById("roomNameDisplay");
+        const rc = document.getElementById("roomCreatorDisplay");
+        if (rn) rn.textContent = data.roomName || "Sala";
+        if (rc) rc.textContent = data.creatorName || "Desconhecido";
     });
 }
 
-// --- 3. O VIGIA (Admin Login/Logout) ---
-document.addEventListener('DOMContentLoaded', () => {
-    const adminBtn = document.getElementById('adminUnlockBtn');
-    
-    const aplicarEstadoAdmin = (isLogado) => {
-        window.isAdminLoggedIn = isLogado;
-        // Chama a lógica central para atualizar tudo
+// ====================================================================
+// 3. LOGIN ADMIN (VIGIA)
+// ====================================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+    const adminBtn = document.getElementById("adminUnlockBtn");
+
+    function setAdminState(isLogged) {
+        window.isAdminLoggedIn = isLogged;
         determineAndApplyPlayerMode();
-        // Atualiza a fila visualmente (checkboxes)
-        if (typeof renderQueue === 'function') renderQueue();
-    };
+    }
 
     if (adminBtn) {
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.attributeName === 'class') {
-                    if (adminBtn.classList.contains('admin-logged-in')) {
-                        console.log("🔑 Login Admin detectado.");
-                        aplicarEstadoAdmin(true);
-                    } else {
-                        console.log("🔒 Logout Admin detectado.");
-                        aplicarEstadoAdmin(false);
-                    }
+        const obs = new MutationObserver((mut) => {
+            mut.forEach((m) => {
+                if (m.attributeName === "class") {
+                    setAdminState(adminBtn.classList.contains("admin-logged-in"));
                 }
             });
         });
-        observer.observe(adminBtn, { attributes: true });
+        obs.observe(adminBtn, { attributes: true });
 
-        // Verificação Inicial (caso já carregue logado)
         setTimeout(() => {
-            if (adminBtn.classList.contains('admin-logged-in') || window.isAdminLoggedIn) {
-                aplicarEstadoAdmin(true);
+            if (adminBtn.classList.contains("admin-logged-in") || window.isAdminLoggedIn) {
+                setAdminState(true);
             }
-        }, 1000);
+        }, 500);
+    }
+    
+    // CORREÇÃO 2: Garante que a fila carregue assim que possível
+    if (typeof loadVideoQueue === 'function') {
+        loadVideoQueue(); 
     }
 });
 
-// --- 4. Visibilidade dos Botões ---
+// ====================================================================
+// 4. VISIBILIDADE DE BOTÕES
+// ====================================================================
+
 function updateAdminButtonsVisibility() {
-    const souAdmin = (window.isAdminLoggedIn === true);
-    const estouSozinho = (onlineUserCount <= 1);
-    // Seleciona todos os botões "X" da fila
-    document.querySelectorAll('.remove-button').forEach(el => {
-        // O botão aparece se for Admin OU se estiver sozinho na sala
-        if (souAdmin || estouSozinho) {
-            el.style.display = 'block';
-        } else {
-            el.style.display = 'none';
-        }
-    });
-    // Modo Festa é quando não sou admin E tem mais gente na sala
-    const emModoFesta = (!souAdmin && !estouSozinho);
+    const souAdmin = window.isAdminLoggedIn === true;
+    const sozinho = onlineUserCount <= 1;
+    const festa = !souAdmin && !sozinho;
 
-    // --- CONTROLE DO OVERLAY E MÁSCARA ---
-    const mask = document.getElementById('player-mask');
-    const overlay = document.querySelector('.player-overlay-controls');
-    
-    // MODIFICADO: Mask sempre visível para todos, mas só bloqueia no FESTA
+    document.querySelectorAll(".remove-button").forEach((el) => {
+        el.style.display = souAdmin || sozinho ? "block" : "none";
+    });
+
+    const mask = document.getElementById("player-mask");
+    const overlay = document.querySelector(".player-overlay-controls");
+
     if (mask) {
-        mask.style.display = 'block'; // Sempre visível
-        mask.style.pointerEvents = emModoFesta ? 'auto' : 'none'; // Bloqueia interações (incluindo hover) só no FESTA
-        mask.style.background = emModoFesta ? 'rgba(0,0,0,0.01)' : 'transparent'; // Fundo semi-transparente para capturar eventos no FESTA
+        mask.style.display = "block";
+        mask.style.pointerEvents = festa ? "auto" : "none";
+        mask.style.background = festa ? "rgba(0,0,0,0.01)" : "transparent";
     }
-    if (overlay) overlay.style.display = emModoFesta ? 'flex' : 'none';
 
-    // --- CONTROLE DE BOTÕES DE ADMIN ---
-    const elementsToShowAdminOnly = ['#bulkRemoveBtn', '#clearChatBtn', '#panelBtn'];
-    elementsToShowAdminOnly.forEach(selector => {
-        const el = document.querySelector(selector);
-        if (el) el.style.display = souAdmin ? 'inline-flex' : 'none';
+    if (overlay) overlay.style.display = festa ? "flex" : "none";
+
+    const adminOnly = ["#bulkRemoveBtn", "#clearChatBtn", "#panelBtn"];
+    adminOnly.forEach((sel) => {
+        const el = document.querySelector(sel);
+        if (el) el.style.display = souAdmin ? "inline-flex" : "none";
     });
 
-    const elementsToShowAdminOrSolo = ['#btn-auto-sugestao', '.clear-queue-button'];
-    elementsToShowAdminOrSolo.forEach(selector => {
-        const el = document.querySelector(selector);
-        if (el) el.style.display = (souAdmin || estouSozinho) ? 'inline-flex' : 'none';
+    const adminOrSolo = ["#btn-auto-sugestao", ".clear-queue-button"];
+    adminOrSolo.forEach((sel) => {
+        const el = document.querySelector(sel);
+        if (el) el.style.display = souAdmin || sozinho ? "inline-flex" : "none";
     });
 
-    // Texto do botão de Pular (Diferencia Solo de Festa)
-    const skipText = document.getElementById('skipVoteBtnText');
-    const skipBtn = document.getElementById('skipVoteBtn');
+    // Atualiza texto do botão Pular
+    const skipText = document.getElementById("skipVoteBtnText");
+    const skipBtn = document.getElementById("skipVoteBtn");
     if (skipText && skipBtn) {
-        if (souAdmin) {
-            skipText.textContent = 'Pular (Admin)';
-        } else if (estouSozinho) {
-            skipText.textContent = 'Pular (Solo)';
-        } else {
-            skipText.textContent = skipBtn.classList.contains('voted') ? 'Voto Registrado' : 'Votar para Pular';
-        }
+        if (souAdmin) skipText.textContent = "Pular (Admin)";
+        else if (sozinho) skipText.textContent = "Pular (Solo)";
+        else skipText.textContent = skipBtn.classList.contains("voted") ? "Voto Registrado" : "Votar para Pular";
     }
 }
 
-// --- 5. Funções de Forçar Player (ADMIN, SOLO, FESTA) ---
+// ====================================================================
+// 5. MODO DO PLAYER + SINCRONIZAÇÃO
+// ====================================================================
 
-// MODIFICADO: Helper para pegar vídeo atual (prioriza estado global para sincronização)
 function getCurrentVideoIdAndState() {
-    // NOVO: Prioriza estado global (do broadcaster) para sincronização de novos usuários
+    // 1. Prioridade: Estado Global (Firebase) - Essencial para Sincronia
     if (window.currentVideoState && window.currentVideoState.videoId) {
         return {
             videoId: window.currentVideoState.videoId,
-            currentTime: window.currentVideoState.currentTime || 0
+            currentTime: window.currentVideoState.currentTime || 0,
         };
     }
 
-    // Fallback: Tenta pegar do player local
-    let vidId = null;
-    let time = 0;
-    if (typeof player !== 'undefined' && player && typeof player.getVideoData === 'function') {
+    // 2. Fallback: Player atual (se existir)
+    if (typeof player !== "undefined" && player?.getVideoData) {
         try {
-            vidId = player.getVideoData().video_id;
-            time = player.getCurrentTime();
-        } catch (e) {}
+            return {
+                videoId: player.getVideoData().video_id,
+                currentTime: player.getCurrentTime(),
+            };
+        } catch {}
     }
 
-    // Se falhar, tenta pegar da fila
-    if (!vidId && typeof videoQueue !== 'undefined' && videoQueue.length > 0) {
-        try {
-            let url = videoQueue[0].videoUrl;
-            let match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/)([^#&?]*))/);
-            if (match) vidId = match[1];
-        } catch (e) {}
+    // 3. Fallback: Fila Local
+    if (Array.isArray(videoQueue) && videoQueue.length > 0) {
+        const url = videoQueue[0].videoUrl;
+        const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/)([^#&?]*))/);
+        if (match) {
+            return { videoId: match[1], currentTime: 0 };
+        }
     }
-    return { videoId: vidId, currentTime: time };
+
+    return { videoId: null, currentTime: 0 };
 }
 
+// --- MODOS ---
 function forceAdminPlayer() {
     if (!window.isAdminLoggedIn) return;
-    console.log("👑 Ativando Player ADMIN (Com Controles)");
-    recreatePlayerSafe(1); // 1 = Com controles
+    recreatePlayerSafe(1);
 }
 
 function forceSoloPlayer() {
     if (window.isAdminLoggedIn || onlineUserCount > 1) return;
-    console.log("👤 Ativando Player SOLO (Com Controles - Liberado como Admin)");
-    recreatePlayerSafe(1); // 1 = Com controles (já garante liberação)
+    recreatePlayerSafe(1);
 }
 
 function forceNormalPlayer() {
     if (window.isAdminLoggedIn || onlineUserCount <= 1) return;
-    console.log("🎉 Ativando Player FESTA (Sem Controles - Sincronizado)");
-    recreatePlayerSafe(0); // 0 = Sem controles
+    recreatePlayerSafe(0);
 }
 
-// Função unificada para recriar o player
+// ====================================================================
+// 6. RECRIAÇÃO SEGURA DO PLAYER
+// ====================================================================
+
 function recreatePlayerSafe(controlsValue) {
     const data = getCurrentVideoIdAndState();
-    
-    // 1. Atualiza o Estado Global
-    window.currentPlayerMode = (controlsValue === 1) ? 'SOLO' : 'FESTA';
 
-    // 2. Tenta encontrar os elementos visuais
-    const mask = document.getElementById('player-mask');
-    const overlay = document.querySelector('.player-overlay-controls');
-    
-    // 3. Aplica a visibilidade (garante que apareçam/sumam conforme modo)
-    // MODIFICADO: Mask sempre display block, pointer-events e background ajustados em updateAdminButtonsVisibility
-    if (mask) {
-        mask.style.zIndex = "10"; // Garante que fique na frente do vídeo
-    }
-
-    if (overlay) {
-        overlay.style.zIndex = "11"; // Garante que os botões fiquem clicáveis
-    }
-
-    if (typeof updateAdminButtonsVisibility === 'function') updateAdminButtonsVisibility();
-
-    // 4. Proteção contra fila vazia
     if (!data.videoId) {
-        console.warn("⚠️ UI atualizada para " + window.currentPlayerMode + ", mas player não recriado: Sem vídeo.");
+        // Se não achou vídeo, tenta forçar o carregamento da fila se ela estiver vazia
+        if ((!videoQueue || videoQueue.length === 0) && typeof loadVideoQueue === 'function') {
+            loadVideoQueue();
+        }
+        console.warn("⚠️ Player não recriado: Nenhum vídeo encontrado.");
         return;
     }
 
-    // 5. RECONSTRUÇÃO SEGURA (O PONTO CHAVE)
-    const oldPlayerDiv = document.getElementById('videoPlayer');
-    if (oldPlayerDiv) {
-        // Em vez de limpar o container.innerHTML, criamos um novo elemento e substituímos o antigo
-        const newPlayerDiv = document.createElement('div');
-        newPlayerDiv.id = 'videoPlayer';
-        oldPlayerDiv.replaceWith(newPlayerDiv);
+    const container = document.getElementById("videoPlayer");
+
+    if (container) {
+        const novo = document.createElement("div");
+        novo.id = "videoPlayer";
+        container.replaceWith(novo);
     }
 
-    // 6. Recria o Player do YouTube
     setTimeout(() => {
-        if (typeof YT === 'undefined' || !YT.Player) return;
-        
-        console.log(`🎬 [${window.currentPlayerMode}] Renderizando vídeo: ${data.videoId}`);
+        if (!YT?.Player) return;
 
-        player = new YT.Player('videoPlayer', {
-            height: '100%',
-            width: '100%',
+        console.log(`🎬 Recriando Player [${controlsValue === 1 ? 'COM' : 'SEM'} Controles]. Video: ${data.videoId}`);
+
+        player = new YT.Player("videoPlayer", {
+            height: "100%",
+            width: "100%",
             videoId: data.videoId,
             playerVars: {
-                'autoplay': 1,
-                'controls': controlsValue,
-                'disablekb': (controlsValue === 0) ? 1 : 0,
-                'fs': 1,
-                'modestbranding': 1,
-                'rel': 0,
-                'start': Math.max(0, Math.floor(data.currentTime))
+                autoplay: 1,
+                controls: controlsValue,
+                disablekb: controlsValue === 0 ? 1 : 0,
+                rel: 0,
+                fs: 1,
+                start: Math.floor(data.currentTime),
             },
             events: {
-                'onReady': (event) => {
-                    event.target.playVideo();
+                onReady: (ev) => {
+                    // CORREÇÃO 3: Garante o carregamento da fila quando o player volta
+                    if (typeof loadVideoQueue === 'function') loadVideoQueue();
+                    
+                    ev.target.playVideo();
                     if (controlsValue === 0) {
-                        const iframe = event.target.getIframe();
-                        if (iframe) iframe.style.pointerEvents = 'none'; // Impede cliques no iframe
+                        const iframe = ev.target.getIframe();
+                        if (iframe) iframe.style.pointerEvents = "none";
                     }
                 },
-                'onStateChange': (event) => {
-                    if (typeof onPlayerStateChange === 'function') onPlayerStateChange(event);
-                }
-            }
+                onStateChange: (ev) => {
+                    if (typeof onPlayerStateChange === "function") {
+                        onPlayerStateChange(ev);
+                    }
+                },
+            },
         });
     }, 150);
 }
 
-function updateRoomActivity() {
-    if (window.isAdminLoggedIn && window.roomRef) {
-        window.roomRef.update({ lastActivity: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
-    }
-}
-
-// FORÇA ATUALIZAÇÃO INICIAL DO CONTADOR (DEBUG)
-document.addEventListener('DOMContentLoaded', () => {
+// Inicialização de segurança
+document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
-        console.log(`🔍 DEBUG: Contador inicial: ${onlineUserCount}`);
-        if (typeof presenceRef !== 'undefined') {
-            presenceRef.once('value', (snap) => {
+        if (typeof presenceRef !== "undefined") {
+            presenceRef.once("value", (snap) => {
                 onlineUserCount = snap.numChildren();
-                console.log(`🔍 DEBUG: Contador forçado para ${onlineUserCount}`);
                 determineAndApplyPlayerMode();
             });
         }
-    }, 2000); // Delay para garantir que Firebase esteja carregado
+    }, 1000);
 });
