@@ -2463,9 +2463,11 @@ body:not(.non-admin) .player-overlay-controls {
     border: 1px solid var(--danger-color);
     color: var(--danger-color);
     transition: var(--transition);
-    margin-left: auto;
+    
+    /* Limpar chat do lado direito */
+    margin-right: auto; /* Empurra o que estiver à direita para longe */
+    margin-left: 0;     /* Garante que não haja espaço na esquerda */
 }
-
 #clearChatBtn:hover {
     background: var(--danger-color);
     color: white;
