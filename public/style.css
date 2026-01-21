@@ -3842,5 +3842,22 @@ emoji-picker {
 }
 
 /* ==========================================================================
-   SEÇÃO DE CHAT
+  Para não mostrar o mais vídeos do YT
    ========================================================================== */
+/* Container que segura o  mais vídeo do YouTube */
+#video-container-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Isso vai esconder o que vazar */
+}
+
+/* No modo festa, aplicamos um zoom leve para "expulsar" as bordas da tela */
+body.festa-mode iframe#videoPlayer {
+    width: 105% !important;   /* Aumenta a largura */
+    height: 110% !important;  /* Aumenta a altura */
+    left: -2.5%;             /* Centraliza o corte lateral */
+    top: -5%;                /* Esconde o topo onde aparecem os títulos */
+    position: absolute;
+    pointer-events: none;    /* Garante que ninguém clique em nada */
+}
