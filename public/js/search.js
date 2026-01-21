@@ -224,35 +224,62 @@ function detectarGeneroAtual() {
 function gerarQuery() {
     const ano = new Date().getFullYear();
     if(sugestaoTipoSelecionado === 'tendencia') return `musicas mais tocadas ${ano} brasil`;
+    
     if(sugestaoTipoSelecionado === 'similar') {
-        const t = player?.getVideoData?.()?.title || '';
-        return t ? `mix ${t}` : `hits ${ano}`;
+        const fullTitle = player?.getVideoData?.()?.title || '';
+        if (!fullTitle) return `hits ${ano}`;
+
+        // Tenta extrair o artista (geralmente antes do " - " ou " | ")
+        const artista = fullTitle.split(/[-|]/)[0].trim();
+        
+        // Estratégia: buscar "rádio" ou "músicas parecidas" 
+        // Adicionamos "-[título original]" para tentar excluir a música atual da busca
+        const tituloLimpo = fullTitle.replace(/official video|clipe oficial|video/gi, '').trim();
+        return `${artista} radio musicas similares -"${tituloLimpo}"`;
     }
+    
     return `${sugestaoGeneroSelecionado} hits ${ano}`;
 }
 
 // CORREÇÃO AQUI: Aceita um parâmetro 'force' para rodar mesmo desligado
 async function rodarCicloAutoDJ(force = false) {
-    if(!force && !autoSugestaoAtiva) return; // Se não for forçado e estiver off, sai.
-    
+    if(!force && !autoSugestaoAtiva) return;
     if(typeof videoQueue !== 'undefined' && videoQueue.length >= autoSugestaoCount && !force) return;
-    
+
     try {
-        const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(gerarQuery())}&maxResults=20`);
+        const query = gerarQuery();
+        const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}&maxResults=20`);
         if(!res.ok) return;
         const json = await res.json();
-        
         if(!json.items) return;
-        
-        const vid = json.items.find(i => typeof playedVideoHistory !== 'undefined' && !playedVideoHistory.has(i.id.videoId));
-        
-        if(vid) {
+
+        const currentTitle = (player?.getVideoData?.()?.title || '').toLowerCase();
+
+        // Procura um vídeo que:
+        // 1. Não esteja no histórico de IDs
+        // 2. O título não contenha as palavras principais da música atual (para evitar covers/reposts)
+        const vid = json.items.find(i => {
+            const newTitle = i.snippet.title.toLowerCase();
+            const idNaoRepetido = typeof playedVideoHistory !== 'undefined' && !playedVideoHistory.has(i.id.videoId);
+            
+            // Filtro de similaridade de texto simples:
+            // Se o título atual tem "Flowers" e o novo também tem, ele ignora.
+            const palavrasChave = currentTitle.split(' ').filter(w => w.length > 4); // pega palavras longas
+            const eMesmaMusica = palavrasChave.some(p => newTitle.includes(p));
+
+            return idNaoRepetido && !eMesmaMusica;
+        });
+
+        // Se o filtro rigoroso não achar nada, pegamos o primeiro do histórico mesmo (fallback)
+        const finalVid = vid || json.items.find(i => typeof playedVideoHistory !== 'undefined' && !playedVideoHistory.has(i.id.videoId));
+
+        if(finalVid) {
             await videoQueueRef.push({
                 phone: '🤖 DJ Flow',
-                videoUrl: `https://www.youtube.com/watch?v=${vid.id.videoId}`,
-                title: vid.snippet.title
+                videoUrl: `https://www.youtube.com/watch?v=${finalVid.id.videoId}`,
+                title: finalVid.snippet.title
             });
-            if(typeof playedVideoHistory !== 'undefined') playedVideoHistory.add(vid.id.videoId);
+            if(typeof playedVideoHistory !== 'undefined') playedVideoHistory.add(finalVid.id.videoId);
         }
     } catch(e){ console.error("Erro AutoDJ:", e); }
 }
