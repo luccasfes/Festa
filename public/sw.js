@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flowlink-cache-v2'; // 👈 troque a versão sempre que mudar algo grande
+const CACHE_NAME = 'flowlink-cache-v2'; 
 
 const FILES_TO_CACHE = [
   '/',

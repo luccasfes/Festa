@@ -128,31 +128,32 @@ window.checkRoomProtection = function(roomId) {
             const room = snapshot.val();
             
             if (!room) {
-                alert("Sala não encontrada! Redirecionando para criar sala...");
+                alert("Sala não encontrada!");
                 window.location.href = "create.html";
                 return;
             }
 
-            // Atualiza Títulos
-            const nameDisplay = document.getElementById('roomNameDisplay');
-            const creatorDisplay = document.getElementById('roomCreatorDisplay');
-            if (nameDisplay) nameDisplay.textContent = room.roomName || "Sala";
-            if (creatorDisplay) creatorDisplay.textContent = room.creatorName || "?";
+            // Atualiza UI básica
+            if (document.getElementById('roomNameDisplay')) 
+                document.getElementById('roomNameDisplay').textContent = room.roomName || "Sala";
 
-            // VERIFICA SE É PRIVADA
             const isPrivate = room.isPrivate === true || room.isPrivate === "true";
+            const storedHash = room.password || room.passwordHash;
 
-            // === CORREÇÃO CRÍTICA ===
-            // No create.html você salva como 'password', mas antes buscávamos 'passwordHash'.
-            // Agora pegamos o valor correto.
-            const storedHash = room.password || room.passwordHash; 
-
+            // === LÓGICA DE BYPASS PARA ADMIN ===
+            // Se a sala for privada, verifica se o usuário já é Admin
             if (isPrivate && storedHash) {
-                console.log("🔒 Sala privada detectada. Bloqueando tela.");
-                window.currentRoomPasswordHash = storedHash;
-                lockScreen();
+                const currentUser = firebase.auth().currentUser;
+                
+                if (window.isAdminLoggedIn || currentUser) {
+                    console.log("👑 Admin detectado: Acesso liberado sem senha.");
+                    unlockScreen(); 
+                } else {
+                    console.log("🔒 Sala privada: Bloqueando para usuário comum.");
+                    window.currentRoomPasswordHash = storedHash;
+                    lockScreen();
+                }
             } else {
-                console.log("🔓 Sala pública. Liberando acesso.");
                 unlockScreen();
             }
             
