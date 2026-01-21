@@ -317,13 +317,15 @@ function recreatePlayerSafe(controlsValue) {
             width: "100%",
             videoId: data.videoId,
             playerVars: {
-                autoplay: 1,
-                controls: controlsValue,
-                disablekb: controlsValue === 0 ? 1 : 0,
-                rel: 0,
-                fs: 1,
-                start: Math.floor(data.currentTime),
-            },
+    autoplay: 1,
+    controls: controlsValue,
+    disablekb: controlsValue === 0 ? 1 : 0,
+    rel: 0,
+    fs: 1,
+    iv_load_policy: 3, // Esconde anotações/cards de inscrição
+    modestbranding: 1, // Tenta esconder o logo do YouTube na barra
+    start: Math.floor(data.currentTime),
+},
             events: {
                 onReady: (ev) => {
                     // CORREÇÃO 3: Garante o carregamento da fila quando o player volta
