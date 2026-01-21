@@ -1,5 +1,5 @@
 // ====================================================================
-// PRESENÇA, CONTROLE DE MODO E VISIBILIDADE (CORRIGIDO v2.7 - USANDO CONTADOR DA VERSÃO FUNCIONANDO)
+// PRESENÇA, CONTROLE DE MODO E VISIBILIDADE (CORRIGIDO v2.8 - MASK SEMPRE VISÍVEL, SEEK BLOQUEADO NO FESTA)
 // ====================================================================
 
 // --- Variáveis Globais de Estado ---
@@ -63,7 +63,7 @@ function determineAndApplyPlayerMode() {
 // --- 2. Listeners do Firebase (Presença, Conexão e Estado do Vídeo) ---
 
 // NOVO: Inicialize currentVideoRef (assumindo Firebase configurado)
-if (typeof firebase !== 'undefined' && window.roomId) {
+if (typeof firebase !== '' && window.roomId) {
     window.currentVideoRef = firebase.database().ref('rooms/' + window.roomId + '/currentVideo');
 }
 
@@ -206,7 +206,12 @@ function updateAdminButtonsVisibility() {
     const mask = document.getElementById('player-mask');
     const overlay = document.querySelector('.player-overlay-controls');
     
-    if (mask) mask.style.display = emModoFesta ? 'block' : 'none';
+    // MODIFICADO: Mask sempre visível para todos, mas só bloqueia no FESTA
+    if (mask) {
+        mask.style.display = 'block'; // Sempre visível
+        mask.style.pointerEvents = emModoFesta ? 'auto' : 'none'; // Bloqueia interações (incluindo hover) só no FESTA
+        mask.style.background = emModoFesta ? 'rgba(0,0,0,0.01)' : 'transparent'; // Fundo semi-transparente para capturar eventos no FESTA
+    }
     if (overlay) overlay.style.display = emModoFesta ? 'flex' : 'none';
 
     // --- CONTROLE DE BOTÕES DE ADMIN ---
@@ -298,16 +303,13 @@ function recreatePlayerSafe(controlsValue) {
     const mask = document.getElementById('player-mask');
     const overlay = document.querySelector('.player-overlay-controls');
     
-    // 3. Aplica a visibilidade (isso garante que apareçam/sumam)
+    // 3. Aplica a visibilidade (garante que apareçam/sumam conforme modo)
+    // MODIFICADO: Mask sempre display block, pointer-events e background ajustados em updateAdminButtonsVisibility
     if (mask) {
-        mask.style.display = (controlsValue === 0) ? 'block' : 'none'; 
-        if (controlsValue === 0) {
-            mask.style.zIndex = "10"; // Garante que fique na frente do vídeo
-        }
+        mask.style.zIndex = "10"; // Garante que fique na frente do vídeo
     }
 
     if (overlay) {
-        overlay.style.display = (controlsValue === 0) ? 'flex' : 'none';
         overlay.style.zIndex = "11"; // Garante que os botões fiquem clicáveis
     }
 
@@ -352,7 +354,7 @@ function recreatePlayerSafe(controlsValue) {
                     event.target.playVideo();
                     if (controlsValue === 0) {
                         const iframe = event.target.getIframe();
-                        if (iframe) iframe.style.pointerEvents = 'none';
+                        if (iframe) iframe.style.pointerEvents = 'none'; // Impede cliques no iframe
                     }
                 },
                 'onStateChange': (event) => {
