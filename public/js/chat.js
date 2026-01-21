@@ -79,9 +79,8 @@ chatMessagesRef.orderByChild('timestamp').limitToLast(50).on('value', snapshot =
 // Cria o HTML da mensagem
 function createMessageElement(key, msg) {
     const isMine = msg.userId === sessionStorage.getItem('userVoteId');
-    
-    // Adiciona a classe 'admin-king'
     const div = document.createElement('div');
+    
     div.className = `chat-message ${isMine ? 'mine' : ''} ${msg.userIsAdmin ? 'admin-king' : ''}`;
     div.id = 'msg-' + key;
 
@@ -89,50 +88,40 @@ function createMessageElement(key, msg) {
     const safeText = escapeHtml(msg.text);
     const safeTextForJs = safeText.replace(/'/g, "\\'").replace(/"/g, '&quot;');
     const safeUserForJs = safeUser.replace(/'/g, "\\'");
-
     const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     
-    // CORREÇÃO DE COR: Se for Admin, usa PRETO (#000) para destacar no fundo Dourado
     const color = msg.userIsAdmin ? '#000000' : getUserColor(safeUser);
+    const crownHtml = msg.userIsAdmin ? '<i class="fas fa-crown" style="margin-right:8px; color:#000;"></i>' : '';
 
-    // CORREÇÃO DA COROA: Coroa escura para ver no fundo claro
-    const crownHtml = msg.userIsAdmin ? '<i class="fas fa-crown" style="margin-right:5px; color:#3e2723; font-size: 0.9em;"></i>' : '';
-
-    // HTML da Resposta
     let replyHtml = '';
     if(msg.replyToId) {
         replyHtml = `<div class="chat-reply-block"><small>${escapeHtml(msg.replyToUser)}</small><div>${escapeHtml(msg.replyToText)}</div></div>`;
     }
 
-    const editedHtml = msg.isEdited ? '<span class="edited-marker" style="font-size:0.7em; opacity:0.7; font-style:italic; margin-left:5px;">(editado)</span>' : '';
-
-    // Botões
-    let actionsHtml = `
-        <button class="chat-reply-btn" title="Responder" onclick="setReplyContext('${key}', '${safeUserForJs}', '${safeTextForJs}')">
-            <i class="fas fa-reply"></i>
-        </button>
-    `;
-    if (isMine) {
-        actionsHtml += `
-            <button class="chat-edit-btn" title="Editar" onclick="startEditing('${key}', '${safeTextForJs}')">
-                <i class="fas fa-pen"></i>
-            </button>
-        `;
-    }
-
     div.innerHTML = `
         ${replyHtml}
-        <div class="chat-header">
-            <span class="chat-user" style="color:${color}; font-weight: ${msg.userIsAdmin ? 'bold' : 'normal'}">
+        <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="chat-user" style="color:${color} !important; font-weight: bold;">
                 ${crownHtml}${safeUser}
             </span>
-            <div class="chat-message-actions" style="display:flex; gap:5px;">
-                ${actionsHtml}
+            <div class="chat-message-actions">
+                <button class="chat-reply-btn" onclick="setReplyContext('${key}', '${safeUserForJs}', '${safeTextForJs}')">
+                    <i class="fas fa-reply"></i>
+                </button>
             </div>
         </div>
-        <div class="chat-body" id="body-${key}" style="color: ${msg.userIsAdmin ? '#2d1a0e' : 'inherit'}">${safeText}${editedHtml}</div>
-        <div class="chat-time" style="color: ${msg.userIsAdmin ? '#5d4037' : 'inherit'}">${time}</div>
+        <div class="chat-body" id="body-${key}" style="
+            overflow-wrap: anywhere; 
+            word-break: break-word; 
+            white-space: normal;
+            color: ${msg.userIsAdmin ? '#2d1a0e' : 'inherit'} !important;">
+            ${safeText}
+        </div>
+        <div class="chat-time" style="text-align: right; font-size: 0.7rem; opacity: 0.8;">
+            ${time}
+        </div>
     `;
+    
     return div;
 }
 

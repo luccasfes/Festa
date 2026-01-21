@@ -1614,7 +1614,7 @@ body:not(.non-admin) .player-overlay-controls {
 }
 
 .chat-messages-list {
-    height: 400px;
+    height: 450px;
     /* Aumentei a altura um pouco */
     overflow-y: auto;
     background: var(--chat-bg-color);
@@ -1961,8 +1961,10 @@ body:not(.non-admin) .player-overlay-controls {
 
 /* 1. Botão de Resposta (que aparece na bolha) */
 .chat-message {
-    position: relative;
-    /* Necessário para o botão */
+    max-width: 80%; /* Aumentado um pouco para melhor uso de espaço */
+    word-wrap: break-word;
+    overflow-wrap: anywhere; /* Força quebra de links longos ou emails */
+    word-break: break-word;
 }
 
 .chat-reply-btn {
@@ -3565,33 +3567,102 @@ emoji-picker {
 
 /* === VISUAL DO do chat para o admin=== */
 
-/* Aplica o estilo no BALÃO INTEIRO (não só no texto) */
+/* =========================================
+   ESTILO SUPREMO: ADMIN DOURADO (VISÍVEL PARA TODOS)
+   ========================================= */
+
+/* O Balão de Mensagem */
 .chat-message.admin-king {
-    background: linear-gradient(135deg, #ffd700 0%, #ffc107 100%) !important; /* Amarelo Ouro */
-    border: 2px solid #fff9c4 !important; /* Borda clara */
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4) !important; /* Brilho Dourado */
-    color: #3e2723 !important; /* Texto Marrom Escuro (Contraste) */
+    position: relative;
+    background: linear-gradient(135deg, #FFD700, #FFEB7A);
+    border: 2px solid #d4af37;
+    box-shadow: 
+        0 0 10px rgba(212,175,55,0.4),
+        0 0 25px rgba(212,175,55,0.2);
+    overflow: hidden;
+    color: #2C1E00;
 }
 
-/* Garante que o texto lá dentro fique escuro */
+
+/* Garante que o texto dentro do balão seja legível */
+.chat-message.admin-king .chat-text, 
 .chat-message.admin-king .chat-body,
-.chat-message.admin-king .chat-time,
-.chat-message.admin-king .chat-user {
-    color: #3e2723 !important; 
+.chat-message.admin-king .chat-time {
+    color: #2C1E00 !important;
     text-shadow: none !important;
+    opacity: 1 !important;
 }
 
-/* Estilo especial se a mensagem for MINHA (Alinhada à direita) */
-.chat-message.mine.admin-king {
-    background: linear-gradient(135deg, #ffc107 0%, #ffd700 100%) !important;
-    border-color: #ffe082 !important;
+/* O Nome do Usuário no topo do balão */
+.chat-message.admin-king .chat-user {
+    color: #000000 !important;
+    font-weight: 900 !important;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 /* Animação da Coroa */
 .chat-message.admin-king .fa-crown {
-    display: inline-block;
-    animation: floatCrown 3s ease-in-out infinite;
-    color: #3e2723 !important; /* Coroa escura */
+    color: #000000 !important;
+    filter: drop-shadow(0 0 2px rgba(255,255,255,0.8));
+    animation: crownWobble 2s infinite ease-in-out;
+}
+
+@keyframes crownWobble {
+    0%, 100% { transform: rotate(-5deg) scale(1.1); }
+    50% { transform: rotate(5deg) scale(1.2); }
+}
+
+/* Efeito de brilho passando pelo balão (opcional, mas fica lindo) */
+.chat-message.admin-king::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(
+        120deg,
+        transparent 20%,
+        rgba(255,215,100,0.8),
+        transparent 80%
+    );
+    opacity: 0.6;
+    animation: goldGlow 3s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.chat-message.admin-king::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: inherit;
+    background: radial-gradient(circle, rgba(255,215,100,0.4), transparent 70%);
+    filter: blur(12px);
+    opacity: 0.6;
+    animation: goldPulse 2.5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .chat-section {
+        width: 100%;
+        margin-top: 20px;
+        padding: 0;
+    }
+}
+
+
+@keyframes goldGlow {
+    0%   { transform: translateX(-100%); }
+    50%  { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+
+@keyframes goldPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
 }
 
 @keyframes floatCrown {
