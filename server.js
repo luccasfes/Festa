@@ -1,9 +1,9 @@
-// server.js (Versão Final com Spotify + YouTube)
-require('dotenv').config(); // Carrega as variáveis do .env
+// server.js 
+require('dotenv').config(); 
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const axios = require('axios'); // Importa o axios para fazer requisições
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,21 +15,63 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ==================================================================
-// --- INTEGRAÇÃO SPOTIFY (GENRE DETECTION) ---
+// --- CONFIGURAÇÃO DE CHAVES YOUTUBE (ROTAÇÃO) ---
+// ==================================================================
+
+// Lista de chaves carregadas do .env
+const YOUTUBE_KEYS = [
+    process.env.YOUTUBE_API_KEY,
+    process.env.YOUTUBE_API_KEY_2
+].filter(key => !!key);
+
+/**
+ * Função auxiliar que tenta fazer a requisição ao YouTube.
+ * Se uma chave retornar erro de cota (403), ela tenta automaticamente a próxima.
+ */
+async function fetchYoutubeWithFallback(url, params) {
+    let lastError = null;
+
+    for (let i = 0; i < YOUTUBE_KEYS.length; i++) {
+        const currentKey = YOUTUBE_KEYS[i];
+        
+        try {
+            const response = await axios.get(url, {
+                params: { ...params, key: currentKey },
+                headers: {
+                    'Referer': 'http://localhost:3000',
+                    'Origin': 'http://localhost:3000'
+                }
+            });
+            return response.data;
+
+        } catch (error) {
+            lastError = error;
+            // Se o erro for 403 (Cota Excedida), tenta a próxima chave da lista
+            if (error.response && error.response.status === 403) {
+                console.warn(`⚠️ Chave YouTube ${i + 1} esgotada. Tentando backup...`);
+                continue; 
+            } else {
+                throw error;
+            }
+        }
+    }
+    throw lastError;
+}
+
+// ==================================================================
+// --- INTEGRAÇÃO SPOTIFY ---
 // ==================================================================
 let spotifyToken = null;
 let tokenExpiration = 0;
 
 async function getSpotifyToken() {
     const now = Date.now();
-    // Se já temos um token válido, usa ele
     if (spotifyToken && now < tokenExpiration) return spotifyToken;
 
     try {
         const params = new URLSearchParams();
         params.append('grant_type', 'client_credentials');
 
-        // Pede um novo token para o Spotify
         const response = await axios.post('https://accounts.spotify.com/api/token', params, {
             headers: {
                 'Authorization': 'Basic ' + Buffer.from(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64'),
@@ -38,16 +80,14 @@ async function getSpotifyToken() {
         });
 
         spotifyToken = response.data.access_token;
-        // Define expiração (diminuímos 60s para segurança)
         tokenExpiration = now + ((response.data.expires_in - 60) * 1000); 
         return spotifyToken;
     } catch (error) {
-        console.error("Erro ao pegar token Spotify:", error.response ? error.response.data : error.message);
+        console.error("Erro ao autenticar no Spotify:", error.message);
         return null;
     }
 }
 
-// Rota que o seu front-end chama para descobrir o gênero
 app.get('/api/spotify-genre', async (req, res) => {
     try {
         const query = req.query.q;
@@ -56,7 +96,7 @@ app.get('/api/spotify-genre', async (req, res) => {
         const token = await getSpotifyToken();
         if (!token) return res.status(500).json({ error: 'Falha na autenticação Spotify' });
 
-        // 1. Busca a música (Track)
+        // 1. Busca a música
         const searchRes = await axios.get('https://api.spotify.com/v1/search', {
             params: { q: query, type: 'track', limit: 1 },
             headers: { 'Authorization': `Bearer ${token}` }
@@ -67,19 +107,17 @@ app.get('/api/spotify-genre', async (req, res) => {
         }
 
         const track = searchRes.data.tracks.items[0];
-        // O gênero fica no Artista, não na música, então pegamos o ID do artista
         const artistId = track.artists[0].id; 
 
-        // 2. Busca o Artista para pegar os gêneros
+        // 2. Busca o Artista para obter os gêneros
         const artistRes = await axios.get(`https://api.spotify.com/v1/artists/${artistId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        // Retorna tudo para o front-end
         res.json({
             track: track.name,
             artist: track.artists[0].name,
-            genres: artistRes.data.genres // Ex: ['sertanejo', 'sertanejo universitario']
+            genres: artistRes.data.genres 
         });
 
     } catch (error) {
@@ -89,89 +127,54 @@ app.get('/api/spotify-genre', async (req, res) => {
 });
 
 // ==================================================================
-// --- ROTAS YOUTUBE (ORIGINAIS) ---
+// --- ROTAS YOUTUBE (COM ROTAÇÃO) ---
 // ==================================================================
 
-// --- ROTA 1: BUSCA NO YOUTUBE ---
 app.get('/api/youtube-search', async (req, res) => {
     try {
         const query = req.query.q;
-        
-        if (!query) {
-            return res.status(400).json({ error: 'Termo de busca é obrigatório' });
-        }
+        if (!query) return res.status(400).json({ error: 'Termo de busca é obrigatório' });
 
-        const apiKey = process.env.YOUTUBE_API_KEY; 
-        
-        if (!apiKey) {
-            console.error('ERRO: API Key não encontrada no .env');
-            return res.status(500).json({ error: 'Erro de configuração no servidor' });
-        }
-
-        const response = await axios.get(`https://www.googleapis.com/youtube/v3/search`, {
-            params: {
-                part: 'snippet',
-                maxResults: 5,
-                q: query,
-                key: apiKey,
-                type: 'video'
-            },
-            headers: {
-                'Referer': 'http://localhost:3000', 
-                'Origin': 'http://localhost:3000'
-            }
+        const data = await fetchYoutubeWithFallback('https://www.googleapis.com/youtube/v3/search', {
+            part: 'snippet',
+            maxResults: 5,
+            q: query,
+            type: 'video'
         });
 
-        res.json(response.data);
+        res.json(data);
 
     } catch (error) {
-        console.error('Erro na rota de busca:', error.message);
-        res.status(500).json({ error: 'Erro ao buscar vídeos' });
+        console.error('Erro na rota de busca YouTube:', error.message);
+        const status = error.response ? error.response.status : 500;
+        res.status(status).json({ error: 'Todas as cotas do YouTube foram excedidas.' });
     }
 });
 
-// --- ROTA 2: DETALHES DO VÍDEO (TÍTULO, ETC) ---
 app.get('/api/video-info', async (req, res) => {
     try {
         const videoId = req.query.id;
-        
-        if (!videoId) {
-            return res.status(400).json({ error: 'ID do vídeo é obrigatório' });
-        }
+        if (!videoId) return res.status(400).json({ error: 'ID do vídeo é obrigatório' });
 
-        const apiKey = process.env.YOUTUBE_API_KEY;
-
-        if (!apiKey) {
-            console.error('ERRO: API Key não encontrada no .env');
-            return res.status(500).json({ error: 'Erro de configuração no servidor' });
-        }
-
-        const response = await axios.get(`https://www.googleapis.com/youtube/v3/videos`, {
-            params: {
-                part: 'snippet',
-                id: videoId,
-                key: apiKey
-            },
-            headers: {
-                'Referer': 'http://localhost:3000',
-                'Origin': 'http://localhost:3000'
-            }
+        const data = await fetchYoutubeWithFallback('https://www.googleapis.com/youtube/v3/videos', {
+            part: 'snippet',
+            id: videoId
         });
 
-        res.json(response.data);
+        res.json(data);
 
     } catch (error) {
-        console.error('Erro na rota de detalhes:', error.message);
+        console.error('Erro na rota de detalhes YouTube:', error.message);
         res.status(500).json({ error: 'Erro ao buscar detalhes do vídeo' });
     }
 });
 
-// Rota padrão para servir o index.html em qualquer outra URL
+// Rota padrão para servir o front-end
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Inicia o servidor
 app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
+    console.log(`Chaves YouTube configuradas: ${YOUTUBE_KEYS.length}`);
 });
