@@ -107,7 +107,7 @@ if (nameInput) {
 let sugestaoGeneroSelecionado = 'pop';
 let sugestaoTipoSelecionado = 'genero';
 let autoSugestaoAtiva = false;
-let autoSugestaoCount = 1;
+let autoSugestaoCount = 5;
 let autoSugestaoInterval = null;
 
 function renderizarGeneros() {
@@ -156,7 +156,7 @@ function selectGenero(genero) {
 
 function changeAutoCount(val) {
     let v = parseInt(document.getElementById('autoCount').textContent) + val;
-    v = Math.max(1, Math.min(10, v));
+    v = Math.max(1, Math.min(5, v));
     document.getElementById('autoCount').textContent = v;
     autoSugestaoCount = v;
 }
@@ -178,6 +178,7 @@ function ativarAutoSugestao() {
         if(autoSugestaoInterval) clearInterval(autoSugestaoInterval);
         rodarCicloAutoDJ();
        // 240000 (4 minutos)
+       // 15000 (15 segundos)
         autoSugestaoInterval = setInterval(rodarCicloAutoDJ, 240000);
     } else {
         if(autoSugestaoInterval) clearInterval(autoSugestaoInterval);
