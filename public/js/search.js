@@ -177,7 +177,8 @@ function ativarAutoSugestao() {
         showNotification('Auto DJ Ligado', 'success');
         if(autoSugestaoInterval) clearInterval(autoSugestaoInterval);
         rodarCicloAutoDJ();
-        autoSugestaoInterval = setInterval(rodarCicloAutoDJ, 15000);
+       // 240000 (4 minutos)
+        autoSugestaoInterval = setInterval(rodarCicloAutoDJ, 240000);
     } else {
         if(autoSugestaoInterval) clearInterval(autoSugestaoInterval);
         showNotification('Auto DJ Desligado', 'info');
