@@ -127,11 +127,13 @@ window.checkRoomProtection = function(roomId) {
         .then(snapshot => {
             const room = snapshot.val();
             
-            if (!room) {
-                alert("Sala não encontrada!");
-                window.location.href = "create.html";
-                return;
+            
+            if (!room || !room.creatorName) {
+                console.warn("Sala inválida detectada! Redirecionando para criar...");
+                window.location.replace("create.html");
+                return; 
             }
+            // ---------------------------
 
             // Atualiza UI básica
             if (document.getElementById('roomNameDisplay')) 
@@ -140,8 +142,7 @@ window.checkRoomProtection = function(roomId) {
             const isPrivate = room.isPrivate === true || room.isPrivate === "true";
             const storedHash = room.password || room.passwordHash;
 
-            // === LÓGICA DE BYPASS PARA ADMIN ===
-            // Se a sala for privada, verifica se o usuário já é Admin
+            // Lógica de senha
             if (isPrivate && storedHash) {
                 const currentUser = firebase.auth().currentUser;
                 
@@ -160,8 +161,9 @@ window.checkRoomProtection = function(roomId) {
             hideInitialLoader();
         })
         .catch(err => {
-            console.error("Erro ao verificar sala:", err);
-            hideInitialLoader();
+            console.error("Erro crítico ao verificar sala:", err);
+            // Na dúvida (erro de rede/permissão), chuta para o create
+            window.location.replace("create.html");
         });
 };
 
