@@ -6,7 +6,7 @@
     <title>FlowLink Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -737,37 +737,56 @@
         }
 
         function confirmCreateRoom() {
-            let id = document.getElementById('newRoomId').value.trim();
-            let name = document.getElementById('newRoomName').value.trim();
-            const password = document.getElementById('newRoomPassword').value.trim();
+    let id = document.getElementById('newRoomId').value.trim();
+    let name = document.getElementById('newRoomName').value.trim();
+    const passwordRaw = document.getElementById('newRoomPassword').value.trim(); // Senha original
 
-            if(!id) {
-                alert("O ID da sala é obrigatório.");
-                return;
-            }
+    if(!id) {
+        alert("O ID da sala é obrigatório.");
+        return;
+    }
 
-            // Se não der nome, usa o ID
-            if(!name) name = id;
+    if(!name) name = id;
 
-            // Verificar se o ID já existe
-            if(allRoomsRaw[id]) {
-                alert("Já existe uma sala com este ID. Escolha outro.");
-                return;
-            }
+    if(allRoomsRaw[id]) {
+        alert("Já existe uma sala com este ID. Escolha outro.");
+        return;
+    }
 
-            // Criar no Firebase
-            database.ref('rooms/' + id).set({
-                roomName: name,
-                creatorName: "Lucas Silva", // Criador fixo como solicitado
-                createdAt: firebase.database.ServerValue.TIMESTAMP,
-                password: password, 
-                videoQueue: {},
-                presence: {}
-            }).then(() => {
-                closeModal('createRoomModal');
-                alert(`Sala "${name}" criada com sucesso! (ID: ${id})`);
-            }).catch(e => alert("Erro ao criar: " + e.message));
-        }
+    // --- CORREÇÃO AQUI ---
+    let finalPassword = null;
+    let isPrivate = false;
+
+    if (passwordRaw) {
+        isPrivate = true;
+        // Cria o HASH da senha para bater com a verificação do session.js
+        finalPassword = CryptoJS.SHA256(passwordRaw).toString();
+    }
+    // ---------------------
+
+    // Criar no Firebase
+    database.ref('rooms/' + id).set({
+        roomName: name,
+        creatorName: "Lucas Silva",
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        
+        // Salva os campos corrigidos
+        password: finalPassword, 
+        isPrivate: isPrivate,
+        
+        videoQueue: {},
+        presence: {}
+    }).then(() => {
+        closeModal('createRoomModal');
+        alert(`Sala "${name}" criada com sucesso! (ID: ${id})`);
+        
+        // Limpa os campos
+        document.getElementById('newRoomId').value = '';
+        document.getElementById('newRoomName').value = '';
+        document.getElementById('newRoomPassword').value = '';
+        
+    }).catch(e => alert("Erro ao criar: " + e.message));
+}
 
         // --- LISTENERS DE FILTRO ---
         document.getElementById('searchInput').addEventListener('input', updateRoomsList);
