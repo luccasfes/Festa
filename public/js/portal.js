@@ -1,17 +1,13 @@
 // Entrada do Portal / FlowLink
 
 (function() {
-    // 1. Verifica se já estamos tentando entrar em uma sala específica pela URL
     const params = new URLSearchParams(window.location.search);
     const roomIdFromUrl = params.get('room');
 
-    // 2. SÓ renderiza o Portal se NÃO houver roomId na URL
     if (!roomIdFromUrl) {
-        // Esconde o loader inicial da index.html se ele existir
         const loader = document.getElementById('initialLoader');
         if (loader) loader.style.display = 'none';
 
-        // Configurações globais de layout para a Landing Page
         document.body.className = 'theme-transition'; 
         document.body.style.display = 'flex';
         document.body.style.alignItems = 'center';
@@ -20,7 +16,6 @@
         document.body.style.margin = '0';
         document.body.style.overflowX = 'hidden';
 
-        // Injeção do HTML Premium Responsivo
         document.body.innerHTML = `
             <div class="bg-decoration">
                 <div class="shape shape-1"></div>
@@ -71,7 +66,9 @@
                             </button>
                         </div>
                         
-                        <p class="terms-disclaimer">Ao criar uma sala, você concorda com as diretrizes da comunidade.</p>
+                        <p class="terms-disclaimer">
+                            Ao entrar, você concorda com os <a href="#" onclick="abrirTermos(event)">Termos de Uso e Segurança</a>.
+                        </p>
                     </div>
                 </main>
 
@@ -81,15 +78,42 @@
                             <i class="fas fa-music"></i> <span>FlowLink</span>
                         </div>
                         <div class="footer-links">
-                            <a href="#"><i class="fas fa-shield-alt"></i> Privado</a>
+                            <a href="#" onclick="abrirTermos(event)"><i class="fas fa-shield-alt"></i> Termos & Privacidade</a>
                         </div>
-                        
                     </div>
                 </footer>
             </div>
 
+            <div id="termsModal" class="modal" style="display:none; align-items:center; justify-content:center; z-index:9999;">
+                <div class="modal-content" style="max-width: 600px; text-align: left; max-height: 80vh; overflow-y: auto;">
+                    <div class="modal-header" style="justify-content: space-between; display: flex; margin-bottom: 15px;">
+                        <h3 style="margin:0; color:var(--accent-color);">Termos de Uso</h3>
+                        <span class="close-button" onclick="fecharTermos()" style="cursor:pointer; font-size:1.5rem;">&times;</span>
+                    </div>
+                    <div style="line-height: 1.6; color: var(--text-primary); font-size: 0.9rem;">
+                        <p><strong>1. Como Funciona:</strong> O FlowLink é uma plataforma para assistir vídeos em sincronia. O serviço é gratuito.</p>
+                        
+                        <p><strong>2. Conteúdo:</strong> Todo conteúdo vem do YouTube. Não hospedamos vídeos. Você deve respeitar as diretrizes do YouTube.</p>
+                        
+                        <p><strong>3. Privacidade:</strong> Salas podem ter senha, mas não possuem criptografia de ponta a ponta. Histórico é apagado após o fim da sessão.</p>
+                        
+                        <div style="background: rgba(255, 152, 0, 0.1); border-left: 4px solid #ff9800; padding: 10px; margin: 15px 0; border-radius: 4px;">
+                            <strong>4. Acesso Administrativo (IMPORTANTE):</strong><br>
+                            Para garantir a segurança da comunidade e resolver problemas técnicos, 
+                            <u>os Administradores podem acessar qualquer sala (Pública ou Privada com senha) a qualquer momento</u>, 
+                            para fins de moderação. Ao criar uma sala, você concorda com esta condição.
+                        </div>
+
+                        <p><strong>5. Conduta:</strong> Proibido conteúdo ilegal ou ofensivo. O desrespeito resultará em banimento.</p>
+                    </div>
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button class="btn primary" onclick="fecharTermos()" style="padding: 10px 20px;">Entendi</button>
+                    </div>
+                </div>
+            </div>
+
             <style>
-                /* ANIMAÇÕES E ELEMENTOS DE FUNDO */
+                /* Estilos existentes mantidos... */
                 .bg-decoration { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; pointer-events: none; }
                 .shape { position: absolute; background: var(--accent-color); opacity: 0.1; filter: blur(50px); border-radius: 50%; animation: floatShape 15s infinite alternate ease-in-out; }
                 .shape-1 { width: 400px; height: 400px; top: -100px; right: -50px; }
@@ -97,14 +121,12 @@
                 .shape-3 { width: 150px; height: 150px; top: 40%; left: 30%; animation-delay: -2s; background: #fff; }
                 @keyframes floatShape { 0% { transform: translate(0, 0) rotate(0deg); } 100% { transform: translate(50px, 100px) rotate(30deg); } }
 
-                /* ESTRUTURA PRINCIPAL */
                 .landing-wrapper { width: 95%; max-width: 900px; animation: modalFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1); }
                 .main-panel { display: flex; flex-direction: row; padding: 0; overflow: hidden; min-height: 420px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 30px; }
                 .panel-side-info { flex: 1.2; padding: 50px; background: rgba(255, 255, 255, 0.03); text-align: left; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid rgba(255, 255, 255, 0.05); }
                 .panel-actions { flex: 1; padding: 50px; display: flex; flex-direction: column; justify-content: center; gap: 20px; }
                 .mobile-only-header { display: none; }
 
-                /* RESPONSIVIDADE CELULAR */
                 @media (max-width: 768px) {
                     .main-panel { flex-direction: column; max-width: 400px; margin: 0 auto; }
                     .panel-side-info { display: none; }
@@ -114,11 +136,9 @@
                     .mobile-only-header h2 { font-size: 1.6rem; color: #fff; margin: 0; }
                 }
 
-                /* ESTILOS VISUAIS */
                 .landing-header { text-align: center; margin-bottom: 30px; }
                 .logo-area { display: inline-flex; align-items: center; gap: 10px; position: relative; }
                 .logo-area h1 { font-size: 3.2rem; font-weight: 800; background: linear-gradient(to right, #fff, var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
-                .v-tag { background: var(--accent-color); color: #000; padding: 2px 8px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; }
                 .icon-pulse { width: 60px; height: 60px; background: rgba(99, 102, 241, 0.1); border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 25px; font-size: 1.8rem; color: var(--accent-color); border: 1px solid rgba(255,255,255,0.1); }
                 .panel-side-info h2 { color: #fff; margin-bottom: 15px; font-size: 1.8rem; }
                 .panel-side-info p { color: #94a3b8; line-height: 1.6; margin-bottom: 20px; }
@@ -131,66 +151,79 @@
                 .join-input-group { display: flex; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
                 .join-input-group input { flex: 1; background: transparent; border: none; color: #fff; padding: 10px 15px; outline: none; }
                 .enter-btn { width: 45px !important; height: 45px !important; border-radius: 15px !important; display: flex; align-items: center; justify-content: center; padding: 0 !important; }
-                .terms-disclaimer { font-size: 0.7rem; color: #475569; text-align: center; margin: 0; }
+                .terms-disclaimer { font-size: 0.75rem; color: #475569; text-align: center; margin: 0; }
+                .terms-disclaimer a { color: #64748b; text-decoration: none; transition: 0.3s; }
+                .terms-disclaimer a:hover { color: var(--accent-color); text-decoration: underline; }
+                
                 .enhanced-footer { margin-top: 40px; padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
                 .footer-content { display: flex; flex-direction: column; align-items: center; gap: 15px; }
                 .footer-brand { color: #fff; opacity: 0.8; display: flex; align-items: center; gap: 8px; font-weight: 600; }
                 .footer-links { display: flex; gap: 20px; }
-                .footer-links a { color: #64748b; text-decoration: none; font-size: 0.85rem; transition: 0.3s; }
+                .footer-links a { color: #64748b; text-decoration: none; font-size: 0.85rem; transition: 0.3s; cursor: pointer; }
                 .footer-links a:hover { color: var(--accent-color); }
-                .footer-copy { color: #475569; font-size: 0.75rem; }
 
                 @keyframes modalFadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
             </style>
         `;
 
-        // 3. DEFINE A FUNÇÃO GLOBALMENTE PARA O ONCLICK FUNCIONAR
-        // js/portal.js (Trecho da função irParaSala)
+        // 3. FUNÇÕES GLOBAIS
+        
+        window.irParaSala = async function() {
+            const input = document.getElementById('joinRoomInput');
+            const btn = document.querySelector('.enter-btn');
+            if (!input || !btn) return;
 
-window.irParaSala = async function() {
-    const input = document.getElementById('joinRoomInput');
-    const btn = document.querySelector('.enter-btn');
-    if (!input || !btn) return;
+            const roomId = input.value.trim();
+            if (!roomId) {
+                alert("Por favor, digite o código da sala.");
+                return;
+            }
 
-    const roomId = input.value.trim();
-    if (!roomId) {
-        alert("Por favor, digite o código da sala.");
-        return;
-    }
+            input.disabled = true;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-    // Bloqueia interface para evitar cliques duplos
-    input.disabled = true;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            try {
+                const snapshot = await firebase.database().ref('rooms/' + roomId).once('value');
 
-    try {
-        // Consulta direta ao Firebase usando a instância do database inicializada no config.js
-        const snapshot = await firebase.database().ref('rooms/' + roomId).once('value');
+                if (snapshot.exists()) {
+                    window.location.href = `index.html?room=${roomId}`;
+                } else {
+                    alert("A sala '" + roomId + "' não foi encontrada. Verifique o código!");
+                    input.disabled = false;
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-arrow-right"></i>';
+                    input.value = '';
+                    input.focus();
+                }
+            } catch (error) {
+                console.error("Erro ao verificar sala:", error);
+                alert("Erro de conexão com o servidor. Tente novamente.");
+                input.disabled = false;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-arrow-right"></i>';
+            }
+        };
 
-        if (snapshot.exists()) {
-            // SALA ENCONTRADA: Redireciona
-            window.location.href = `index.html?room=${roomId}`;
-        } else {
-            // SALA NÃO EXISTE: Notifica e libera o input
-            alert("A sala '" + roomId + "' não foi encontrada. Verifique o código!");
-            
-            // Libera para nova tentativa
-            input.disabled = false;
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-arrow-right"></i>';
-            input.value = '';
-            input.focus();
-        }
-    } catch (error) {
-        console.error("Erro ao verificar sala:", error);
-        alert("Erro de conexão com o servidor. Tente novamente.");
-        input.disabled = false;
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-arrow-right"></i>';
-    }
-};
+        // Funções do Modal de Termos
+        window.abrirTermos = function(e) {
+            if(e) e.preventDefault();
+            document.getElementById('termsModal').style.display = 'flex';
+        };
 
-        // 4. SUPORTE PARA TECLA ENTER NO INPUT
+        window.fecharTermos = function() {
+            document.getElementById('termsModal').style.display = 'none';
+        };
+
+        // Fechar ao clicar fora
+        window.onclick = function(event) {
+            const modal = document.getElementById('termsModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        // 4. SUPORTE PARA TECLA ENTER
         document.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 const input = document.getElementById('joinRoomInput');
