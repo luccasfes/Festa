@@ -1764,8 +1764,33 @@ body:not(.non-admin) .player-overlay-controls {
 }
 
 /* Esconde o nome do usuário nas próprias mensagens */
+/* --- COLE ISSO NO LUGAR DO CÓDIGO APAGADO --- */
+
+/* Garante que o cabeçalho (nome + ícone) apareça */
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px; /* Espaço entre o nome e a mensagem */
+    min-height: 20px;
+}
+
+/* Garante que o nome apareça mesmo nas suas mensagens */
 .chat-message.mine .chat-user {
-    display: none;
+    display: flex !important; /* Força aparecer */
+    justify-content: flex-end; /* Alinha seu nome à direita */
+    color: rgba(255,255,255,0.9);
+}
+
+/* Ajusta o alinhamento do nome nas mensagens dos outros */
+.chat-message:not(.mine) .chat-header {
+    justify-content: flex-start;
+}
+
+/* Se for admin King, garante a cor escura no nome */
+.chat-message.admin-king .chat-user {
+    color: #3e2723 !important;
+    font-weight: 800;
 }
 
 .chat-body {
@@ -3940,4 +3965,10 @@ body.festa-mode iframe#videoPlayer {
     .error-content h1 {
         font-size: 1.5rem;
     }
+}
+
+.chat-user i {
+    margin-right: 6px;
+    font-size: 1.1em;
+    vertical-align: middle;
 }
