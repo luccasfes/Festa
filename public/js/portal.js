@@ -193,41 +193,48 @@
         // 3. FUNÇÕES GLOBAIS
         
         window.irParaSala = async function() {
-            const input = document.getElementById('joinRoomInput');
-            const btn = document.querySelector('.enter-btn');
-            if (!input || !btn) return;
+    const input = document.getElementById('joinRoomInput');
+    const btn = document.querySelector('.enter-btn');
+    if (!input || !btn) return;
 
-            const roomId = input.value.trim();
-            if (!roomId) {
-                alert("Por favor, digite o código da sala.");
-                return;
-            }
+    const roomId = input.value.trim();
+    if (!roomId) {
+        // Mantemos este alert apenas porque o campo está vazio
+        alert("Por favor, digite o código da sala.");
+        return;
+    }
 
-            input.disabled = true;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    // Feedback visual de carregamento
+    input.disabled = true;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-            try {
-                const snapshot = await firebase.database().ref('rooms/' + roomId).once('value');
+    try {
+        // Verifica a existência da sala no Firebase
+        const snapshot = await firebase.database().ref('rooms/' + roomId).once('value');
 
-                if (snapshot.exists()) {
-                    window.location.href = `index.html?room=${roomId}`;
-                } else {
-                    alert("A sala '" + roomId + "' não foi encontrada. Verifique o código!");
-                    input.disabled = false;
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-arrow-right"></i>';
-                    input.value = '';
-                    input.focus();
-                }
-            } catch (error) {
-                console.error("Erro ao verificar sala:", error);
-                alert("Erro de conexão com o servidor. Tente novamente.");
-                input.disabled = false;
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-arrow-right"></i>';
-            }
-        };
+        if (snapshot.exists()) {
+            // Se existir, vai para a sala
+            window.location.href = `index.html?room=${roomId}`;
+        } else {
+            // SE NÃO EXISTIR: Redireciona para a página visual 404
+            console.log("Sala não encontrada, redirecionando...");
+            window.location.href = '/404.html'; 
+        }
+    } catch (error) {
+        console.error("Erro técnico:", error);
+        // Se as Regras JSON bloquearem (sala inexistente), também vai para o 404
+        if (error.code === "PERMISSION_DENIED") {
+            window.location.href = '/404.html';
+        } else {
+            // Erros de internet/conexão
+            input.disabled = false;
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-arrow-right"></i>';
+            alert("Erro de conexão. Verifique sua internet.");
+        }
+    }
+};
 
         // Funções do Modal de Termos
         window.abrirTermos = function(e) {

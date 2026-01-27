@@ -3861,3 +3861,83 @@ body.festa-mode iframe#videoPlayer {
     position: absolute;
     pointer-events: none;    /* Garante que ninguém clique em nada */
 }
+
+/* =========================================
+   ESTILOS DA PÁGINA 404
+   ========================================= */
+
+.error-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-align: center;
+}
+
+.error-container {
+    max-width: 600px !important;
+    padding: 50px 30px !important;
+    animation: modalAppear 0.5s ease-out;
+}
+
+.error-icon {
+    position: relative;
+    font-size: 8rem;
+    color: var(--accent-color);
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.fa-spin-slow {
+    animation: fa-spin 8s linear infinite;
+    opacity: 0.2;
+}
+
+.error-code {
+    position: absolute;
+    font-weight: 800;
+    font-size: 4rem;
+    color: var(--text-primary);
+    text-shadow: 0 0 20px var(--accent-glow);
+}
+
+.error-content h1 {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    background: linear-gradient(to right, #fff, var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.error-content p {
+    color: var(--text-secondary);
+    margin-bottom: 35px;
+    font-size: 1.1rem;
+}
+
+.error-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+/* Responsivo para o 404 */
+@media (max-width: 480px) {
+    .error-actions {
+        flex-direction: column;
+    }
+    
+    .error-icon {
+        font-size: 6rem;
+    }
+    
+    .error-code {
+        font-size: 3rem;
+    }
+    
+    .error-content h1 {
+        font-size: 1.5rem;
+    }
+}
