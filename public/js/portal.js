@@ -85,29 +85,53 @@
             </div>
 
             <div id="termsModal" class="modal" style="display:none; align-items:center; justify-content:center; z-index:9999;">
-                <div class="modal-content" style="max-width: 600px; text-align: left; max-height: 80vh; overflow-y: auto;">
-                    <div class="modal-header" style="justify-content: space-between; display: flex; margin-bottom: 15px;">
-                        <h3 style="margin:0; color:var(--accent-color);">Termos de Uso</h3>
-                        <span class="close-button" onclick="fecharTermos()" style="cursor:pointer; font-size:1.5rem;">&times;</span>
+                <div class="modal-content" style="max-width: 650px; text-align: left; max-height: 85vh; overflow-y: auto; background: #1a1a1a; border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+                    
+                    <div class="modal-header" style="justify-content: space-between; display: flex; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <h3 style="margin:0; color:var(--accent-color); font-size: 1.4rem;"><i class="fas fa-file-contract"></i> Termos de Uso</h3>
+                        <span class="close-button" onclick="fecharTermos()" style="cursor:pointer; font-size:1.8rem; line-height: 1; color: #aaa;">&times;</span>
                     </div>
-                    <div style="line-height: 1.6; color: var(--text-primary); font-size: 0.9rem;">
-                        <p><strong>1. Como Funciona:</strong> O FlowLink é uma plataforma para assistir vídeos em sincronia. O serviço é gratuito.</p>
+
+                    <div class="terms-body" style="line-height: 1.6; color: #e0e0e0; font-size: 0.95rem; padding-right: 10px;">
                         
-                        <p><strong>2. Conteúdo:</strong> Todo conteúdo vem do YouTube. Não hospedamos vídeos. Você deve respeitar as diretrizes do YouTube.</p>
-                        
-                        <p><strong>3. Privacidade:</strong> Salas podem ter senha, mas não possuem criptografia de ponta a ponta. Histórico é apagado após o fim da sessão.</p>
-                        
-                        <div style="background: rgba(255, 152, 0, 0.1); border-left: 4px solid #ff9800; padding: 10px; margin: 15px 0; border-radius: 4px;">
-                            <strong>4. Acesso Administrativo (IMPORTANTE):</strong><br>
-                            Para garantir a segurança da comunidade e resolver problemas técnicos, 
-                            <u>os Administradores podem acessar qualquer sala (Pública ou Privada com senha) a qualquer momento</u>, 
-                            para fins de moderação. Ao criar uma sala, você concorda com esta condição.
+                        <p style="margin-bottom: 15px;"><strong>1. Natureza do Serviço:</strong><br>
+                        O FlowLink é uma plataforma experimental e gratuita que permite sincronizar a reprodução de vídeos do YouTube entre usuários. O serviço é fornecido "como está", sem garantias de disponibilidade contínua.</p>
+
+                        <p style="margin-bottom: 15px;"><strong>2. Conteúdo e Copyright:</strong><br>
+                        Todo o conteúdo exibido vem diretamente do YouTube. O FlowLink não hospeda vídeos. O usuário deve respeitar os Termos de Uso do YouTube.</p>
+
+                        <p style="margin-bottom: 15px;"><strong>3. Privacidade e Dados:</strong><br>
+                        As salas podem possuir senha, mas não utilizam criptografia de ponta a ponta. Históricos e dados são voláteis e podem ser apagados a qualquer momento.</p>
+
+                        <div style="background: rgba(255, 152, 0, 0.15); border-left: 4px solid #ff9800; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                            <strong style="color: #ffb74d;">4. Acesso Administrativo (IMPORTANTE):</strong><br>
+                            Para garantir a segurança da plataforma, 
+                            <u>os Administradores podem acessar qualquer sala (pública ou privada) a qualquer momento</u> 
+                            para fins de moderação e suporte técnico.
                         </div>
 
-                        <p><strong>5. Conduta:</strong> Proibido conteúdo ilegal ou ofensivo. O desrespeito resultará em banimento.</p>
+                        <p style="margin-bottom: 15px;"><strong>5. Conduta do Usuário:</strong><br>
+                        É proibido conteúdo ilegal, ofensivo ou discriminatório. O usuário é o único responsável por suas ações e pelo conteúdo que adiciona à fila.</p>
+
+                        <p style="margin-bottom: 15px;"><strong>6. Moderação:</strong><br>
+                        A administração pode banir usuários e encerrar salas a qualquer momento em caso de abuso ou violação destes termos.</p>
+
+                        <p style="margin-bottom: 15px;"><strong>7. Limitação de Responsabilidade:</strong><br>
+                        Não nos responsabilizamos por interrupções do serviço, conteúdo exibido por terceiros ou danos decorrentes do uso da plataforma.</p>
+
+                        <div style="background: rgba(33, 150, 243, 0.15); border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                            <strong style="color: #64b5f6;">8. Idade Mínima (13 Anos):</strong><br>
+                            Em conformidade com as diretrizes do YouTube, <u>este serviço é restrito a usuários com 13 anos ou mais</u>. 
+                            Ao utilizar o FlowLink, você declara ter idade suficiente. O uso por menores deve ser estritamente supervisionado pelos pais ou responsáveis legais.
+                        </div>
+
+                        <p style="margin-bottom: 0;"><strong>9. Aceite Automático:</strong><br>
+                        Ao continuar utilizando o serviço, você concorda automaticamente com todos os termos acima e suas futuras atualizações.</p>
+
                     </div>
-                    <div style="margin-top: 20px; text-align: right;">
-                        <button class="btn primary" onclick="fecharTermos()" style="padding: 10px 20px;">Entendi</button>
+
+                    <div style="margin-top: 25px; text-align: right; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                        <button class="btn primary" onclick="fecharTermos()" style="padding: 12px 30px; border-radius: 8px;">Li e Concordo</button>
                     </div>
                 </div>
             </div>
