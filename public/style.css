@@ -1450,6 +1450,11 @@ body.non-admin #player-mask::after {
     pointer-events: auto;
     /* bloqueia cliques só nessa faixa */
 }
+ /* modo solo com player liebrado */
+body.solo-mode #player-mask::after {
+    display: none !important;
+    pointer-events: none !important;
+}
 
 /* Admin pode interagir com tudo (mask desativado) */
 body:not(.non-admin) #player-mask,
