@@ -3937,6 +3937,7 @@ body.festa-mode iframe#videoPlayer {
     font-size: 2rem;
     margin-bottom: 15px;
     background: linear-gradient(to right, #fff, var(--accent-color));
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
