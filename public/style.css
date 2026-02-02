@@ -3978,3 +3978,260 @@ body.festa-mode iframe#videoPlayer {
     font-size: 1.1em;
     vertical-align: middle;
 }
+
+/* --- POSICIONAMENTO DO CANTO DIREITO --- */
+.header-right {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    display: flex;
+    flex-direction: column;
+    /* MUDANÇA: 'stretch' faz o botão esticar para ficar da largura do online */
+    align-items: stretch; 
+    gap: 8px;
+    z-index: 100;
+}
+
+/* Força o indicador a perder a posição absoluta antiga */
+.presence-indicator {
+    position: static !important;
+    margin: 0 !important;
+    /* Garante alinhamento do texto */
+    justify-content: center;
+}
+
+/* --- ESTILO DO BOTÃO REPORT (AGORA IGUAL AO ONLINE) --- */
+.btn-report-round {
+    /* Removemos tamanho fixo de bolinha */
+    width: auto;
+    height: auto;
+    
+    /* Copiamos as medidas exatas do .presence-indicator */
+    border-radius: 25px;
+    padding: 10px 18px;
+    
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ff5252;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centraliza conteúdo */
+    gap: 8px; /* Espaço entre ícone e texto */
+    
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* TRUQUE: Adiciona o texto "Reportar" via CSS para equilibrar o visual */
+.btn-report-round::after {
+    content: "Reportar";
+}
+
+.btn-report-round:hover {
+    background: rgba(255, 82, 82, 0.2);
+    transform: scale(1.05); /* Cresce levemente, igual ao pulse */
+    border-color: #ff5252;
+}
+
+/* --- MOBILE: VOLTA A SER BOLINHA --- */
+/* No celular não cabe o texto grande, então volta a ser ícone */
+@media (max-width: 768px) {
+    .header-right {
+        top: 15px;
+        right: 15px;
+        gap: 5px;
+        align-items: flex-end; /* Alinha na direita */
+    }
+    
+    .btn-report-round {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 50%;
+        font-size: 0.9rem;
+    }
+
+    /* Esconde o texto "Reportar" no celular */
+    .btn-report-round::after {
+        display: none;
+    }
+}
+
+/* ---------------------------- */
+/* --- ESTILO MODERNO DO MODAL DE REPORT --- */
+
+/* Fundo do modal com blur mais forte */
+.report-modal-modern {
+    backdrop-filter: blur(15px);
+    background: rgba(0, 0, 0, 0.75);
+}
+
+/* Conteúdo central */
+.glass-content {
+    background: linear-gradient(145deg, rgba(30, 30, 40, 0.95), rgba(20, 20, 30, 0.98));
+    border: 1px solid rgba(255, 82, 82, 0.2); /* Borda avermelhada sutil */
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 82, 82, 0.1);
+    border-radius: 20px;
+    padding: 0;
+    max-width: 380px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Header minimalista (só o fechar) */
+.modal-header-clean {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 10;
+}
+
+.modal-body-centered {
+    padding: 40px 30px 30px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Ícone Pulsante */
+.report-icon-pulse {
+    width: 70px;
+    height: 70px;
+    background: rgba(255, 82, 82, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255, 82, 82, 0.3);
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+    animation: pulse-red 2s infinite;
+}
+
+.report-icon-pulse i {
+    font-size: 30px;
+    color: #ff5252;
+}
+
+@keyframes pulse-red {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.4);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 15px rgba(255, 82, 82, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+    }
+}
+
+/* Textos */
+.modal-body-centered h3 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: white;
+    font-weight: 700;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-bottom: 25px;
+}
+
+/* Inputs Modernos */
+.form-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.input-group-modern {
+    position: relative;
+    width: 100%;
+}
+
+.input-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    transition: 0.3s;
+}
+
+.textarea-group .input-icon {
+    top: 15px;
+    transform: none;
+}
+
+.input-group-modern input,
+.input-group-modern textarea {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 12px 12px 45px; /* Espaço para o ícone */
+    border-radius: 12px;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.input-group-modern textarea {
+    height: 100px;
+    resize: none;
+    padding-top: 12px;
+}
+
+.input-group-modern input:focus,
+.input-group-modern textarea:focus {
+    border-color: #ff5252;
+    background: rgba(0, 0, 0, 0.5);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 82, 82, 0.1);
+}
+
+.input-group-modern input:focus + .input-icon,
+.input-group-modern textarea:focus + .input-icon {
+    color: #ff5252;
+}
+
+/* Botão de Enviar */
+.btn-report-submit {
+    background: linear-gradient(135deg, #ff5252, #d32f2f);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    width: 100%;
+    margin-top: 5px;
+}
+
+.btn-report-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(211, 47, 47, 0.4);
+}
+
+.btn-report-submit:active {
+    transform: scale(0.98);
+}

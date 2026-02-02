@@ -4,30 +4,88 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const axios = require('axios');
+const nodemailer = require('nodemailer'); // <--- 1. Adicionado Nodemailer
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Habilitar CORS
+// Habilitar CORS e JSON
 app.use(cors());
+app.use(express.json()); // <--- 2.  Necessário para ler o corpo do POST (req.body)
 
 // Serve ficheiros estáticos da pasta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ==================================================================
+// --- CONFIGURAÇÃO DE EMAIL (REPORT) ---
+// ==================================================================
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER, // Lê do arquivo .env
+        pass: process.env.EMAIL_PASS  // Lê do arquivo .env
+    }
+});
+
+// Rota de Report 
+app.post('/api/report', async (req, res) => {
+    try {
+        // Recebe os novos campos: roomId e reporter
+        const { userReported, reason, room, roomId, reporter } = req.body;
+        
+        console.log(`📩 Recebendo report de ${reporter} sobre ${userReported}`);
+
+        // Verificação de segurança das chaves (mantida)
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+            return res.status(500).json({ error: "Configuração de e-mail ausente" });
+        }
+
+        const mailOptions = {
+            from: `"FlowLink System" <${process.env.EMAIL_USER}>`,
+            to: process.env.EMAIL_USER, 
+            subject: `⚠️ REPORT: ${room}`,
+            // HTML atualizado com as novas informações
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h2 style="color: #d32f2f;">🚨 Novo Report de Usuário</h2>
+                    
+                    <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                        <p><strong>Quem Reportou:</strong> ${reporter}</p>
+                        <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+                        <p><strong>Sala:</strong> ${room}</p>
+                        <p><strong>ID da Sala:</strong> <code>${roomId}</code></p>
+                    </div>
+
+                    <div style="background: #fff0f0; padding: 15px; border-radius: 5px; border: 1px solid #ffcdd2;">
+                        <p style="font-size: 1.1em;"><strong>Usuário Denunciado:</strong> ${userReported}</p>
+                        <p><strong>Motivo:</strong></p>
+                        <blockquote style="border-left: 4px solid #d32f2f; padding-left: 10px; color: #555;">
+                            ${reason}
+                        </blockquote>
+                    </div>
+                    
+                    <p style="font-size: 0.8em; color: #888; margin-top: 20px;">Enviado automaticamente pelo sistema FlowLink.</p>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Erro ao enviar report:", error);
+        res.status(500).json({ error: 'Falha ao enviar e-mail' });
+    }
+});
+
+// ==================================================================
 // --- CONFIGURAÇÃO DE CHAVES YOUTUBE (ROTAÇÃO) ---
 // ==================================================================
 
-// Lista de chaves carregadas do .env
 const YOUTUBE_KEYS = [
     process.env.YOUTUBE_API_KEY,
     process.env.YOUTUBE_API_KEY_2
 ].filter(key => !!key);
 
-/**
- * Função auxiliar que tenta fazer a requisição ao YouTube.
- * Se uma chave retornar erro de cota (403), ela tenta automaticamente a próxima.
- */
 async function fetchYoutubeWithFallback(url, params) {
     let lastError = null;
 
@@ -46,7 +104,6 @@ async function fetchYoutubeWithFallback(url, params) {
 
         } catch (error) {
             lastError = error;
-            // Se o erro for 403 (Cota Excedida), tenta a próxima chave da lista
             if (error.response && error.response.status === 403) {
                 console.warn(`⚠️ Chave YouTube ${i + 1} esgotada. Tentando backup...`);
                 continue; 
@@ -72,6 +129,7 @@ async function getSpotifyToken() {
         const params = new URLSearchParams();
         params.append('grant_type', 'client_credentials');
 
+        // URL Oficial do Spotify para Token
         const response = await axios.post('https://accounts.spotify.com/api/token', params, {
             headers: {
                 'Authorization': 'Basic ' + Buffer.from(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64'),
@@ -96,7 +154,7 @@ app.get('/api/spotify-genre', async (req, res) => {
         const token = await getSpotifyToken();
         if (!token) return res.status(500).json({ error: 'Falha na autenticação Spotify' });
 
-        // 1. Busca a música
+        // 1. Busca a música (URL Oficial)
         const searchRes = await axios.get('https://api.spotify.com/v1/search', {
             params: { q: query, type: 'track', limit: 1 },
             headers: { 'Authorization': `Bearer ${token}` }
@@ -109,7 +167,7 @@ app.get('/api/spotify-genre', async (req, res) => {
         const track = searchRes.data.tracks.items[0];
         const artistId = track.artists[0].id; 
 
-        // 2. Busca o Artista para obter os gêneros
+        // 2. Busca o Artista (URL Oficial)
         const artistRes = await axios.get(`https://api.spotify.com/v1/artists/${artistId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -127,7 +185,7 @@ app.get('/api/spotify-genre', async (req, res) => {
 });
 
 // ==================================================================
-// --- ROTAS YOUTUBE (COM ROTAÇÃO) ---
+// --- ROTAS YOUTUBE ---
 // ==================================================================
 
 app.get('/api/youtube-search', async (req, res) => {
@@ -169,31 +227,20 @@ app.get('/api/video-info', async (req, res) => {
     }
 });
 
-// Rota padrão para servir o front-end
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-    console.log(`Chaves YouTube configuradas: ${YOUTUBE_KEYS.length}`);
-});
-
-
-
-//  /api/spotify-recommendations
+// ==================================================================
+// --- SPOTIFY RECOMMENDATIONS ---
+// ==================================================================
 
 app.get('/api/spotify-recommendations', async (req, res) => {
     try {
-        const { q, genre } = req.query; // Agora aceita 'genre' também
+        const { q, genre } = req.query; 
         const token = await getSpotifyToken();
         if (!token) return res.status(500).json({ error: 'Erro no token Spotify' });
 
         let recommendations = [];
 
-        // CASO 1: Busca por GÊNERO Específico (Selecionado pelo usuário)
+        // CASO 1: Busca por GÊNERO
         if (genre) {
-            // Mapear seus gêneros para gêneros do Spotify
             const mapGeneros = {
                 'sertanejo': 'sertanejo,brazilian',
                 'funk': 'funk,baile-funk',
@@ -205,29 +252,29 @@ app.get('/api/spotify-recommendations', async (req, res) => {
                 'reggaeton': 'reggaeton,latin'
             };
             
-            const seed = mapGeneros[genre] || genre; // Usa o mapa ou o próprio nome
+            const seed = mapGeneros[genre] || genre;
 
+            // URL Oficial Recommendations
             const recRes = await axios.get('https://api.spotify.com/v1/recommendations', {
                 params: { 
                     seed_genres: seed, 
                     limit: 5,
-                    min_popularity: 60, // Só sucessos
-                    target_energy: 0.7  // Músicas animadas pra festa
+                    min_popularity: 60, 
+                    target_energy: 0.7
                 },
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             recommendations = recRes.data.tracks;
         } 
         
-        // CASO 2: Busca por SIMILARIDADE (Auto DJ Inteligente)
+        // CASO 2: Busca por SIMILARIDADE (Auto DJ)
         else if (q) {
             const qLower = q.toLowerCase();
             let seedGenres = '';
             
-            // Inteligência Disney/Contexto
-            if (qLower.includes('disney') || qLower.includes('moana') || qLower.includes('frozen') || qLower.includes('encanto')) {
+            if (qLower.includes('disney') || qLower.includes('moana') || qLower.includes('frozen')) {
                 seedGenres = 'disney,show-tunes,soundtracks';
-            } else if (qLower.includes('dreamworks') || qLower.includes('shrek')) {
+            } else if (qLower.includes('shrek')) {
                 seedGenres = 'work-out,soundtracks'; 
             }
 
@@ -239,7 +286,7 @@ app.get('/api/spotify-recommendations', async (req, res) => {
                 recommendations = recRes.data.tracks;
             } 
             
-            // Se não for contexto especial, busca a música para pegar o ID
+            // Se não for contexto especial, busca ID da música
             if (recommendations.length === 0) {
                 const searchRes = await axios.get('https://api.spotify.com/v1/search', {
                     params: { q: q, type: 'track', limit: 1 },
@@ -257,7 +304,6 @@ app.get('/api/spotify-recommendations', async (req, res) => {
             }
         }
 
-        // Formata o resultado
         const tracks = recommendations.map(t => ({
             title: t.name,
             artist: t.artists[0].name,
@@ -269,7 +315,16 @@ app.get('/api/spotify-recommendations', async (req, res) => {
 
     } catch (error) {
         console.error('Erro no Auto DJ Spotify:', error.message);
-        // Não quebra o app, retorna array vazio pro front usar fallback
         res.json([]); 
     }
+});
+
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+    console.log(`🔑 Chaves YouTube configuradas: ${YOUTUBE_KEYS.length}`);
 });

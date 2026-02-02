@@ -8,20 +8,23 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a237e">
     <title>FlowLink</title>
-    <meta name="description" content="Crie sua sala de música colaborativa no FlowLink. Assista vídeos do YouTube em sincronia com seus amigos, onde quer que estejam.">
+    <meta name="description"
+        content="Crie sua sala de música colaborativa no FlowLink. Assista vídeos do YouTube em sincronia com seus amigos, onde quer que estejam.">
     <meta name="keywords" content="FlowLink, música, youtube sync, watch together, festa online, player colaborativo">
     <meta name="author" content="FlowLink">
 
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://flowlink-7fd57.web.app/">
     <meta property="og:title" content="FlowLink - Sincronize a Vibe 🎵">
-    <meta property="og:description" content="A festa não para! Entre na sala, adicione vídeos e ouça música com a galera em tempo real.">
+    <meta property="og:description"
+        content="A festa não para! Entre na sala, adicione vídeos e ouça música com a galera em tempo real.">
     <meta property="og:image" content="https://flowlink-7fd57.web.app/assets/icon-512.png">
 
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://flowlink-7fd57.web.app/">
     <meta property="twitter:title" content="FlowLink - Sua Sala de Música">
-    <meta property="twitter:description" content="Venha ouvir música com a gente! Player sincronizado para festas virtuais.">
+    <meta property="twitter:description"
+        content="Venha ouvir música com a gente! Player sincronizado para festas virtuais.">
     <meta property="twitter:image" content="https://flowlink-7fd57.web.app/assets/icon-512.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
@@ -41,28 +44,36 @@
     <div class="container">
 
         <header class="app-header">
-            <div class="header-controls-left">
-                <button id="adminUnlockBtn" class="btn-icon" onclick="openAdminUnlockModal()" title="Admin">
-    <i class="fas fa-lock"></i>
-</button>
+    <div class="header-controls-left">
+        <button id="adminUnlockBtn" class="btn-icon" onclick="openAdminUnlockModal()" title="Admin">
+            <i class="fas fa-lock"></i>
+        </button>
+        <button class="btn small" id="panelBtn" onclick="FuncaoParaAbrirPainel()" style="display: none;">
+            <i class="fas fa-cog"></i> <span>Painel</span>
+        </button>
+        <button class="btn small secondary" onclick="openThemeModal()" title="Mudar Tema">
+            <i class="fas fa-palette"></i>
+        </button>
+    </div>
 
-                <button class="btn small" id="panelBtn" onclick="FuncaoParaAbrirPainel()" style="display: none;">
-                    <i class="fas fa-cog"></i> <span>Painel</span>
-                </button>
-                <button class="btn small secondary" onclick="openThemeModal()" title="Mudar Tema">
-                    <i class="fas fa-palette"></i>
-                </button>
-            </div>
-            <h1><i class="fas fa-music"></i> FlowLink<i class="fas fa-headphones"></i></h1>
-            <div class="room-details">
-                <span id="roomNameDisplay">Carregando sala...</span>
-                (Criada por: <span id="roomCreatorDisplay">...</span>)
-            </div>
-            <div class="presence-indicator">
-                <i class="fas fa-users"></i>
-                <span id="userCount">0</span> online
-            </div>
-        </header>
+    <h1><i class="fas fa-music"></i> FlowLink<i class="fas fa-headphones"></i></h1>
+    
+    <div class="room-details">
+        <span id="roomNameDisplay">Carregando sala...</span>
+        (Criada por: <span id="roomCreatorDisplay">...</span>)
+    </div>
+
+    <div class="header-right">
+        <div class="presence-indicator">
+            <i class="fas fa-users"></i>
+            <span id="userCount">0</span> online
+        </div>
+        
+        <button class="btn-report-round" onclick="openReportModal()" title="Reportar">
+            <i class="fas fa-flag"></i>
+        </button>
+    </div>
+</header>
 
         <main class="main-layout">
 
@@ -81,8 +92,8 @@
                     <span id="addBtnLoader" class="loading" style="display: none;"></span>
                 </button>
                 <button class="btn primary youtube" onclick="openYTSearchModal()">
-    <i class="fab fa-youtube"></i> Buscar no YouTube
-</button>
+                    <i class="fab fa-youtube"></i> Buscar no YouTube
+                </button>
             </section>
 
             <section class="video-player-section card">
@@ -214,18 +225,54 @@
         </div>
     </div>
 
-    <div id="editNameModal" class="modal" style="display: none; z-index: 10000; align-items: center; justify-content: center;">
-    <div class="modal-content" style="background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 350px; text-align: center;">
-        <h3 style="margin-top: 0; color: white;">Quem é você?</h3>
-        
-        <div class="input-group">
-            <input type="text" id="editNameInput" placeholder="Seu apelido..." maxlength="15"
-                   style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: rgba(0,0,0,0.3); color: white; text-align: center; font-size: 1.1rem; margin-bottom: 20px;">
-        </div>
+    <div id="editNameModal" class="modal"
+        style="display: none; z-index: 10000; align-items: center; justify-content: center;">
+        <div class="modal-content"
+            style="background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 350px; text-align: center;">
+            <h3 style="margin-top: 0; color: white;">Quem é você?</h3>
 
-        <button class="btn primary" onclick="saveUserName()" style="width: 100%; padding: 12px; font-weight: bold;">
-            Salvar e Entrar
-        </button>
+            <div class="input-group">
+                <input type="text" id="editNameInput" placeholder="Seu apelido..." maxlength="15"
+                    style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: rgba(0,0,0,0.3); color: white; text-align: center; font-size: 1.1rem; margin-bottom: 20px;">
+            </div>
+
+            <button class="btn primary" onclick="saveUserName()" style="width: 100%; padding: 12px; font-weight: bold;">
+                Salvar e Entrar
+            </button>
+        </div>
+    </div>
+
+    <div id="reportModal" class="modal report-modal-modern">
+    <div class="modal-content glass-content">
+        <div class="modal-header-clean">
+            <span class="close-button" onclick="closeReportModal()">×</span>
+        </div>
+        
+        <div class="modal-body-centered">
+            <div class="report-icon-pulse">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+
+            <h3>Reportar Problema</h3>
+            <p class="subtitle">Ajude-nos a manter a festa segura.</p>
+
+            <div class="form-container">
+                <div class="input-group-modern">
+                    <i class="fas fa-user-tag input-icon"></i>
+                    <input type="text" id="reportUser" placeholder="Nome do usuário..." autocomplete="off">
+                </div>
+
+                <div class="input-group-modern textarea-group">
+                    <i class="fas fa-comment-alt input-icon"></i>
+                    <textarea id="reportReason" placeholder="Descreva o motivo da denúncia..."></textarea>
+                </div>
+
+                <button class="btn btn-report-submit" onclick="submitReport()" id="submitReportBtn">
+                    <span>Enviar Denúncia</span>
+                    <i class="fas fa-paper-plane"></i> 
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -271,41 +318,41 @@
     </div>
 
     <div id="ytSearchModal" class="modal yt-search-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fab fa-youtube"></i> Buscar no YouTube</h3>
-            <span class="close-button" onclick="closeYTSearchModal()">×</span>
-        </div>
-        <div class="modal-body">
-            
-            <div class="yt-session-info">
-                <div class="yt-session-text">
-                    <i class="fas fa-user"></i> 
-                    <span>Como:</span> 
-                    <strong id="currentSessionUser">Visitante</strong>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fab fa-youtube"></i> Buscar no YouTube</h3>
+                <span class="close-button" onclick="closeYTSearchModal()">×</span>
+            </div>
+            <div class="modal-body">
+
+                <div class="yt-session-info">
+                    <div class="yt-session-text">
+                        <i class="fas fa-user"></i>
+                        <span>Como:</span>
+                        <strong id="currentSessionUser">Visitante</strong>
+                    </div>
+
+                    <button class="btn small secondary" onclick="openEditNameModal()">
+                        <i class="fas fa-edit"></i> Alterar
+                    </button>
                 </div>
 
-                <button class="btn small secondary" onclick="openEditNameModal()">
-                    <i class="fas fa-edit"></i> Alterar
-                </button>
+                <div class="search-controls">
+                    <input type="text" id="ytSearchQuery" placeholder="Digite o nome da música...">
+                    <button class="btn primary" onclick="searchYouTube()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+
+                <div id="ytSearchResults"></div>
             </div>
-            
-            <div class="search-controls">
-                <input type="text" id="ytSearchQuery" placeholder="Digite o nome da música...">
-                <button class="btn primary" onclick="searchYouTube()">
-                    <i class="fas fa-search"></i>
-                </button>
-            </div>
-            
-            <div id="ytSearchResults"></div>
         </div>
     </div>
-</div>
 
-<!-- Cuida das notificações -->
-<div id="notification" class="notification">
-    <span id="notificationMessage"></span>
-</div>
+    <!-- Cuida das notificações -->
+    <div id="notification" class="notification">
+        <span id="notificationMessage"></span>
+    </div>
 
     <div id="sugestaoModal" class="modal sugestao-modal">
         <div class="modal-content">
@@ -426,9 +473,10 @@
                         </a>
 
                         <button class="btn small warning" onclick="limparSalasVazias()"
-    title="Apagar apenas salas vazias" style="margin-left: 10px; background:#ff9800; color:white;">
-    <i class="fas fa-broom"></i> Limpar Salas Vazias
-</button>
+                            title="Apagar apenas salas vazias"
+                            style="margin-left: 10px; background:#ff9800; color:white;">
+                            <i class="fas fa-broom"></i> Limpar Salas Vazias
+                        </button>
 
                     </div>
                 </h4>
@@ -444,40 +492,46 @@
     </div>
 
 
-  <div id="roomPasswordModal" class="modal" style="display: none; background: rgba(0,0,0,0.98); z-index: 9999; align-items: center; justify-content: center;">
-    <div class="modal-content" style="border: 1px solid var(--accent-color); box-shadow: 0 0 50px rgba(0, 210, 255, 0.3); max-width: 400px; text-align: center; position: relative;">
-        
-        <div style="margin-bottom: 20px;">
-            <i class="fas fa-lock" style="font-size: 3rem; color: var(--accent-color); margin-bottom: 15px; animation: pulse 2s infinite;"></i>
-            <h3 style="margin: 0; color: white;">Sala Privada</h3>
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">Esta sala é protegida por senha.</p>
-        </div>
-        
-        <form onsubmit="event.preventDefault(); verifyRoomPassword();">
-            <input type="password" id="roomEntryPassword" placeholder="Digite a senha..." 
-                   autocomplete="current-password"
-                   style="text-align: center; letter-spacing: 3px; font-weight: bold; font-size: 1.2rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #444; border-radius: 8px; padding: 12px; width: 100%; margin-bottom: 10px; transition: 0.3s;">
-            
-            <div id="passwordErrorMsg" style="color: var(--error-color); margin-bottom: 10px; display: none; font-size: 0.9rem; font-weight: bold;"><i class="fas fa-times-circle"></i> Senha incorreta!</div>
+    <div id="roomPasswordModal" class="modal"
+        style="display: none; background: rgba(0,0,0,0.98); z-index: 9999; align-items: center; justify-content: center;">
+        <div class="modal-content"
+            style="border: 1px solid var(--accent-color); box-shadow: 0 0 50px rgba(0, 210, 255, 0.3); max-width: 400px; text-align: center; position: relative;">
 
-            <button type="submit" class="btn primary" id="verifyPassBtn" style="width: 100%; margin-bottom: 15px;">
-                <i class="fas fa-unlock"></i> Destravar
-            </button>
-        </form>
-        
-        </div>
-</div>
+            <div style="margin-bottom: 20px;">
+                <i class="fas fa-lock"
+                    style="font-size: 3rem; color: var(--accent-color); margin-bottom: 15px; animation: pulse 2s infinite;"></i>
+                <h3 style="margin: 0; color: white;">Sala Privada</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Esta sala é protegida por senha.</p>
+            </div>
 
-    <div id="initialLoader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0f1a; z-index: 8888; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s;">
+            <form onsubmit="event.preventDefault(); verifyRoomPassword();">
+                <input type="password" id="roomEntryPassword" placeholder="Digite a senha..."
+                    autocomplete="current-password"
+                    style="text-align: center; letter-spacing: 3px; font-weight: bold; font-size: 1.2rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #444; border-radius: 8px; padding: 12px; width: 100%; margin-bottom: 10px; transition: 0.3s;">
+
+                <div id="passwordErrorMsg"
+                    style="color: var(--error-color); margin-bottom: 10px; display: none; font-size: 0.9rem; font-weight: bold;">
+                    <i class="fas fa-times-circle"></i> Senha incorreta!</div>
+
+                <button type="submit" class="btn primary" id="verifyPassBtn" style="width: 100%; margin-bottom: 15px;">
+                    <i class="fas fa-unlock"></i> Destravar
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+    <div id="initialLoader"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0f1a; z-index: 8888; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s;">
         <i class="fas fa-circle-notch fa-spin" style="font-size: 3rem; color: var(--accent-color);"></i>
         <p style="margin-top: 15px; color: #aaa;">Conectando à festa...</p>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
-    <script src="js/config.js"></script>   
+    <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
-    <script src="js/session.js"></script>  
+    <script src="js/session.js"></script>
     <script src="js/presence.js"></script>
     <script src="js/queue.js"></script>
     <script src="js/search.js"></script>
@@ -496,16 +550,16 @@
                 // Se o loader ainda estiver visível depois de 4 segundos...
                 if (loader && loader.style.display !== 'none') {
                     console.warn("⚠️ O carregamento demorou demais. Forçando entrada.");
-                    
+
                     // Verifica se o Firebase carregou
                     if (typeof firebase === 'undefined') {
                         alert("Erro Crítico: O Firebase não carregou. Verifique sua internet ou o arquivo config.js");
-                    } 
+                    }
                     // Verifica se o session.js carregou
                     else if (typeof checkRoomProtection === 'undefined') {
                         alert("Erro: O arquivo 'js/session.js' não foi encontrado ou tem erro. Verifique a pasta 'js'.");
                     }
-                    
+
                     // Libera a tela de qualquer jeito para não travar
                     loader.style.display = 'none';
                     document.body.style.opacity = '1';

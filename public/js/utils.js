@@ -69,3 +69,62 @@ document.addEventListener('keydown', (event) => {
         document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
     }
 });
+
+
+        function openReportModal() {
+    document.getElementById('reportModal').style.display = 'flex';
+}
+
+function closeReportModal() {
+    document.getElementById('reportModal').style.display = 'none';
+}
+
+// Essa função será a que chamará a API que vamos configurar no servidor
+async function submitReport() {
+    const userReported = document.getElementById('reportUser').value;
+    const reason = document.getElementById('reportReason').value;
+    const roomName = document.getElementById('roomNameDisplay').innerText;
+    
+    // --- NOVO: Captura dados extras ---
+    // Pega o ID da sala da variável global do session.js
+    const roomId = window.currentRoomId || "ID Desconhecido"; 
+    
+    // Pega o nome de quem está enviando (do session storage ou da variável global)
+    const reporter = window.currentSessionUser || sessionStorage.getItem('ytSessionUser') || "Anônimo";
+
+    if (!userReported || !reason) {
+        alert("Preencha todos os campos para o report.");
+        return;
+    }
+
+    const btn = document.getElementById('submitReportBtn');
+    btn.disabled = true;
+    btn.innerText = "Enviando...";
+
+    try {
+        const response = await fetch('/api/report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userReported: userReported,
+                reason: reason,
+                room: roomName,
+                roomId: roomId,     // <--- Enviando ID da sala
+                reporter: reporter  // <--- Enviando quem reportou
+            })
+        });
+
+        if (response.ok) {
+            alert("Report enviado com sucesso para os administradores!");
+            closeReportModal();
+        } else {
+            throw new Error("Erro no servidor");
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Erro ao enviar report. Tente novamente mais tarde.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Report';
+    }
+}
