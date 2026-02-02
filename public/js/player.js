@@ -52,7 +52,11 @@ function onYouTubeIframeAPIReady() {
  * 2. MONITORAMENTO DE ESTADO
  * Gerencia o que acontece quando o vídeo dá play, pause ou acaba.
  */
+
 function onPlayerStateChange(event) {
+    // 1. CORREÇÃO PRINCIPAL: Usamos o player do evento, não a variável global
+    const playerSeguro = event.target; 
+
     // --- RESUME LOCAL (SÓ NO MODO SOLO) ---
     if (
         event.data === YT.PlayerState.PLAYING &&
@@ -65,11 +69,16 @@ function onPlayerStateChange(event) {
         const now = Date.now();
 
         if (savedVideoId && !isNaN(savedTime) && (now - lastSaveTime < 3600000)) {
-            const currentVideoId = player.getVideoData()?.video_id;
+            // Uso seguro do getVideoData
+            const currentVideoId = playerSeguro.getVideoData ? playerSeguro.getVideoData()?.video_id : null;
+            
             if (currentVideoId === savedVideoId && savedTime > 5) {
                 console.log(`🔄 RESUMINDO LOCAL EM ${savedTime}s`);
                 localResumeAlreadyUsed = true;
-                player.seekTo(savedTime, true);
+                
+                if (typeof playerSeguro.seekTo === 'function') {
+                    playerSeguro.seekTo(savedTime, true);
+                }
                 
                 localStorage.removeItem('localPlayerTime');
                 localStorage.removeItem('localPlayerVideoId');
@@ -78,32 +87,62 @@ function onPlayerStateChange(event) {
         }
     }
 
-    // --- FIM DO VÍDEO (PRÓXIMO DA FILA) ---
+    // --- FIM DO VÍDEO (PRÓXIMO DA FILA + AUTO DJ) ---
     if (event.data === YT.PlayerState.ENDED) {
+        console.log("🎬 Vídeo acabou.");
+
+        // Limpa storage local
         localStorage.removeItem('localPlayerTime');
         localStorage.removeItem('localPlayerVideoId');
         localStorage.removeItem('localPlayerTimestamp');
 
+        // 1. Tenta pegar o título para o DJ Maestro (antes de remover da fila)
+        // Isso é crucial para o DJ saber o que buscar
+        let tituloAcabou = "";
+        try {
+            if (playerSeguro.getVideoData) {
+                tituloAcabou = playerSeguro.getVideoData().title;
+            }
+        } catch(e) {}
+
+        // 2. Remove o vídeo que acabou da fila do Firebase
         if (typeof videoQueue !== 'undefined' && videoQueue.length > 0) {
+            // Removemos o primeiro da fila (que acabou de tocar)
             setTimeout(() => {
                 if (typeof videoQueueRef !== 'undefined') {
                     videoQueueRef.child(videoQueue[0].id).remove().catch(err => console.error(err));
                 }
             }, 500);
         }
+
+        // 3. CHAMA O DJ MAESTRO (Importante!)
+        // Se a função existir e estiver ativa, ele já prepara a próxima
+        if (typeof rodarCicloAutoDJ === 'function') {
+             // Passamos o título apenas se precisar forçar contexto, 
+             // mas o search.js atualizado já pega do player se não passarmos nada.
+             // O delay garante que o player status já atualizou
+             setTimeout(() => rodarCicloAutoDJ(), 1000);
+        }
     }
 
     // --- SINCRONIA MESTRE (ADMIN OU BROADCASTER ENVIA DADOS) ---
     if (window.isAdminLoggedIn || window.isBroadcaster) {
         let vidId = null;
-        try { vidId = player.getVideoData().video_id; } catch (e) {}
+        try { 
+            // Proteção contra erro de função inexistente
+            if (playerSeguro.getVideoData) {
+                vidId = playerSeguro.getVideoData().video_id; 
+            }
+        } catch (e) {}
 
         if (vidId && typeof playerStateRef !== 'undefined') {
+            const currentTime = playerSeguro.getCurrentTime ? playerSeguro.getCurrentTime() : 0;
+            
             playerStateRef.update({ 
                 state: event.data,
                 videoId: vidId,
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
-                videoTime: player.getCurrentTime(),
+                videoTime: currentTime,
                 status: event.data === YT.PlayerState.PLAYING ? 'playing' : 'paused'
             });
         }

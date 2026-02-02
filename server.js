@@ -178,3 +178,98 @@ app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
     console.log(`Chaves YouTube configuradas: ${YOUTUBE_KEYS.length}`);
 });
+
+
+
+//  /api/spotify-recommendations
+
+app.get('/api/spotify-recommendations', async (req, res) => {
+    try {
+        const { q, genre } = req.query; // Agora aceita 'genre' também
+        const token = await getSpotifyToken();
+        if (!token) return res.status(500).json({ error: 'Erro no token Spotify' });
+
+        let recommendations = [];
+
+        // CASO 1: Busca por GÊNERO Específico (Selecionado pelo usuário)
+        if (genre) {
+            // Mapear seus gêneros para gêneros do Spotify
+            const mapGeneros = {
+                'sertanejo': 'sertanejo,brazilian',
+                'funk': 'funk,baile-funk',
+                'pop': 'pop,pop-film',
+                'rock': 'rock,hard-rock',
+                'eletronica': 'edm,dance,house',
+                'rap': 'hip-hop,rap',
+                'pagode': 'pagode,samba',
+                'reggaeton': 'reggaeton,latin'
+            };
+            
+            const seed = mapGeneros[genre] || genre; // Usa o mapa ou o próprio nome
+
+            const recRes = await axios.get('https://api.spotify.com/v1/recommendations', {
+                params: { 
+                    seed_genres: seed, 
+                    limit: 5,
+                    min_popularity: 60, // Só sucessos
+                    target_energy: 0.7  // Músicas animadas pra festa
+                },
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            recommendations = recRes.data.tracks;
+        } 
+        
+        // CASO 2: Busca por SIMILARIDADE (Auto DJ Inteligente)
+        else if (q) {
+            const qLower = q.toLowerCase();
+            let seedGenres = '';
+            
+            // Inteligência Disney/Contexto
+            if (qLower.includes('disney') || qLower.includes('moana') || qLower.includes('frozen') || qLower.includes('encanto')) {
+                seedGenres = 'disney,show-tunes,soundtracks';
+            } else if (qLower.includes('dreamworks') || qLower.includes('shrek')) {
+                seedGenres = 'work-out,soundtracks'; 
+            }
+
+            if (seedGenres) {
+                const recRes = await axios.get('https://api.spotify.com/v1/recommendations', {
+                    params: { seed_genres: seedGenres, limit: 5, min_popularity: 50 },
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                recommendations = recRes.data.tracks;
+            } 
+            
+            // Se não for contexto especial, busca a música para pegar o ID
+            if (recommendations.length === 0) {
+                const searchRes = await axios.get('https://api.spotify.com/v1/search', {
+                    params: { q: q, type: 'track', limit: 1 },
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (searchRes.data.tracks.items.length > 0) {
+                    const trackId = searchRes.data.tracks.items[0].id;
+                    const recRes = await axios.get('https://api.spotify.com/v1/recommendations', {
+                        params: { seed_tracks: trackId, limit: 5 },
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    recommendations = recRes.data.tracks;
+                }
+            }
+        }
+
+        // Formata o resultado
+        const tracks = recommendations.map(t => ({
+            title: t.name,
+            artist: t.artists[0].name,
+            full: `${t.name} - ${t.artists[0].name}`,
+            uri: t.uri
+        }));
+
+        res.json(tracks);
+
+    } catch (error) {
+        console.error('Erro no Auto DJ Spotify:', error.message);
+        // Não quebra o app, retorna array vazio pro front usar fallback
+        res.json([]); 
+    }
+});
