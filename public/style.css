@@ -4066,172 +4066,266 @@ body.festa-mode iframe#videoPlayer {
 /* ---------------------------- */
 /* --- ESTILO MODERNO DO MODAL DE REPORT --- */
 
-/* Fundo do modal com blur mais forte */
-.report-modal-modern {
-    backdrop-filter: blur(15px);
-    background: rgba(0, 0, 0, 0.75);
-}
-
-/* Conteúdo central */
-.glass-content {
-    background: linear-gradient(145deg, rgba(30, 30, 40, 0.95), rgba(20, 20, 30, 0.98));
-    border: 1px solid rgba(255, 82, 82, 0.2); /* Borda avermelhada sutil */
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 82, 82, 0.1);
-    border-radius: 20px;
-    padding: 0;
-    max-width: 380px;
-    overflow: hidden;
-    position: relative;
-}
-
-/* Header minimalista (só o fechar) */
-.modal-header-clean {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    z-index: 10;
-}
-
-.modal-body-centered {
-    padding: 40px 30px 30px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* Ícone Pulsante */
-.report-icon-pulse {
-    width: 70px;
-    height: 70px;
-    background: rgba(255, 82, 82, 0.1);
-    border-radius: 50%;
-    display: flex;
+.report-modal-compact {
+    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 20000;
+    
+    /* CORREÇÃO AQUI: Era 'flex', agora é 'none' para começar escondido */
+    display: none; 
+    
     align-items: center;
     justify-content: center;
-    margin-bottom: 15px;
-    border: 1px solid rgba(255, 82, 82, 0.3);
-    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
-    animation: pulse-red 2s infinite;
-}
-
-.report-icon-pulse i {
-    font-size: 30px;
-    color: #ff5252;
-}
-
-@keyframes pulse-red {
-    0% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.4);
-    }
-    70% {
-        transform: scale(1);
-        box-shadow: 0 0 0 15px rgba(255, 82, 82, 0);
-    }
-    100% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
-    }
-}
-
-/* Textos */
-.modal-body-centered h3 {
-    margin: 0;
-    font-size: 1.4rem;
-    color: white;
-    font-weight: 700;
-}
-
-.subtitle {
-    font-size: 0.9rem;
-    color: #aaa;
-    margin-bottom: 25px;
-}
-
-/* Inputs Modernos */
-.form-container {
+    position: fixed; /* Garante que fique sobre tudo */
+    top: 0;
+    left: 0;
     width: 100%;
+    height: 100%;
+}
+
+/* Caixa Principal */
+.glass-compact {
+    width: 95%;
+    max-width: 420px; /* Mais estreito */
+    background: #1a1a2e;
+    border: 1px solid rgba(255, 82, 82, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    overflow: hidden; /* Remove scroll do container */
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 15px;
 }
 
-.input-group-modern {
+/* Header Compacto */
+.modal-header-compact {
+    background: linear-gradient(90deg, rgba(255,82,82,0.1), transparent);
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.header-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.shield-icon {
+    font-size: 1.2rem;
+    color: #ff5252;
+    animation: pulse 2s infinite;
+}
+
+.modal-header-compact h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: white;
+    line-height: 1;
+}
+
+.subtitle-compact {
+    font-size: 0.75rem;
+    color: #aaa;
+}
+
+.close-button-compact {
+    color: #aaa;
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 0.8;
+}
+
+.close-button-compact:hover {
+    color: white;
+}
+
+/* Corpo Compacto */
+.modal-body-compact {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Espaço entre linhas reduzido */
+}
+
+/* Inputs */
+.input-wrapper-compact {
     position: relative;
-    width: 100%;
 }
 
-.input-icon {
+.input-wrapper-compact input {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 10px 10px 10px 35px;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.95rem;
+}
+
+.input-wrapper-compact .input-icon {
     position: absolute;
-    left: 15px;
+    left: 10px;
     top: 50%;
     transform: translateY(-50%);
     color: #666;
-    transition: 0.3s;
+    font-size: 0.9rem;
 }
 
-.textarea-group .input-icon {
-    top: 15px;
-    transform: none;
+/* Grid de Motivos (Pills) */
+.label-mini {
+    display: block;
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 5px;
 }
 
-.input-group-modern input,
-.input-group-modern textarea {
-    width: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 12px 12px 12px 45px; /* Espaço para o ícone */
-    border-radius: 12px;
-    color: white;
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
+.reasons-grid-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
 }
 
-.input-group-modern textarea {
-    height: 100px;
-    resize: none;
-    padding-top: 12px;
+.reason-pill input {
+    display: none;
 }
 
-.input-group-modern input:focus,
-.input-group-modern textarea:focus {
-    border-color: #ff5252;
-    background: rgba(0, 0, 0, 0.5);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(255, 82, 82, 0.1);
-}
-
-.input-group-modern input:focus + .input-icon,
-.input-group-modern textarea:focus + .input-icon {
-    color: #ff5252;
-}
-
-/* Botão de Enviar */
-.btn-report-submit {
-    background: linear-gradient(135deg, #ff5252, #d32f2f);
-    color: white;
-    border: none;
-    padding: 14px;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
+.reason-pill span {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    transition: transform 0.2s, box-shadow 0.2s;
+    gap: 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 8px;
+    border-radius: 6px;
+    color: #ccc;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.reason-pill span i {
+    font-size: 0.9rem;
+    color: #ff5252;
+}
+
+/* Selecionado */
+.reason-pill input:checked + span {
+    background: rgba(255, 82, 82, 0.2);
+    border-color: #ff5252;
+    color: white;
+}
+
+/* Textarea Reduzida */
+.textarea-wrapper-compact {
+    position: relative;
+}
+
+.textarea-wrapper-compact textarea {
     width: 100%;
+    height: 60px; /* Altura fixa pequena */
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 8px;
+    border-radius: 8px;
+    color: white;
+    resize: none;
+    font-size: 0.9rem;
+    font-family: inherit;
+}
+
+.char-count-mini {
+    position: absolute;
+    bottom: 5px;
+    right: 8px;
+    font-size: 0.65rem;
+    color: #555;
+}
+
+/* Footer: Checkbox + Botão lado a lado */
+.footer-compact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     margin-top: 5px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.05);
 }
 
-.btn-report-submit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(211, 47, 47, 0.4);
+.confirm-check-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
 }
 
-.btn-report-submit:active {
-    transform: scale(0.98);
+.confirm-check-compact input {
+    display: none;
 }
+
+.checkmark-mini {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #666;
+    border-radius: 4px;
+    display: inline-block;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.confirm-check-compact input:checked + .checkmark-mini {
+    background: #ff5252;
+    border-color: #ff5252;
+}
+
+.text-mini {
+    font-size: 0.75rem;
+    color: #ccc;
+}
+
+.btn-compact-submit {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #ff5252, #d32f2f);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.5;
+    pointer-events: none;
+    transition: 0.3s;
+}
+
+.btn-compact-submit:not(:disabled) {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Foco geral */
+input:focus, textarea:focus {
+    outline: none;
+    border-color: #ff5252;
+}
+
+/* Mobile: Ajuste para telas muito pequenas */
+@media (max-width: 380px) {
+    .footer-compact {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .btn-compact-submit {
+        justify-content: center;
+    }
+}
+
+/* ==========================================================
+   Logo acima ta o modal de report - Fim do modal report
+   =========================================================== */
