@@ -2,33 +2,30 @@ const functions = require('firebase-functions');
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-const nodemailer = require('nodemailer'); // <--- 1. Coloque os requires no topo
-require('dotenv').config(); 
+const nodemailer = require('nodemailer');
+require('dotenv').config(); // <--- Carrega as variáveis do arquivo .env
 
 const app = express();
 
-// 2. Configurações essenciais do Express
+// Configurações essenciais do Express
 app.use(cors({ origin: true }));
-app.use(express.json()); // <--- 3. NECESSÁRIO para ler os dados enviados pelo front (req.body)
+app.use(express.json());
 
-// Função auxiliar para pegar a chave (Local ou Nuvem)
+// Função auxiliar para pegar a chave do YouTube
 const getApiKey = () => {
-    if (process.env.YOUTUBE_API_KEY) return process.env.YOUTUBE_API_KEY;
-    if (functions.config().youtube && functions.config().youtube.key) return functions.config().youtube.key;
-    return null;
+    // 1. Tenta pegar do arquivo .env (process.env)
+    // 2. Se não achar, tenta pegar do Firebase Config (functions.config)
+    return process.env.YOUTUBE_API_KEY || (functions.config().youtube && functions.config().youtube.key) || null;
 };
 
 // ==================================================================
 // --- CONFIGURAÇÃO DE EMAIL (REPORT) ---
 // ==================================================================
-// Configure aqui o transporte de e-mail (ANTES das rotas)
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        // DICA: Para produção no Firebase, o ideal é usar functions.config().email.user 
-        // Mas pode deixar hardcoded aqui se for usar Senha de App e não se importar de expor no código
-        user: 'lucs.silva11@gmail.com',  // <--- TROQUE AQUI
-        pass: 's3751993l'     // <--- TROQUE AQUI
+        user: process.env.EMAIL_USER, // Pega do .env
+        pass: process.env.EMAIL_PASS  // Pega do .env
     }
 });
 
@@ -36,10 +33,14 @@ const transporter = nodemailer.createTransport({
 app.post('/api/report', async (req, res) => {
     try {
         const { userReported, reason, room } = req.body;
+        
+        // Define quem recebe o e-mail:
+        // Se ADMIN_EMAIL estiver vazio no .env, ele envia para o próprio EMAIL_USER
+        const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
 
         const mailOptions = {
-            from: '"FlowLink Report" <seu-email-admin@gmail.com>', // <--- TROQUE AQUI (Mesmo do auth.user)
-            to: 'lucs.silva11@gmail.com', // Seu e-mail pessoal que recebe o aviso
+            from: `"FlowLink Report" <${process.env.EMAIL_USER}>`,
+            to: adminEmail, 
             subject: `⚠️ Report de Usuário - Sala: ${room}`,
             html: `
                 <h2>Novo Report Recebido</h2>
@@ -111,5 +112,4 @@ app.get('/api/video-info', async (req, res) => {
     }
 });
 
-// 4. A exportação DEVE ser a ÚLTIMA linha
 exports.api = functions.https.onRequest(app);
