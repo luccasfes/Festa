@@ -1,17 +1,17 @@
 // server.js 
-require('dotenv').config(); 
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const axios = require('axios');
-const nodemailer = require('nodemailer'); // <--- 1. Adicionado Nodemailer
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Habilitar CORS e JSON
 app.use(cors());
-app.use(express.json()); // <--- 2.  Necessário para ler o corpo do POST (req.body)
+app.use(express.json());
 
 // Serve ficheiros estáticos da pasta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
@@ -22,40 +22,34 @@ app.use(express.static(path.join(__dirname, 'public')));
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER, // Lê do arquivo .env
-        pass: process.env.EMAIL_PASS  // Lê do arquivo .env
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     }
 });
 
 // Rota de Report 
 app.post('/api/report', async (req, res) => {
     try {
-        // Recebe os novos campos: roomId e reporter
         const { userReported, reason, room, roomId, reporter } = req.body;
-        
         console.log(`📩 Recebendo report de ${reporter} sobre ${userReported}`);
 
-        // Verificação de segurança das chaves (mantida)
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
             return res.status(500).json({ error: "Configuração de e-mail ausente" });
         }
 
         const mailOptions = {
             from: `"FlowLink System" <${process.env.EMAIL_USER}>`,
-            to: process.env.EMAIL_USER, 
+            to: process.env.EMAIL_USER,
             subject: `⚠️ REPORT: ${room}`,
-            // HTML atualizado com as novas informações
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
                     <h2 style="color: #d32f2f;">🚨 Novo Report de Usuário</h2>
-                    
                     <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
                         <p><strong>Quem Reportou:</strong> ${reporter}</p>
                         <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
                         <p><strong>Sala:</strong> ${room}</p>
                         <p><strong>ID da Sala:</strong> <code>${roomId}</code></p>
                     </div>
-
                     <div style="background: #fff0f0; padding: 15px; border-radius: 5px; border: 1px solid #ffcdd2;">
                         <p style="font-size: 1.1em;"><strong>Usuário Denunciado:</strong> ${userReported}</p>
                         <p><strong>Motivo:</strong></p>
@@ -63,7 +57,6 @@ app.post('/api/report', async (req, res) => {
                             ${reason}
                         </blockquote>
                     </div>
-                    
                     <p style="font-size: 0.8em; color: #888; margin-top: 20px;">Enviado automaticamente pelo sistema FlowLink.</p>
                 </div>
             `
@@ -91,7 +84,7 @@ async function fetchYoutubeWithFallback(url, params) {
 
     for (let i = 0; i < YOUTUBE_KEYS.length; i++) {
         const currentKey = YOUTUBE_KEYS[i];
-        
+
         try {
             const response = await axios.get(url, {
                 params: { ...params, key: currentKey },
@@ -106,7 +99,7 @@ async function fetchYoutubeWithFallback(url, params) {
             lastError = error;
             if (error.response && error.response.status === 403) {
                 console.warn(`⚠️ Chave YouTube ${i + 1} esgotada. Tentando backup...`);
-                continue; 
+                continue;
             } else {
                 throw error;
             }
@@ -129,7 +122,7 @@ async function getSpotifyToken() {
         const params = new URLSearchParams();
         params.append('grant_type', 'client_credentials');
 
-        // URL Oficial do Spotify para Token
+        // URL CORRETA (Oficial)
         const response = await axios.post('https://accounts.spotify.com/api/token', params, {
             headers: {
                 'Authorization': 'Basic ' + Buffer.from(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64'),
@@ -138,7 +131,7 @@ async function getSpotifyToken() {
         });
 
         spotifyToken = response.data.access_token;
-        tokenExpiration = now + ((response.data.expires_in - 60) * 1000); 
+        tokenExpiration = now + ((response.data.expires_in - 60) * 1000);
         return spotifyToken;
     } catch (error) {
         console.error("Erro ao autenticar no Spotify:", error.message);
@@ -165,9 +158,9 @@ app.get('/api/spotify-genre', async (req, res) => {
         }
 
         const track = searchRes.data.tracks.items[0];
-        const artistId = track.artists[0].id; 
+        const artistId = track.artists[0].id;
 
-        // 2. Busca o Artista (URL Oficial)
+        // 2. Busca o Artista (URL Oficial e sintaxe corrigida)
         const artistRes = await axios.get(`https://api.spotify.com/v1/artists/${artistId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -175,7 +168,7 @@ app.get('/api/spotify-genre', async (req, res) => {
         res.json({
             track: track.name,
             artist: track.artists[0].name,
-            genres: artistRes.data.genres 
+            genres: artistRes.data.genres
         });
 
     } catch (error) {
@@ -233,73 +226,79 @@ app.get('/api/video-info', async (req, res) => {
 
 app.get('/api/spotify-recommendations', async (req, res) => {
     try {
-        const { q, genre } = req.query; 
+        const { q, genre } = req.query;
         const token = await getSpotifyToken();
         if (!token) return res.status(500).json({ error: 'Erro no token Spotify' });
 
+        const SEARCH_URL = 'https://api.spotify.com/v1/search'; 
         let recommendations = [];
 
-        // CASO 1: Busca por GÊNERO
+        // CASO 1: Busca por GÊNERO (Aqui estava o erro do Funk Gringo)
         if (genre) {
-            const mapGeneros = {
-                'sertanejo': 'sertanejo,brazilian',
-                'funk': 'funk,baile-funk',
-                'pop': 'pop,pop-film',
-                'rock': 'rock,hard-rock',
-                'eletronica': 'edm,dance,house',
-                'rap': 'hip-hop,rap',
-                'pagode': 'pagode,samba',
-                'reggaeton': 'reggaeton,latin'
-            };
-            
-            const seed = mapGeneros[genre] || genre;
+            const g = genre.toLowerCase().trim();
+            let termoBusca = "";
 
-            // URL Oficial Recommendations
-            const recRes = await axios.get('https://api.spotify.com/v1/recommendations', {
-                params: { 
-                    seed_genres: seed, 
-                    limit: 5,
-                    min_popularity: 60, 
-                    target_energy: 0.7
-                },
+            // DICIONÁRIO DE TRADUÇÃO PARA O "SPOTIFYQUÊS"
+            // Isso garante que venha a música certa, não a versão gringa
+            const mapaBrasileiro = {
+                'funk': 'playlist:funk_hits_brasil funk mandelão', // Força funk BR
+                'sertanejo': 'sertanejo universitario top brasil',
+                'pagode': 'pagode churrasco ao vivo',
+                'samba': 'samba raiz brasil',
+                'eletronica': 'alok vintage culture dubdogz brasil', // Eletrônica BR
+                'rap': 'rap nacional trap brasil',
+                'rock': 'rock nacional brasil anos 2000',
+                'pop': 'pop brasil luisa sonza anitta',
+                'reggaeton': 'reggaeton brasil hits'
+            };
+
+            // Se tiver no mapa, usa a busca específica. Se não, usa "hits brasil"
+            termoBusca = mapaBrasileiro[g] || `${g} hits brasil`;
+
+            console.log(`🇧🇷 [Server] Buscando Gênero BR: "${termoBusca}"`);
+
+            // Faz a busca focada no mercado BR
+            const searchRes = await axios.get(SEARCH_URL, {
+                params: { q: termoBusca, type: 'track', limit: 20, market: 'BR' }, 
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            recommendations = recRes.data.tracks;
-        } 
-        
-        // CASO 2: Busca por SIMILARIDADE (Auto DJ)
+            
+            if (searchRes.data.tracks && searchRes.data.tracks.items.length > 0) {
+                // Pega 20 resultados e escolhe 5 aleatórios para não ficar repetitivo
+                recommendations = searchRes.data.tracks.items
+                    .sort(() => 0.5 - Math.random()) // Embaralha
+                    .slice(0, 5); // Pega 5
+            }
+        }
+
+        // CASO 2: Busca por Contexto (Música tocando) - JÁ ESTAVA BOM
         else if (q) {
             const qLower = q.toLowerCase();
-            let seedGenres = '';
             
-            if (qLower.includes('disney') || qLower.includes('moana') || qLower.includes('frozen')) {
-                seedGenres = 'disney,show-tunes,soundtracks';
-            } else if (qLower.includes('shrek')) {
-                seedGenres = 'work-out,soundtracks'; 
-            }
-
-            if (seedGenres) {
-                const recRes = await axios.get('https://api.spotify.com/v1/recommendations', {
-                    params: { seed_genres: seedGenres, limit: 5, min_popularity: 50 },
+            // Desenhos / Filmes
+            if (qLower.includes('disney') || qLower.includes('moana') || qLower.includes('frozen') || qLower.includes('encanto')) {
+                const searchRes = await axios.get(SEARCH_URL, {
+                    params: { q: 'disney hits portugues brasil', type: 'track', limit: 10, market: 'BR' },
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                recommendations = recRes.data.tracks;
+                recommendations = searchRes.data.tracks.items;
             } 
-            
-            // Se não for contexto especial, busca ID da música
-            if (recommendations.length === 0) {
-                const searchRes = await axios.get('https://api.spotify.com/v1/search', {
-                    params: { q: q, type: 'track', limit: 1 },
+            else {
+                // Busca tracks DO ARTISTA para garantir o estilo
+                const searchRes = await axios.get(SEARCH_URL, {
+                    params: { q: `artist:${q}`, type: 'track', limit: 10, market: 'BR' },
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (searchRes.data.tracks.items.length > 0) {
-                    const trackId = searchRes.data.tracks.items[0].id;
-                    const recRes = await axios.get('https://api.spotify.com/v1/recommendations', {
-                        params: { seed_tracks: trackId, limit: 5 },
+                if (!searchRes.data.tracks || searchRes.data.tracks.items.length === 0) {
+                    // Fallback se não achar o artista
+                     const searchResBackup = await axios.get(SEARCH_URL, {
+                        params: { q: `${q} sucesso brasil`, type: 'track', limit: 10, market: 'BR' },
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
-                    recommendations = recRes.data.tracks;
+                    recommendations = searchResBackup.data.tracks.items;
+                } else {
+                    recommendations = searchRes.data.tracks.items;
                 }
             }
         }
@@ -315,10 +314,9 @@ app.get('/api/spotify-recommendations', async (req, res) => {
 
     } catch (error) {
         console.error('Erro no Auto DJ Spotify:', error.message);
-        res.json([]); 
+        res.json([]); // Retorna vazio pro frontend usar o fallback do YouTube
     }
 });
-
 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

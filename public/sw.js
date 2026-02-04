@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flowlink-cache-v3'; // Mudei para v3 para forçar atualização
+const CACHE_NAME = 'flowlink-cache-v4'; // Subi para v4 para limpar o cache bugado
 
 const FILES_TO_CACHE = [
   '/',
@@ -7,8 +7,6 @@ const FILES_TO_CACHE = [
   '/admin.html',
   '/style.css',
   '/assets/favicon.png',
-  '/assets/icon-192.png',
-  '/assets/icon-512.png',
   '/js/utils.js', 
   '/js/player.js',
   '/js/theme.js'
@@ -18,7 +16,14 @@ const FILES_TO_CACHE = [
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE))
+    caches.open(CACHE_NAME).then(cache => {
+        // Tenta adicionar arquivos. Se um falhar, loga o erro mas não quebra tudo imediatamente,
+        // porém o addAll exige que TODOS funcionem.
+        // Removi os ícones faltantes acima para garantir que funcione.
+        return cache.addAll(FILES_TO_CACHE);
+    }).catch(err => {
+        console.error("Erro crítico ao instalar cache:", err);
+    })
   );
 });
 
@@ -29,6 +34,7 @@ self.addEventListener('activate', (event) => {
       Promise.all(
         keys.map(key => {
           if (key !== CACHE_NAME) {
+            console.log("Removendo cache antigo:", key);
             return caches.delete(key);
           }
         })
@@ -40,12 +46,12 @@ self.addEventListener('activate', (event) => {
 // FETCH
 self.addEventListener('fetch', (event) => {
   
-  // 1. REGRA DE OURO: Ignorar chamadas de API (Resolve o erro "Failed to fetch")
+  // 1. REGRA DE OURO: Ignorar chamadas de API
   if (event.request.url.includes('/api/')) {
-    return; // Deixa a internet cuidar disso, não o cache
+    return;
   }
 
-  // 2. Para HTML (Navegação): Tenta Rede -> Falha -> Cache
+  // 2. Para HTML (Navegação)
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -59,7 +65,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. Para arquivos estáticos: Cache First -> Rede
+  // 3. Para arquivos estáticos
   event.respondWith(
     caches.match(event.request).then(cached => {
       return cached || fetch(event.request);

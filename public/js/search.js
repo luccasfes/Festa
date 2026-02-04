@@ -13,28 +13,68 @@ const generosMusicais = [
     { id: 'pagode', name: 'Pagode/Samba', icon: 'fa-drum' }
 ];
 
-// --- FUNÇÕES DE BUSCA ---
+// ====================================================================
+// 1. FUNÇÃO DE LIMPEZA DE TÍTULO (IMPORTANTE PARA O DNA)
+// ====================================================================
+function limparTitulo(titulo) {
+    if (!titulo) return "";
+    
+    // Decodifica HTML entities (ex: &amp; -> &)
+    const txt = document.createElement("textarea");
+    txt.innerHTML = titulo;
+    let t = txt.value.toLowerCase();
+
+    return t
+        // 1. Padroniza duplas (Jorge & Mateus -> Jorge e Mateus)
+        .replace(/\s&\s/g, ' e ') 
+        .replace(/&/g, 'e') 
+        
+        // 2. Remove participações (Corta tudo depois do ft.)
+        // Ex: "Musica ft. Fulano" -> "Musica"
+        .replace(/(\sft\.|\sfeat\.|\sfeaturing|\sparticipation).*/g, '')
+
+        // 3. Remove coisas entre parênteses e colchetes
+        .replace(/\(.*\)|\[.*\]/g, '') 
+
+        // 4. Remove termos técnicos de vídeo
+        .replace(/official video|video oficial|clipe oficial|videoclipe|lyric|audio|visualizer/g, '')
+        
+        // 5. Remove termos de show
+        .replace(/ao vivo|live|no ar|performance|session|em brasília|dvd|amazon original|acústico/g, '')
+        
+        // 6. Limpeza final de caracteres (apenas letras, números e espaços)
+        .replace(/[^a-z0-9à-ú\s]/g, '') 
+        .replace(/\s+/g, ' ') 
+        .trim();
+}
+
+// ====================================================================
+// 2. FUNÇÕES DE INTERFACE (MODAL E BUSCA MANUAL)
+// ====================================================================
 function openYTSearchModal() {
-    document.getElementById('ytSearchModal').style.display = 'flex';
+    const modal = document.getElementById('ytSearchModal');
+    if(modal) modal.style.display = 'flex';
+    
     const resultsDiv = document.getElementById('ytSearchResults');
     if (resultsDiv) resultsDiv.innerHTML = '';
 
     if (currentSessionUser) {
-        document.querySelector('.session-info').style.display = 'flex';
-        document.getElementById('userNameInputGroup').style.display = 'none';
-        document.getElementById('currentSessionUser').textContent = currentSessionUser;
+        if(document.querySelector('.session-info')) document.querySelector('.session-info').style.display = 'flex';
+        if(document.getElementById('userNameInputGroup')) document.getElementById('userNameInputGroup').style.display = 'none';
+        if(document.getElementById('currentSessionUser')) document.getElementById('currentSessionUser').textContent = currentSessionUser;
         setTimeout(() => {
             const input = document.getElementById('ytSearchQuery');
             if(input) input.focus();
         }, 100);
     } else {
-        document.querySelector('.session-info').style.display = 'none';
-        document.getElementById('userNameInputGroup').style.display = 'block';
+        if(document.querySelector('.session-info')) document.querySelector('.session-info').style.display = 'none';
+        if(document.getElementById('userNameInputGroup')) document.getElementById('userNameInputGroup').style.display = 'block';
     }
 }
 
 function closeYTSearchModal() {
-    document.getElementById('ytSearchModal').style.display = 'none';
+    const modal = document.getElementById('ytSearchModal');
+    if(modal) modal.style.display = 'none';
 }
 
 function setSessionUser() {
@@ -90,20 +130,20 @@ async function searchYouTube() {
     }
 }
 
-// Verifica se o campo de busca existe antes de adicionar o evento (Segurança)
+// Event Listeners seguros
 const searchInput = document.getElementById('ytSearchQuery');
 if (searchInput) {
     searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') searchYouTube() });
 }
 
-// Se o campo existir, adiciona o evento de apertar Enter meio que se o user apertar enter ele fala entrega quando apertar enter
 const nameInput = document.getElementById('ytSearchName');
 if (nameInput) {
     nameInput.addEventListener('keypress', e => { if (e.key === 'Enter') setSessionUser() });
 }
 
-
-// --- AUTO DJ E GÊNEROS ---
+// ====================================================================
+// 3. AUTO DJ - CONFIGURAÇÃO E UI
+// ====================================================================
 let sugestaoGeneroSelecionado = 'pop';
 let sugestaoTipoSelecionado = 'genero';
 let autoSugestaoAtiva = false;
@@ -177,9 +217,7 @@ function ativarAutoSugestao() {
         showNotification('Auto DJ Ligado', 'success');
         if(autoSugestaoInterval) clearInterval(autoSugestaoInterval);
         rodarCicloAutoDJ();
-       // 240000 (4 minutos)
-       // 15000 (15 segundos)
-        autoSugestaoInterval = setInterval(rodarCicloAutoDJ, 240000);
+        autoSugestaoInterval = setInterval(rodarCicloAutoDJ, 240000); // 4 minutos
     } else {
         if(autoSugestaoInterval) clearInterval(autoSugestaoInterval);
         showNotification('Auto DJ Desligado', 'info');
@@ -223,142 +261,205 @@ function detectarGeneroAtual() {
     } catch(e){}
 }
 
-function gerarQuery() {
-    const ano = new Date().getFullYear();
-    if(sugestaoTipoSelecionado === 'tendencia') return `musicas mais tocadas ${ano} brasil`;
-    
-    if(sugestaoTipoSelecionado === 'similar') {
-        const fullTitle = player?.getVideoData?.()?.title || '';
-        if (!fullTitle) return `hits ${ano}`;
-
-        // Tenta extrair o artista (geralmente antes do " - " ou " | ")
-        const artista = fullTitle.split(/[-|]/)[0].trim();
-        
-        // Estratégia: buscar "rádio" ou "músicas parecidas" 
-        // Adicionamos "-[título original]" para tentar excluir a música atual da busca
-        const tituloLimpo = fullTitle.replace(/official video|clipe oficial|video/gi, '').trim();
-        return `${artista} radio musicas similares -"${tituloLimpo}"`;
-    }
-    
-    return `${sugestaoGeneroSelecionado} hits ${ano}`;
-}
-
-// CORREÇÃO AQUI: Aceita um parâmetro 'force' para rodar mesmo desligado
-// public/js/search.js
+// ====================================================================
+// 4. LÓGICA PRINCIPAL DO AUTO DJ (CORRIGIDA)
+// ====================================================================
 
 async function rodarCicloAutoDJ(force = false) {
     // Verifica se deve rodar
     if (!force && !autoSugestaoAtiva) return;
     if (typeof videoQueue !== 'undefined' && videoQueue.length >= autoSugestaoCount && !force) return;
 
+    console.log("🚀 [DJ Maestro] Iniciando ciclo..."); 
+
     try {
         let queryParaYouTube = '';
-        let contextoOficial = false; // Se true, força busca VEVO/Oficial
+        let contextoOficial = false; 
         let apiEndpoint = '';
 
-        // === DECISÃO: MODO GÊNERO ou MODO SIMILAR? ===
-        // Se o usuário selecionou a aba "Gênero" explicitamente
+        // === A. MODO GÊNERO ===
         if (sugestaoTipoSelecionado === 'genero' && sugestaoGeneroSelecionado) {
             console.log(`[DJ Maestro] Modo Gênero Ativo: ${sugestaoGeneroSelecionado}`);
             apiEndpoint = `/api/spotify-recommendations?genre=${sugestaoGeneroSelecionado}`;
         } 
-        // Caso contrário, usa a música atual como base (Modo Similar/Contexto)
+        
+        // === B. MODO CONTEXTO (Baseado na música atual) ===
         else {
-            const currentTitle = player?.getVideoData?.()?.title || '';
-            if (!currentTitle) return; // Se não tem música tocando nem gênero, não faz nada
-            console.log(`[DJ Maestro] Modo Contexto: Baseado em "${currentTitle}"`);
+            let currentTitle = player?.getVideoData?.()?.title || '';
+            if (!currentTitle) {
+                console.log("⚠️ [DJ Maestro] Nenhuma música tocando para basear contexto.");
+                return; 
+            }
+
+            const titleLower = currentTitle.toLowerCase();
+
+            // --- LISTA MÁGICA DE DESENHOS ---
+            // Se encontrar qualquer um desses, força o modo Disney
+            const termosDesenho = [
+                'disney', 'pixar', 'princesa e o sapo', 'o rei leão', 'rei leao', 
+                'moana', 'frozen', 'encanto', 'mulan', 'tarzan', 'hercules', 
+                'aladdin', 'a pequena sereia', 'bela e a fera', 'cinderela', 
+                'pocahontas', 'corcunda de notre dame', 'shrek', 'toy story', 
+                'monstros s.a', 'procurando nemo', 'os incriveis', 'enrolados', 
+                'valente', 'divertida mente', 'viva - a vida', 'wish', 'elementos', 
+                'zootopia', 'trilha sonora', 'soundtrack', 'animação'
+            ];
+
+            const ehDesenho = termosDesenho.some(termo => titleLower.includes(termo));
+
+            if (ehDesenho) {
+                console.log(`🏰 [DJ Maestro] Detectado tema DESENHO/DISNEY no título.`);
+                // Força "Disney" para o servidor buscar playlists de desenho
+                currentTitle = "Disney"; 
+            } else {
+                // --- LÓGICA PADRÃO (LIMPEZA DE ARTISTA) ---
+                if (currentTitle.includes('-')) currentTitle = currentTitle.split('-')[0];
+                if (currentTitle.includes(':')) currentTitle = currentTitle.split(':')[0];
+                currentTitle = currentTitle.split(',')[0];
+                currentTitle = currentTitle.replace(/ft\..*|feat\..*|\(.*\)/gi, '').trim();
+                
+                console.log(`👤 [DJ Maestro] Modo Contexto: Baseado no Artista "${currentTitle}"`);
+            }
+            
             apiEndpoint = `/api/spotify-recommendations?q=${encodeURIComponent(currentTitle)}`;
         }
 
-        // 1. Busca recomendação inteligente no Servidor/Spotify
+        // 1. Busca recomendação no Servidor/Spotify
+        console.log(`📡 [DJ Maestro] Consultando API: ${apiEndpoint}`);
         try {
             const spotifyRes = await fetch(apiEndpoint);
+            
             if (spotifyRes.ok) {
                 const recs = await spotifyRes.json();
+                console.log(`✅ [DJ Maestro] Spotify retornou ${recs ? recs.length : 0} sugestões.`);
+                
                 if (recs && recs.length > 0) {
-                    // Pega uma sugestão aleatória das 5 retornadas para variar mais
                     const index = Math.floor(Math.random() * recs.length);
                     const musicaSugerida = recs[index];
-                    
                     const termo = musicaSugerida.full.toLowerCase();
 
-                    // Se for Gênero, sempre queremos oficial
+                    // Definições de busca no YouTube
                     if (sugestaoTipoSelecionado === 'genero') {
                         queryParaYouTube = `${musicaSugerida.full} audio oficial -cover -remix`;
                         contextoOficial = true;
                     }
-                    // Detecção de Contexto Disney/Filmes (mantida da versão anterior)
                     else if (termo.includes('disney') || termo.includes('moana') || termo.includes('frozen') || termo.includes('encanto') || termo.includes('soundtrack')) {
                         contextoOficial = true;
                         queryParaYouTube = `${musicaSugerida.full} Disney VEVO official video pt-br`;
                     } 
-                    // Padrão
                     else {
                         queryParaYouTube = `${musicaSugerida.full} official audio`;
                     }
+                    console.log(`🎵 [DJ Maestro] Escolha do Spotify: "${musicaSugerida.full}"`);
                 }
+            } else {
+                console.warn(`⚠️ [DJ Maestro] Erro na API Spotify: ${spotifyRes.status}`);
             }
         } catch (err) {
-            console.warn("[DJ Maestro] Falha no Spotify, usando fallback manual.", err);
+            console.warn("[DJ Maestro] Falha na conexão com Spotify (usando fallback).", err);
         }
 
         // Fallback (se Spotify falhar)
         if (!queryParaYouTube) {
+            console.log("🛡️ [DJ Maestro] Ativando Fallback (Modo Busca Manual)...");
             if (sugestaoTipoSelecionado === 'genero') {
-                queryParaYouTube = `${sugestaoGeneroSelecionado} melhores hits oficial`;
+                queryParaYouTube = `${sugestaoGeneroSelecionado} hits brasil oficial`;
             } else {
-                const currentTitle = player?.getVideoData?.()?.title || '';
-                queryParaYouTube = `${currentTitle} official video VEVO`;
+                const rawTitle = player?.getVideoData?.()?.title || '';
+                queryParaYouTube = `${rawTitle} mix oficial`;
             }
         }
 
+        console.log(`🔍 [DJ Maestro] Buscando no YouTube: "${queryParaYouTube}"`);
+
         // 2. Busca no YouTube
         const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(queryParaYouTube)}&maxResults=15`);
-        if (!res.ok) return;
-        const json = await res.json();
-        if (!json.items || json.items.length === 0) return;
+        
+        if (!res.ok) {
+            console.error(`❌ [DJ Maestro] Erro na busca do YouTube! Status: ${res.status}`);
+            return;
+        }
 
-        // 3. FILTRAGEM E PONTUAÇÃO (O "Ouvido" do Maestro)
+        const json = await res.json();
+        if (!json.items || json.items.length === 0) {
+            console.warn("⚠️ [DJ Maestro] YouTube retornou 0 vídeos.");
+            return;
+        }
+
+        // 3. FILTRAGEM E PONTUAÇÃO
         const candidatos = json.items.map(item => {
             let score = 0;
             const t = item.snippet.title.toLowerCase();
             const c = item.snippet.channelTitle.toLowerCase();
-            const d = item.snippet.description.toLowerCase();
 
-            // Bônus para Oficial
             if (c.includes('vevo')) score += 100;
             if (c.includes('oficial') || c.includes('official')) score += 50;
-            if (c.includes('topic') || c.includes('tópico')) score += 40;
-            
-            // Contexto Específico
-            if (contextoOficial) {
-                if (c.includes('disney')) score += 80;
-                if (c.includes('dreamworks')) score += 80;
-            }
+            if (contextoOficial && (c.includes('disney') || c.includes('dreamworks'))) score += 80;
 
-            // Penalidades (Lixo)
-            if (t.includes('paródia') || t.includes('parodia')) score -= 1000;
-            if (t.includes('meme')) score -= 1000;
-            if (t.includes('cover') && !t.includes('cover art')) score -= 500;
-            if (t.includes('react') || t.includes('analise')) score -= 500;
-            if (t.includes('karaoke') || t.includes('playback')) score -= 500;
+            if (t.includes('paródia') || t.includes('parodia') || t.includes('meme')) score -= 1000;
+            if ((t.includes('cover') || t.includes('karaoke')) && !t.includes('cover art')) score -= 500;
 
             return { item, score };
         });
 
-        // Ordena pelos melhores
         candidatos.sort((a, b) => b.score - a.score);
 
-        // Escolhe o vencedor (que não foi tocado ainda)
         const vencedor = candidatos.find(cand => {
-            if (cand.score < -100) return false; // Ignora lixo total
-            const idNaoRepetido = typeof playedVideoHistory !== 'undefined' && !playedVideoHistory.has(cand.item.id.videoId);
-            return idNaoRepetido;
+            if (cand.score < -100) return false; 
+            
+            const vidId = cand.item.id.videoId;
+            const vidTitle = cand.item.snippet.title;
+
+            // Filtros de Repetição
+            const playingNow = player?.getVideoData?.();
+            if (playingNow && playingNow.video_id === vidId) return false;
+            
+            const idRepetido = typeof playedVideoHistory !== 'undefined' && playedVideoHistory.has(vidId);
+            if (idRepetido) return false;
+
+            const filaIds = window.roomData && window.roomData.queue ? Object.values(window.roomData.queue).map(x => x.videoUrl.split('v=')[1]) : [];
+            if (filaIds.includes(vidId)) return false;
+
+            // DNA
+            const dadosSala = window.roomData || {}; 
+            const historico = dadosSala.history ? Object.values(dadosSala.history) : [];
+            const fila = dadosSala.queue ? Object.values(dadosSala.queue) : [];
+            
+            let listaComparacao = [...historico, ...fila];
+            if (playingNow && playingNow.title) listaComparacao.push({ title: playingNow.title });
+            listaComparacao = listaComparacao.slice(-20); 
+
+            const gerarTokens = (t) => limparTitulo(t).split(' ').filter(w => w.length >= 2);
+            const tokensCandidato = gerarTokens(vidTitle);
+            
+            if (tokensCandidato.length < 2) return true;
+
+            const temRepeticao = listaComparacao.some(musica => {
+                const tokensExistente = gerarTokens(musica.title);
+                if (tokensExistente.length < 2) return false;
+
+                let matches = 0;
+                tokensCandidato.forEach(token => {
+                    if (tokensExistente.includes(token)) matches++;
+                });
+
+                const matchCandidato = matches / tokensCandidato.length;
+                const matchExistente = matches / tokensExistente.length;
+
+                return matchCandidato > 0.7 || matchExistente > 0.7; 
+            });
+
+            if (temRepeticao) {
+                console.log(`🚫 [DJ Maestro] Recusou: "${vidTitle}" (Repetição detectada)`);
+                return false; 
+            }
+
+            return true; 
         });
 
         if (vencedor) {
             const vid = vencedor.item;
-            console.log(`[DJ Maestro] Adicionando (${sugestaoTipoSelecionado}): ${vid.snippet.title}`);
+            console.log(`✅ [DJ Maestro] Adicionando: ${vid.snippet.title}`);
             
             await videoQueueRef.push({
                 phone: '🤖 DJ Maestro', 
@@ -369,10 +470,12 @@ async function rodarCicloAutoDJ(force = false) {
             
             if (typeof playedVideoHistory !== 'undefined') playedVideoHistory.add(vid.id.videoId);
             if (force) showNotification(`Sugerido: ${vid.snippet.title}`, 'success');
+        } else {
+            console.warn("⚠️ [DJ Maestro] Nenhum vídeo passou nos filtros.");
         }
 
     } catch (e) {
-        console.error("Erro DJ Maestro:", e);
+        console.error("❌ Erro FATAL DJ Maestro:", e);
     }
 }
 
@@ -380,7 +483,7 @@ async function sugerirAgora() {
     const btn = document.querySelector('.btn-now');
     if(btn) { btn.disabled = true; btn.innerHTML = '...'; }
     
-    // CORREÇÃO: Passamos 'true' para forçar a adição
+    // Passamos 'true' para forçar a adição
     await rodarCicloAutoDJ(true);
     
     if(btn) {
