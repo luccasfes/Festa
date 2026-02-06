@@ -1,5 +1,5 @@
 // ====================================================================
-// SESSION.JS — VERSÃO FUNCIONAL + CORREÇÃO DA SENHA
+// SESSION.JS — VERSÃO FINAL (VIA PERFIL DO FIREBASE)
 // ====================================================================
 
 console.log(">>> session.js carregado com sucesso");
@@ -25,9 +25,9 @@ window.updateGlobalUserUI = function(name) {
     
     // 2. Atualiza TODOS os lugares visíveis
     const places = [
-        { id: 'userNameDisplay', text: name },      // Chat
-        { id: 'currentSessionUser', text: name },   // Modal YouTube (Novo HTML)
-        { id: 'phone', value: name }                // Input (se ainda existir)
+        { id: 'userNameDisplay', text: name },
+        { id: 'currentSessionUser', text: name },
+        { id: 'phone', value: name }
     ];
     
     places.forEach(place => {
@@ -46,7 +46,7 @@ window.updateGlobalUserUI = function(name) {
         window.myPresenceRef.update({ name: name });
     }
     
-    // 4. Dispara evento (útil para outros scripts)
+    // 4. Dispara evento
     document.dispatchEvent(new CustomEvent('userNameChanged', { detail: { name } }));
 };
 
@@ -55,7 +55,7 @@ window.updateGlobalUserUI = function(name) {
 // --------------------
 document.addEventListener('DOMContentLoaded', function () {
     
-    // A. Verifica Sala e Senha
+    // A. Verifica Sala
     const params = new URLSearchParams(window.location.search);
     window.currentRoomId = params.get("room");
     
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
         window.updateGlobalUserUI(savedName);
     } 
 
-    // C. Configura Enter no Modal de Nome
+    // C. Enter no Input
     const editInput = document.getElementById('editNameInput');
     if (editInput) {
         editInput.addEventListener('keypress', (e) => {
@@ -82,43 +82,62 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // D. Toggle de ver senha (Admin)
+    // D. Toggle Senha Admin
     document.getElementById('toggleAdminUnlockPassword')?.addEventListener('click', function() {
         const input = document.getElementById('adminUnlockPassword');
         input.type = input.type === 'password' ? 'text' : 'password';
     });
 
-    // === DETECTOR AUTOMÁTICO DE ADMIN Inteligente===
-    // Assim que o Firebase carregar o usuário, se for Admin, libera tudo.
+    // === DETECTOR AUTOMÁTICO DE ADMIN (O SEGREDO ESTÁ AQUI) ===
     firebase.auth().onAuthStateChanged(function(user) {
         if (user) {
-            console.log("👑 Sessão Admin recuperada automaticamente.");
+            console.log("👑 Sessão Admin ativa.");
             window.isAdminLoggedIn = true;
             document.body.classList.remove('non-admin');
             
-            // Atualiza UI do Admin
-            updateAdminDisplay(user.email.split('@')[0]);
+            // --- AQUI A MÁGICA ---
+            // Ele vai pegar "Lucas" direto do banco de dados (user.displayName)
+            // Se não achar, pega o email (fallback de segurança)
+            const adminName = user.displayName || user.email.split('@')[0]; 
+            // ---------------------
+
+            updateAdminDisplay(adminName);
+            
             const panelBtn = document.getElementById('panelBtn');
             if(panelBtn) panelBtn.style.display = 'flex';
+
+            const currentName = sessionStorage.getItem('ytSessionUser');
+            if (!currentName || currentName === 'Visitante') {
+                window.updateGlobalUserUI(adminName);
+            }
+
+            if (typeof window.closeEditNameModal === 'function') {
+                window.closeEditNameModal();
+            }
             
-            // === A MÁGICA: SE A TELA ESTIVER TRAVADA, DESTRAVA SOZINHO ===
+            if (window.myPresenceRef) {
+                window.myPresenceRef.update({ isAdmin: true });
+            }
+
             if (document.body.classList.contains('locked')) {
-                console.log("🔓 Desbloqueando sala privada para o Admin...");
                 unlockScreen();
                 if(typeof showNotification === 'function') {
-                    showNotification('Bem-vindo, Admin! Sala liberada.', 'success');
+                    showNotification('Bem-vindo, ' + adminName + '!', 'success');
                 }
             }
         } else {
-            // Se não tiver usuário logado, garante que o modo admin está off
             window.isAdminLoggedIn = false;
             document.body.classList.add('non-admin');
+            
+            if (window.myPresenceRef) {
+                window.myPresenceRef.update({ isAdmin: false });
+            }
         }
     });
 });
 
 // --------------------
-// 3. PROTEÇÃO DE SALA (CORRIGIDO AQUI)
+// 3. PROTEÇÃO DE SALA
 // --------------------
 window.checkRoomProtection = function(roomId) {
     if (!roomId) return hideInitialLoader();
@@ -127,30 +146,23 @@ window.checkRoomProtection = function(roomId) {
         .then(snapshot => {
             const room = snapshot.val();
             
-            
             if (!room || !room.creatorName) {
-                console.warn("Sala inválida detectada! Redirecionando para criar...");
                 window.location.replace("create.html");
                 return; 
             }
-            // ---------------------------
 
-            // Atualiza UI básica
             if (document.getElementById('roomNameDisplay')) 
                 document.getElementById('roomNameDisplay').textContent = room.roomName || "Sala";
 
             const isPrivate = room.isPrivate === true || room.isPrivate === "true";
             const storedHash = room.password || room.passwordHash;
 
-            // Lógica de senha
             if (isPrivate && storedHash) {
                 const currentUser = firebase.auth().currentUser;
                 
                 if (window.isAdminLoggedIn || currentUser) {
-                    console.log("👑 Admin detectado: Acesso liberado sem senha.");
                     unlockScreen(); 
                 } else {
-                    console.log("🔒 Sala privada: Bloqueando para usuário comum.");
                     window.currentRoomPasswordHash = storedHash;
                     lockScreen();
                 }
@@ -161,8 +173,7 @@ window.checkRoomProtection = function(roomId) {
             hideInitialLoader();
         })
         .catch(err => {
-            console.error("Erro crítico ao verificar sala:", err);
-            // Na dúvida (erro de rede/permissão), chuta para o create
+            console.error(err);
             window.location.replace("create.html");
         });
 };
@@ -171,7 +182,6 @@ function lockScreen() {
     const modal = document.getElementById('roomPasswordModal');
     if (modal) {
         modal.style.display = 'flex';
-        // Força o foco no input
         setTimeout(() => document.getElementById('roomEntryPassword')?.focus(), 100);
     }
     document.body.classList.add('locked');
@@ -182,61 +192,50 @@ function unlockScreen() {
     if (modal) modal.style.display = 'none';
     document.body.classList.remove('locked');
     
-    // Só pede o nome se a sala foi liberada E o usuário não tem nome ainda
-    const savedName = sessionStorage.getItem('ytSessionUser');
-    if (!savedName || savedName === 'Visitante') {
-        setTimeout(() => window.openEditNameModal(), 500);
+    if (!window.isAdminLoggedIn) {
+        const savedName = sessionStorage.getItem('ytSessionUser');
+        if (!savedName || savedName === 'Visitante') {
+            setTimeout(() => window.openEditNameModal(), 500);
+        }
     }
 }
 
-// Função chamada pelo botão "Entrar" do modal de senha
 window.verifyRoomPassword = function () {
     const input = document.getElementById('roomEntryPassword');
     const btn = document.getElementById('verifyPassBtn');
     const errorMsg = document.getElementById('passwordErrorMsg');
 
-    if (!input || typeof CryptoJS === 'undefined') {
-        alert("Erro: Biblioteca de criptografia não carregada.");
-        return;
-    }
+    if (!input || typeof CryptoJS === 'undefined') return;
 
     btn.innerText = "Verificando...";
-    // Desabilita para evitar múltiplos cliques
     btn.disabled = true;
 
     setTimeout(() => {
         const typedHash = CryptoJS.SHA256(input.value.trim()).toString();
 
         if (typedHash === window.currentRoomPasswordHash) {
-            // Senha correta
             if (errorMsg) errorMsg.style.display = 'none';
             unlockScreen();
         } else {
-            // Senha incorreta
-            if (errorMsg) {
-                errorMsg.style.display = 'block';
-                // Efeito visual de erro (chacoalhar input se quiser adicionar css depois)
-            }
+            if (errorMsg) errorMsg.style.display = 'block';
             btn.innerText = "Entrar";
             btn.disabled = false;
             input.value = "";
             input.focus();
         }
-    }, 500); // Pequeno delay dramático
+    }, 500);
 };
 
 // --------------------
-// 4. FUNÇÕES DO MODAL "QUEM É VOCÊ?"
+// 4. MODAL NOME
 // --------------------
 window.openEditNameModal = function () {
+    if (window.isAdminLoggedIn) return;
     const modal = document.getElementById('editNameModal');
     const input = document.getElementById('editNameInput');
     const currentName = sessionStorage.getItem('ytSessionUser') || '';
-    
     if (modal) modal.style.display = 'flex';
-    
     if (input) {
-        // Se for visitante, limpa o campo para digitar
         input.value = currentName === 'Visitante' ? '' : currentName;
         setTimeout(() => { input.focus(); input.select(); }, 100);
     }
@@ -248,36 +247,26 @@ window.closeEditNameModal = function () {
 
 window.saveUserName = function () {
     const input = document.getElementById('editNameInput');
-    let newName = input ? input.value.trim() : '';
-    
+    let newName = input ? input.value.trim() : 'Visitante';
     if (!newName) newName = 'Visitante';
-    
     window.updateGlobalUserUI(newName);
-    
     setTimeout(() => {
         window.closeEditNameModal();
-        if (typeof showNotification === 'function') {
-            showNotification('Nome definido: ' + newName, 'success');
-        }
     }, 300);
 };
 
 // --------------------
-// 5. FUNÇÕES DO MODAL YOUTUBE
+// 5. MODAL YOUTUBE
 // --------------------
 window.openYTSearchModal = function() {
     const modal = document.getElementById('ytSearchModal');
     if (modal) {
         modal.style.display = 'flex';
-        // Atualiza o texto visual (caso tenha mudado externamente)
         const nameDisplay = document.getElementById('currentSessionUser');
         if (nameDisplay) {
-            nameDisplay.textContent = window.currentSessionUser || sessionStorage.getItem('ytSessionUser') || 'Visitante';
+            nameDisplay.textContent = window.currentSessionUser || 'Visitante';
         }
-        setTimeout(() => {
-            const searchInput = document.getElementById('ytSearchQuery');
-            if (searchInput) searchInput.focus();
-        }, 100);
+        setTimeout(() => document.getElementById('ytSearchQuery')?.focus(), 100);
     }
     const results = document.getElementById('ytSearchResults');
     if(results) results.innerHTML = '';
@@ -288,7 +277,7 @@ window.closeYTSearchModal = function() {
 };
 
 // --------------------
-// 6. ADMIN
+// 6. LOGIN MANUAL (ADMIN)
 // --------------------
 window.openAdminUnlockModal = function () {
     if (window.isAdminLoggedIn) {
@@ -312,36 +301,39 @@ window.loginAdminSession = async function () {
     const pass = document.getElementById('adminUnlockPassword')?.value;
 
     if (!email || !pass) return alert('Preencha os campos.');
-
     if(typeof toggleLoading === 'function') toggleLoading('adminUnlockConfirmBtn', true);
 
     try {
-        await firebase.auth().signInWithEmailAndPassword(email, pass);
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, pass);
+        const user = userCredential.user;
+        
         window.isAdminLoggedIn = true;
-        // esconder o admin do report
-        if (window.myPresenceRef) {
-            window.myPresenceRef.update({ isAdmin: true });
-        }
         document.body.classList.remove('non-admin');
         
-        updateAdminDisplay(email.split('@')[0]);
+        // --- PEGA O NOME "LUCAS" DO PERFIL ---
+        const adminName = user.displayName || user.email.split('@')[0];
+        // -------------------------------------
+
+        updateAdminDisplay(adminName);
         closeAdminUnlockModal();
+
+        window.updateGlobalUserUI(adminName);
+        window.closeEditNameModal();
+
+        if (window.myPresenceRef) {
+            window.myPresenceRef.update({ 
+                isAdmin: true,
+                name: adminName 
+            });
+        }
         
-        // UI Updates
         document.getElementById('panelBtn').style.display = 'flex';
         document.getElementById('videoList').classList.add('admin-mode');
         document.getElementById('clearChatBtn').style.display = 'inline-block';
         document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
 
         if(typeof showNotification === 'function') showNotification('Modo Admin ATIVADO.', 'success');
-
-        // ===  LIBERA A SALA SE ESTIVER BLOQUEADA para o admin ===
-        // Se a tela estiver bloqueada pela senha da sala, o Admin libera automaticamente.
-        if (document.body.classList.contains('locked')) {
-            console.log("👑 Admin detectado! Liberando sala privada.");
-            unlockScreen(); // Função que remove o modal de senha
-            if(typeof showNotification === 'function') showNotification('Sala liberada pelo Admin!', 'success');
-        }
+        if (document.body.classList.contains('locked')) unlockScreen();
 
     } catch (error) {
         console.error(error);
@@ -353,10 +345,7 @@ window.loginAdminSession = async function () {
 
 window.logoutAdminSession = function () {
     window.isAdminLoggedIn = false;
-
-    if (window.myPresenceRef) {
-        window.myPresenceRef.update({ isAdmin: false });
-    }
+    if (window.myPresenceRef) window.myPresenceRef.update({ isAdmin: false });
     
     document.body.classList.add('non-admin');
     updateAdminDisplay(null);
