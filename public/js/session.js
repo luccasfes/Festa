@@ -386,14 +386,33 @@ function hideInitialLoader() {
 // 7. SISTEMA DE BANIMENTO (SALA APENAS)
 // ====================================================================
 
-// 1. Gera ID do Navegador
+// 1. Gera ID do Navegador (Compatível com Guia Anônima)
+let memoryDeviceId = null; // Guarda o ID na memória RAM caso o armazenamento falhe
+
 window.getDeviceId = function() {
-    let deviceId = localStorage.getItem('flowLinkDeviceId');
-    if (!deviceId) {
-        deviceId = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-        localStorage.setItem('flowLinkDeviceId', deviceId);
+    // Se já geramos um ID nessa sessão (aba aberta), usa ele para garantir que não mude
+    if (memoryDeviceId) return memoryDeviceId;
+
+    // Tenta buscar do LocalStorage (pode falhar em anônimo)
+    try {
+        memoryDeviceId = localStorage.getItem('flowLinkDeviceId');
+    } catch (e) {
+        console.warn("Acesso ao armazenamento bloqueado (Guia Anônima detectada).");
     }
-    return deviceId;
+
+    // Se não achou (ou não pôde ler), gera um novo
+    if (!memoryDeviceId) {
+        memoryDeviceId = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+        
+        // Tenta salvar para o futuro (se falhar, tudo bem, usamos o da memória)
+        try {
+            localStorage.setItem('flowLinkDeviceId', memoryDeviceId);
+        } catch (e) {
+            console.warn("Não foi possível salvar ID persistente. O banimento valerá apenas até a página ser recarregada.");
+        }
+    }
+    
+    return memoryDeviceId;
 };
 
 // 2. VIGIA (Monitora APENAS a sala atual)
