@@ -266,7 +266,7 @@ body::before {
     }
 }
 
-/* ANTES (Seu código atual) */
+/* Botão de admin style dele para acessar o admin */
 #adminUnlockBtn {
     position: absolute;
     top: 20px;
@@ -275,7 +275,10 @@ body::before {
     border: none;
     padding: 10px 20px;
     min-width: 110px;
-    border-radius: 25px;
+    
+    /* AQUI ESTÁ A MUDANÇA DO PC */
+    border-radius: 12px; /* Era 25px. Agora 12px fica igual aos outros botões */
+    
     font-weight: 700;
     transition: var(--transition);
     box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
@@ -3551,42 +3554,49 @@ body:not(.non-admin) .player-overlay-controls {
 
 @media (max-width: 768px) {
 
-    /* 1. Organiza os botões em linha horizontal no topo */
+    /* 1. Arruma o container para ficar no canto esquerdo */
     .header-controls-left {
         display: flex !important;
         flex-direction: row !important;
         top: 15px;
         left: 15px;
-        gap: 8px;
+        gap: 8px; /* Espaço entre as bolinhas */
     }
 
-    /* 2. Transforma os botões em Círculos (Ícones apenas) */
+    /* 2. Transforma o botão Admin (e os outros) em BOLINHAS */
+    #adminUnlockBtn, 
     .header-controls-left .btn {
-        width: 38px !important;
-        height: 38px !important;
-        min-width: 0 !important;
-        padding: 0 !important;
+        /* Tamanho fixo quadrado */
+        width: 40px !important;
+        height: 40px !important;
+        
+        /* Forma de círculo */
         border-radius: 50% !important;
-
-        /* Agora, se o JS disser 'display: none', o botão vai obedecer e sumir. */
-        display: flex;
-
+        
+        /* Reseta estilos de PC */
+        min-width: 0 !important;      /* Remove a largura mínima de 110px */
+        padding: 0 !important;        /* Remove o preenchimento lateral */
+        margin: 0 !important;
+        
+        /* Centraliza o ícone */
+        display: flex !important;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+        position: static !important;  /* Para respeitar a fila do container */
     }
 
-    /* 3. Esconde TODOS os textos dentro dos botões no mobile */
-    .header-controls-left .btn span,
-    #adminStatusText,
-    #adminNameDisplay {
+    /* 3. Esconde textos e nomes dentro dos botões no celular */
+    #adminUnlockBtn span,
+    #adminNameDisplay,
+    .header-controls-left .btn span {
         display: none !important;
     }
 
-    /* 4. Garante que o ícone fique centralizado */
+    /* 4. Ajuste fino do ícone para ficar bem no meio */
+    #adminUnlockBtn i,
     .header-controls-left .btn i {
         margin: 0 !important;
-        font-size: 1rem !important;
+        font-size: 1rem; /* Tamanho do ícone */
     }
 
     /* 5. Ajusta o título para não bater nos botões */
