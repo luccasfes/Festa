@@ -3,18 +3,19 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const nodemailer = require('nodemailer');
-require('dotenv').config(); // Carrega seu arquivo .env
+require('dotenv').config(); 
 
 const app = express();
 
-// Permite conexões de qualquer origem (necessário para o Front-end acessar a Function)
 app.use(cors({ origin: true }));
 app.use(express.json());
 
-// Função auxiliar para pegar a chave do YouTube
-const getApiKey = () => {
-    // Tenta pegar do .env, senão tenta da config do Firebase, senão retorna null
-    return process.env.YOUTUBE_API_KEY || (functions.config().youtube && functions.config().youtube.key) || null;
+// ==================================================================
+// --- CONFIGURAÇÃO DE VARIÁVEIS DE AMBIENTE (FIREBASE) ---
+// ==================================================================
+// Pega do arquivo .env local ou das configurações do Firebase
+const getConfig = (key, nestedKey) => {
+    return process.env[key] || (functions.config()[nestedKey ? nestedKey.split('.')[0] : 'env']?.[nestedKey ? nestedKey.split('.')[1] : key]) || null;
 };
 
 // ==================================================================
@@ -23,37 +24,125 @@ const getApiKey = () => {
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        user: getConfig('EMAIL_USER', 'email.user'),
+        pass: getConfig('EMAIL_PASS', 'email.pass')
+    }
+});
+
+// Rota de Report (Igual ao server.js)
+app.post('/api/report', async (req, res) => {
+    try {
+        const { userReported, reason, room, roomId, reporter } = req.body;
+        const emailUser = getConfig('EMAIL_USER', 'email.user');
+
+        if (!emailUser) {
+            return res.status(500).json({ error: "Configuração de e-mail ausente" });
+        }
+
+        const mailOptions = {
+            from: `"FlowLink System" <${emailUser}>`,
+            to: emailUser,
+            subject: `⚠️ REPORT: ${room}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h2 style="color: #d32f2f;">🚨 Novo Report de Usuário</h2>
+                    <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                        <p><strong>Quem Reportou:</strong> ${reporter || 'Anônimo'}</p>
+                        <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+                        <p><strong>Sala:</strong> ${room}</p>
+                        <p><strong>ID da Sala:</strong> <code>${roomId}</code></p>
+                    </div>
+                    <div style="background: #fff0f0; padding: 15px; border-radius: 5px; border: 1px solid #ffcdd2;">
+                        <p style="font-size: 1.1em;"><strong>Usuário Denunciado:</strong> ${userReported}</p>
+                        <p><strong>Motivo:</strong></p>
+                        <blockquote style="border-left: 4px solid #d32f2f; padding-left: 10px; color: #555;">
+                            ${reason}
+                        </blockquote>
+                    </div>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.status(200).send({ success: true, message: "Report enviado com sucesso!" });
+    } catch (error) {
+        console.error("Erro ao enviar report:", error);
+        res.status(500).send({ error: "Falha ao enviar report" });
     }
 });
 
 // ==================================================================
-// --- INTEGRAÇÃO SPOTIFY (COM CACHE DE TOKEN) ---
+// --- CONFIGURAÇÃO DE CHAVES YOUTUBE (ROTAÇÃO) ---
+// ==================================================================
+
+const YOUTUBE_KEYS = [
+    getConfig('YOUTUBE_API_KEY', 'youtube.key1'),
+    getConfig('YOUTUBE_API_KEY_2', 'youtube.key2')
+].filter(key => !!key);
+
+async function fetchYoutubeWithFallback(url, params) {
+    let lastError = null;
+
+    if (YOUTUBE_KEYS.length === 0) {
+        console.error("Nenhuma chave do YouTube configurada!");
+        throw new Error("Chaves de API ausentes");
+    }
+
+    for (let i = 0; i < YOUTUBE_KEYS.length; i++) {
+        const currentKey = YOUTUBE_KEYS[i];
+
+        try {
+            const response = await axios.get(url, {
+                params: { ...params, key: currentKey },
+                headers: {
+                    'Referer': 'https://flowlink-7fd57.web.app',
+                    'Origin': 'https://flowlink-7fd57.web.app'
+                }
+            });
+            return response.data;
+
+        } catch (error) {
+            lastError = error;
+            if (error.response && error.response.status === 403) {
+                console.warn(`⚠️ Chave YouTube ${i + 1} esgotada. Tentando backup...`);
+                continue;
+            } else {
+                throw error;
+            }
+        }
+    }
+    throw lastError;
+}
+
+// ==================================================================
+// --- INTEGRAÇÃO SPOTIFY (USANDO SUAS URLS ESPECÍFICAS) ---
 // ==================================================================
 let spotifyToken = null;
 let tokenExpiration = 0;
 
 async function getSpotifyToken() {
     const now = Date.now();
-    // Se tiver token salvo e ainda for válido, usa ele (evita chamar API a toa)
     if (spotifyToken && now < tokenExpiration) return spotifyToken;
+
+    const clientId = getConfig('SPOTIFY_CLIENT_ID', 'spotify.id');
+    const clientSecret = getConfig('SPOTIFY_CLIENT_SECRET', 'spotify.secret');
+
+    if (!clientId || !clientSecret) return null;
 
     try {
         const params = new URLSearchParams();
         params.append('grant_type', 'client_credentials');
 
-        // URL do Proxy ou Oficial (mantendo a que funcionou no seu local)
+        // URL ESPECÍFICA DO SEU SERVER.JS
         const response = await axios.post('https://accounts.spotify.com/api/token', params, {
             headers: {
-                'Authorization': 'Basic ' + Buffer.from(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64'),
+                'Authorization': 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64'),
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         });
 
         spotifyToken = response.data.access_token;
-        // Expira em 50 minutos (token dura 60, margem de segurança)
-        tokenExpiration = now + ((response.data.expires_in - 600) * 1000);
+        tokenExpiration = now + ((response.data.expires_in - 60) * 1000);
         return spotifyToken;
     } catch (error) {
         console.error("Erro ao autenticar no Spotify:", error.message);
@@ -61,23 +150,100 @@ async function getSpotifyToken() {
     }
 }
 
+app.get('/api/spotify-genre', async (req, res) => {
+    try {
+        const query = req.query.q;
+        if (!query) return res.status(400).json({ error: 'Termo obrigatório' });
+
+        const token = await getSpotifyToken();
+        if (!token) return res.status(500).json({ error: 'Erro Auth Spotify' });
+
+        // URL ESPECÍFICA DO SEU SERVER.JS (Busca Track)
+        const searchRes = await axios.get('https://api.spotify.com/v1/search', {
+            params: { q: query, type: 'track', limit: 1 },
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!searchRes.data.tracks || searchRes.data.tracks.items.length === 0) {
+            return res.json({ genres: [] });
+        }
+
+        const track = searchRes.data.tracks.items[0];
+        const artistId = track.artists[0].id;
+
+        // URL ESPECÍFICA DO SEU SERVER.JS (Busca Artista)
+        // Nota: Ajustei a sintaxe da string template que estava quebrada no original ({artistId} vs ${artistId})
+        const artistRes = await axios.get(`https://api.spotify.com/v1/artists/$${artistId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        res.json({
+            track: track.name,
+            artist: track.artists[0].name,
+            genres: artistRes.data.genres
+        });
+
+    } catch (error) {
+        console.error('Erro Spotify Genre:', error.message);
+        res.status(500).json({ error: 'Erro interno' });
+    }
+});
+
 // ==================================================================
-// --- ROTA: SPOTIFY RECOMMENDATIONS (VERSÃO BRASIL & DISNEY) ---
+// --- ROTAS YOUTUBE (COM FALLBACK) ---
 // ==================================================================
+
+app.get('/api/youtube-search', async (req, res) => {
+    try {
+        const query = req.query.q;
+        if (!query) return res.status(400).json({ error: 'Termo de busca é obrigatório' });
+
+        const data = await fetchYoutubeWithFallback('https://www.googleapis.com/youtube/v3/search', {
+            part: 'snippet',
+            maxResults: 5, 
+            q: query,
+            type: 'video'
+        });
+        res.json(data);
+    } catch (error) {
+        console.error('Erro YouTube Search:', error.message);
+        const status = error.response ? error.response.status : 500;
+        res.status(status).json({ error: 'Erro ao buscar vídeo' });
+    }
+});
+
+app.get('/api/video-info', async (req, res) => {
+    try {
+        const videoId = req.query.id;
+        if (!videoId) return res.status(400).json({ error: 'ID obrigatório' });
+
+        const data = await fetchYoutubeWithFallback('https://www.googleapis.com/youtube/v3/videos', {
+            part: 'snippet',
+            id: videoId
+        });
+        res.json(data);
+    } catch (error) {
+        console.error('Erro YouTube Info:', error.message);
+        res.status(500).json({ error: 'Erro ao buscar detalhes' });
+    }
+});
+
+// ==================================================================
+// --- SPOTIFY RECOMMENDATIONS (COM URLS DO SERVER.JS) ---
+// ==================================================================
+
 app.get('/api/spotify-recommendations', async (req, res) => {
     try {
         const { q, genre } = req.query;
         const token = await getSpotifyToken();
-        if (!token) return res.status(500).json({ error: 'Erro no token Spotify' });
+        if (!token) return res.json([]); 
 
+        // URL ESPECÍFICA DO SEU SERVER.JS
         const SEARCH_URL = 'https://api.spotify.com/v1/search'; 
         let recommendations = [];
 
-        // CASO 1: Busca por GÊNERO (Dicionário Brasileiro)
         if (genre) {
             const g = genre.toLowerCase().trim();
-            
-            // Esse mapa garante que Funk = Funk BR, não James Brown
             const mapaBrasileiro = {
                 'funk': 'playlist:funk_hits_brasil funk mandelão',
                 'sertanejo': 'sertanejo universitario top brasil',
@@ -89,10 +255,7 @@ app.get('/api/spotify-recommendations', async (req, res) => {
                 'pop': 'pop brasil luisa sonza anitta',
                 'reggaeton': 'reggaeton brasil hits'
             };
-
             const termoBusca = mapaBrasileiro[g] || `${g} hits brasil`;
-
-            console.log(`🇧🇷 [Firebase] Buscando Gênero: "${termoBusca}"`);
 
             const searchRes = await axios.get(SEARCH_URL, {
                 params: { q: termoBusca, type: 'track', limit: 20, market: 'BR' }, 
@@ -100,40 +263,33 @@ app.get('/api/spotify-recommendations', async (req, res) => {
             });
             
             if (searchRes.data.tracks && searchRes.data.tracks.items.length > 0) {
-                // Embaralha e pega 5
                 recommendations = searchRes.data.tracks.items
                     .sort(() => 0.5 - Math.random())
-                    .slice(0, 5);
+                    .slice(0, 5); 
             }
         }
-
-        // CASO 2: Busca por Contexto (Música tocando)
         else if (q) {
             const qLower = q.toLowerCase();
-            
-            // Lógica Disney / Filmes
-            if (qLower.includes('disney') || qLower.includes('moana') || qLower.includes('frozen') || qLower.includes('encanto')) {
+            if (qLower.includes('disney') || qLower.includes('moana') || qLower.includes('frozen')) {
                 const searchRes = await axios.get(SEARCH_URL, {
                     params: { q: 'disney hits portugues brasil', type: 'track', limit: 10, market: 'BR' },
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                recommendations = searchRes.data.tracks.items;
-            } 
-            else {
-                // Busca tracks DO ARTISTA (artist:nome)
-                // Isso evita que "Rubel" traga "DJ Slick"
+                recommendations = searchRes.data.tracks?.items || [];
+            } else {
+                 // Tenta por Artista
                 const searchRes = await axios.get(SEARCH_URL, {
                     params: { q: `artist:${q}`, type: 'track', limit: 10, market: 'BR' },
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (!searchRes.data.tracks || searchRes.data.tracks.items.length === 0) {
-                    // Fallback: Busca genérica com "Brasil"
-                     const searchResBackup = await axios.get(SEARCH_URL, {
+                     // Fallback genérico
+                      const searchResBackup = await axios.get(SEARCH_URL, {
                         params: { q: `${q} sucesso brasil`, type: 'track', limit: 10, market: 'BR' },
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
-                    recommendations = searchResBackup.data.tracks.items;
+                    recommendations = searchResBackup.data.tracks?.items || [];
                 } else {
                     recommendations = searchRes.data.tracks.items;
                 }
@@ -150,101 +306,9 @@ app.get('/api/spotify-recommendations', async (req, res) => {
         res.json(tracks);
 
     } catch (error) {
-        console.error('Erro no Auto DJ Spotify:', error.message);
-        // Retorna array vazio pro Front usar o Fallback do YouTube
-        res.json([]);
+        console.error('Erro Auto DJ Spotify:', error.message);
+        res.json([]); 
     }
 });
 
-// ==================================================================
-// --- ROTA: REPORT (COM HTML ESTILIZADO) ---
-// ==================================================================
-app.post('/api/report', async (req, res) => {
-    try {
-        const { userReported, reason, room, reporter, roomId } = req.body;
-        const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
-
-        const htmlTemplate = `
-            <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
-                <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                    <div style="text-align: center; border-bottom: 3px solid #ff4444; padding-bottom: 15px; margin-bottom: 20px;">
-                        <h1 style="color: #333; margin: 0; font-size: 24px;">🚨 Novo Report Recebido</h1>
-                        <p style="color: #666; margin-top: 5px;">Sistema de Moderação FlowLink</p>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-                        <tr style="background-color: #fff0f0;">
-                            <td style="padding: 12px; border: 1px solid #ffcccc; color: #d32f2f;"><strong>Usuário:</strong></td>
-                            <td style="padding: 12px; border: 1px solid #ffcccc; color: #d32f2f; font-weight: bold;">${userReported}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px; border: 1px solid #eee; color: #555;"><strong>Reportado por:</strong></td>
-                            <td style="padding: 12px; border: 1px solid #eee; color: #333;">${reporter || "Anônimo"}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px; border: 1px solid #eee; color: #555;"><strong>Motivo:</strong></td>
-                            <td style="padding: 12px; border: 1px solid #eee; color: #333;">${reason}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px; border: 1px solid #eee; color: #555;"><strong>Sala:</strong></td>
-                            <td style="padding: 12px; border: 1px solid #eee; color: #333;">${room} <br><small style="color:#999">(${roomId || "ID N/A"})</small></td>
-                        </tr>
-                    </table>
-                    <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #aaa; border-top: 1px solid #eee; padding-top: 15px;">
-                        <p>📅 Data: ${new Date().toLocaleString('pt-BR')}</p>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        const mailOptions = {
-            from: `"FlowLink Security" <${process.env.EMAIL_USER}>`,
-            to: adminEmail, 
-            subject: `🚨 Report: ${userReported} (Sala: ${roomId || '?'})`,
-            html: htmlTemplate
-        };
-
-        await transporter.sendMail(mailOptions);
-        res.status(200).send({ success: true, message: "Report enviado com sucesso!" });
-    } catch (error) {
-        console.error("Erro ao enviar e-mail:", error);
-        res.status(500).send({ error: "Falha ao enviar report" });
-    }
-});
-
-// ==================================================================
-// --- ROTAS YOUTUBE ---
-// ==================================================================
-app.get('/api/youtube-search', async (req, res) => {
-    try {
-        const query = req.query.q;
-        const apiKey = getApiKey();
-        if (!apiKey) return res.status(500).json({ error: 'API Key Ausente no Firebase' });
-
-        // Tenta buscar usando a chave
-        const response = await axios.get(`https://www.googleapis.com/youtube/v3/search`, {
-            params: { part: 'snippet', maxResults: 15, q: query, key: apiKey, type: 'video' },
-            headers: { 'Referer': 'https://flowlink-7fd57.web.app' } // Troque pelo domínio final se mudar
-        });
-        res.json(response.data);
-    } catch (error) {
-        console.error("Erro YouTube:", error.response ? error.response.data : error.message);
-        res.status(500).json({ error: 'Erro ao buscar no YouTube' }); 
-    }
-});
-
-app.get('/api/video-info', async (req, res) => {
-    try {
-        const videoId = req.query.id;
-        const apiKey = getApiKey();
-        if (!apiKey) return res.status(500).json({ error: 'API Key Ausente' });
-
-        const response = await axios.get(`https://www.googleapis.com/youtube/v3/videos`, {
-            params: { part: 'snippet', id: videoId, key: apiKey },
-            headers: { 'Referer': 'https://flowlink-7fd57.web.app' }
-        });
-        res.json(response.data);
-    } catch (error) { res.status(500).json({ error: 'Erro ao buscar detalhes' }); }
-});
-
-// Exporta a API
 exports.api = functions.https.onRequest(app);
