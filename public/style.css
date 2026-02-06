@@ -2637,6 +2637,8 @@ body:not(.non-admin) .player-overlay-controls {
 
 /* Subtítulo e botões de ação globais */
 .admin-panel-body h4 {
+    flex-direction: column; /* Empilha o título e o grupo de botões */
+    align-items: flex-start !important;
     font-size: 1.1rem;
     color: var(--text-primary);
     margin-bottom: 20px;
@@ -2648,6 +2650,29 @@ body:not(.non-admin) .player-overlay-controls {
     flex-wrap: wrap;
     gap: 10px;
 }
+
+/* Css para style para celular  */
+.admin-panel-body h4 div {
+    width: 100%; /* Grupo de botões ocupa a largura toda */
+    flex-wrap: wrap; /* Permite quebrar linha se não couberem lado a lado */
+    gap: 8px; /* Espaço entre os botões */
+}
+
+/* Garante que os botões se adaptem bem no Mobile */
+@media (max-width: 600px) {
+    .admin-panel-body h4 div {
+        display: grid !important; /* Muda de flex para grid */
+        grid-template-columns: 1fr; /* Um botão por linha */
+    }
+
+    .admin-panel-body h4 div .btn {
+        margin-left: 0 !important; /* Remove margens laterais que desalinhariam */
+        width: 100%;
+        justify-content: center;
+        padding: 12px; /* Área de toque maior */
+    }
+}
+/* Style para celualr aqui em  cima fim do style para celualr style do Painel */
 
 /* Lista de Salas */
 .admin-room-list {
@@ -4329,3 +4354,5 @@ input:focus, textarea:focus {
 /* ==========================================================
    Logo acima ta o modal de report - Fim do modal report
    =========================================================== */
+
+   

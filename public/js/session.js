@@ -1,5 +1,5 @@
 // ====================================================================
-// SESSION.JS — VERSÃO FINAL (VIA PERFIL DO FIREBASE)
+// SESSION.JS — VERSÃO FINAL (ROOM BAN ONLY + ADMIN SECURE)
 // ====================================================================
 
 console.log(">>> session.js carregado com sucesso");
@@ -88,19 +88,16 @@ document.addEventListener('DOMContentLoaded', function () {
         input.type = input.type === 'password' ? 'text' : 'password';
     });
 
-    // === DETECTOR AUTOMÁTICO DE ADMIN (O SEGREDO ESTÁ AQUI) ===
+    // === DETECTOR AUTOMÁTICO DE ADMIN ===
     firebase.auth().onAuthStateChanged(function(user) {
         if (user) {
             console.log("👑 Sessão Admin ativa.");
             window.isAdminLoggedIn = true;
             document.body.classList.remove('non-admin');
             
-            // --- AQUI A MÁGICA ---
-            // Ele vai pegar "Lucas" direto do banco de dados (user.displayName)
-            // Se não achar, pega o email (fallback de segurança)
+            // Pega o nome do perfil ou usa fallback do email
             const adminName = user.displayName || user.email.split('@')[0]; 
-            // ---------------------
-
+            
             updateAdminDisplay(adminName);
             
             const panelBtn = document.getElementById('panelBtn');
@@ -170,6 +167,12 @@ window.checkRoomProtection = function(roomId) {
                 unlockScreen();
             }
             
+            // --- [IMPORTANTE] LIGA O SISTEMA DE BANIMENTO AQUI ---
+            if (window.monitorBans) {
+                window.monitorBans(roomId);
+            }
+            // -----------------------------------------------------
+
             hideInitialLoader();
         })
         .catch(err => {
@@ -310,9 +313,8 @@ window.loginAdminSession = async function () {
         window.isAdminLoggedIn = true;
         document.body.classList.remove('non-admin');
         
-        // --- PEGA O NOME "LUCAS" DO PERFIL ---
+        // Pega nome do perfil
         const adminName = user.displayName || user.email.split('@')[0];
-        // -------------------------------------
 
         updateAdminDisplay(adminName);
         closeAdminUnlockModal();
@@ -379,3 +381,96 @@ function hideInitialLoader() {
     }
     document.body.style.opacity = '1';
 }
+
+// ====================================================================
+// 7. SISTEMA DE BANIMENTO (SALA APENAS)
+// ====================================================================
+
+// 1. Gera ID do Navegador
+window.getDeviceId = function() {
+    let deviceId = localStorage.getItem('flowLinkDeviceId');
+    if (!deviceId) {
+        deviceId = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+        localStorage.setItem('flowLinkDeviceId', deviceId);
+    }
+    return deviceId;
+};
+
+// 2. VIGIA (Monitora APENAS a sala atual)
+window.monitorBans = function(roomId) {
+    if (!roomId) return;
+
+    // Escuta a lista de banidos DA SALA
+    firebase.database().ref(`rooms/${roomId}/banned`).on('value', (snapshot) => {
+        const bannedList = snapshot.val();
+        if (!bannedList) return;
+
+        const myName = sessionStorage.getItem('ytSessionUser');
+        const myDeviceId = window.getDeviceId();
+
+        // Verifica Nome e ID
+        const isNameBanned = bannedList[myName] === true;
+        const isDeviceBanned = bannedList[myDeviceId] === true;
+
+        if ((isNameBanned || isDeviceBanned) && !window.isAdminLoggedIn) {
+            console.warn("🚫 Banimento detectado.");
+            
+            sessionStorage.removeItem('ytSessionUser');
+            alert("🚫 Você foi banido desta sala.");
+            window.location.href = 'index.html'; 
+        }
+    });
+};
+
+// 3. COMANDO ADMIN (Banir)
+window.banUser = function(targetName) {
+    if (!window.isAdminLoggedIn) return console.error("⛔ Apenas admins.");
+    if (!window.currentRoomId) return console.error("⛔ Nenhuma sala.");
+    if (!targetName) return console.error("⛔ Informe o nome.");
+
+    const roomId = window.currentRoomId;
+    const usersRef = firebase.database().ref(`rooms/${roomId}/users`);
+
+    // Busca o ID do usuário para banir o dispositivo também
+    usersRef.once('value').then(snapshot => {
+        const users = snapshot.val();
+        let targetDeviceId = null;
+
+        for (let key in users) {
+            if (users[key].name === targetName) {
+                targetDeviceId = users[key].deviceId; 
+                break;
+            }
+        }
+
+        const updates = {};
+        // Bane o NOME
+        updates[`rooms/${roomId}/banned/${targetName}`] = true;
+
+        // Bane o ID (se encontrado)
+        if (targetDeviceId) {
+            updates[`rooms/${roomId}/banned/${targetDeviceId}`] = true;
+            console.log(`🔫 ID do dispositivo banido: ${targetDeviceId}`);
+        }
+
+        return firebase.database().ref().update(updates);
+    }).then(() => {
+        console.log(`🔨 Usuário ${targetName} banido com sucesso!`);
+        if(typeof window.sendSystemMessage === 'function') {
+            window.sendSystemMessage(`🚫 O usuário ${targetName} foi banido da sala.`);
+        }
+    });
+};
+
+window.unbanUser = function(target) {
+    if (!window.isAdminLoggedIn) return;
+    firebase.database().ref(`rooms/${window.currentRoomId}/banned/${target}`).remove()
+        .then(() => console.log(`😇 Banimento de '${target}' removido.`));
+};
+
+window.nukeRoom = function() {
+    if (!window.isAdminLoggedIn) return;
+    if (!confirm("☢️ DESTRUIR SALA?")) return;
+    firebase.database().ref(`rooms/${window.currentRoomId}`).remove()
+        .then(() => window.location.href = 'create.html');
+};

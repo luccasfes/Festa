@@ -135,6 +135,7 @@ if (typeof connectedRef !== "undefined") {
                     name,
                     isAdmin: window.isAdminLoggedIn || false,
                     joinedAt: firebase.database.ServerValue.TIMESTAMP,
+                    deviceId: window.getDeviceId() || 'unknown'
                 })
                 .then(() => {
                     if (roomRef)

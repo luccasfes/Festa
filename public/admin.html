@@ -522,7 +522,7 @@
             measurementId: "G-B0NE1GDVQK"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const auth = firebase.auth();
         const roomsRef = database.ref('rooms');
@@ -535,7 +535,7 @@
         ];
 
         let currentRoomId = null;
-        let allRoomsRaw = {}; // Armazena dados brutos do Firebase
+        let allRoomsRaw = {}; 
 
         // --- AUTH ---
         auth.onAuthStateChanged(user => {
@@ -559,26 +559,31 @@
         // --- REALTIME LISTENER ---
         function startRealTimeListener() {
             roomsRef.on('value', snapshot => {
-                allRoomsRaw = {}; // Limpa dados locais
+                allRoomsRaw = {}; 
                 if(snapshot.exists()) {
                     snapshot.forEach(child => {
                         allRoomsRaw[child.key] = child.val();
                     });
                 }
                 updateGlobalStats();
-                updateRoomsList(); // Renderiza a lista com filtros
+                updateRoomsList();
+                
+                // Atualiza o modal aberto em tempo real
+                if(currentRoomId && allRoomsRaw[currentRoomId]) {
+                    const room = allRoomsRaw[currentRoomId];
+                    renderUserList(room.presence, room.banned, currentRoomId);
+                    renderQueueList(room.videoQueue);
+                }
             });
         }
 
         function updateGlobalStats() {
             let stats = { rooms: 0, users: 0, videos: 0 };
-            
             Object.values(allRoomsRaw).forEach(room => {
                 stats.rooms++;
                 stats.users += room.presence ? Object.keys(room.presence).length : 0;
                 stats.videos += room.videoQueue ? Object.keys(room.videoQueue).length : 0;
             });
-
             document.getElementById("totalRooms").innerText = stats.rooms;
             document.getElementById("totalUsers").innerText = stats.users;
             document.getElementById("totalVideos").innerText = stats.videos;
@@ -592,23 +597,21 @@
 
             grid.innerHTML = '';
 
-            // 1. Converter objeto para array
             let roomsArray = Object.entries(allRoomsRaw).map(([key, val]) => ({
-                id: key,
-                ...val,
+                id: key, ...val,
                 userCount: val.presence ? Object.keys(val.presence).length : 0,
                 queueCount: val.videoQueue ? Object.keys(val.videoQueue).length : 0,
                 createdAt: val.createdAt || 0
             }));
 
-            // 2. Filtrar por Busca
+            // Filtros
             roomsArray = roomsArray.filter(r => 
                 (r.roomName && r.roomName.toLowerCase().includes(searchTerm)) ||
                 (r.id.toLowerCase().includes(searchTerm)) ||
                 (r.creatorName && r.creatorName.toLowerCase().includes(searchTerm))
             );
 
-            // 3. Ordenar
+            // Ordenação
             roomsArray.sort((a, b) => {
                 if (sortType === 'newest') return b.createdAt - a.createdAt;
                 if (sortType === 'oldest') return a.createdAt - b.createdAt;
@@ -617,7 +620,6 @@
                 return 0;
             });
 
-            // 4. Renderizar Cards
             if (roomsArray.length === 0) {
                 grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:50px; color:var(--text-muted);">Nenhuma sala encontrada.</div>';
                 return;
@@ -626,7 +628,7 @@
             roomsArray.forEach(room => {
                 const timeAgo = timeSince(room.createdAt || Date.now());
                 
-                // Música Tocando Agora
+                // Lógica da Música Tocando
                 let nowPlayingHTML = '';
                 if (room.videoQueue) {
                     const firstVideo = Object.values(room.videoQueue)[0];
@@ -635,21 +637,13 @@
                             <div class="music-wave">
                                 <div class="bar"></div><div class="bar"></div><div class="bar"></div>
                             </div>
-                            <div class="song-info">
-                                ${escapeHtml(firstVideo.title || 'Música desconhecida')}
-                            </div>
-                        </div>
-                    `;
+                            <div class="song-info">${escapeHtml(firstVideo.title)}</div>
+                        </div>`;
                 } else {
-                    nowPlayingHTML = `
-                        <div class="now-playing" style="opacity:0.5;">
-                            <i class="fas fa-pause" style="font-size:0.8rem;"></i>
-                            <span style="font-size:0.9rem; margin-left:10px;">Nada tocando</span>
-                        </div>
-                    `;
+                    nowPlayingHTML = `<div class="now-playing" style="opacity:0.5;"><i class="fas fa-pause" style="font-size:0.8rem;"></i> <span style="font-size:0.9rem; margin-left:10px;">Nada tocando</span></div>`;
                 }
 
-                // Avatares empilhados
+                // Avatares
                 let avatarsHTML = '';
                 if (room.presence) {
                     const users = Object.values(room.presence);
@@ -680,22 +674,21 @@
                         </div>
                         ${statusDot}
                     </div>
-
                     ${nowPlayingHTML}
-
                     <div class="room-meta">
                         <div class="creator-info">
                             <span class="creator-name">${escapeHtml(room.creatorName || 'Desconhecido')}</span>
                             <span class="time-ago">Há ${timeAgo}</span>
                         </div>
-                        <div class="user-stack">
-                            ${avatarsHTML}
-                        </div>
+                        <div class="user-stack">${avatarsHTML}</div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
         }
+
+        document.getElementById('searchInput').addEventListener('input', updateRoomsList);
+        document.getElementById('sortFilter').addEventListener('change', updateRoomsList);
 
         // --- FUNÇÕES DE AÇÃO ---
 
@@ -727,71 +720,53 @@
                 .catch(e => alert('Erro ao limpar: ' + e.message));
         }
 
-        // --- CRIAÇÃO DE SALA ---
         function openCreateModal() {
             document.getElementById('newRoomId').value = '';
             document.getElementById('newRoomName').value = '';
             document.getElementById('newRoomPassword').value = '';
-            
             document.getElementById('createRoomModal').classList.add('active');
             setTimeout(() => document.getElementById('newRoomId').focus(), 100);
         }
 
         function confirmCreateRoom() {
-    let id = document.getElementById('newRoomId').value.trim();
-    let name = document.getElementById('newRoomName').value.trim();
-    const passwordRaw = document.getElementById('newRoomPassword').value.trim(); // Senha original
+            let id = document.getElementById('newRoomId').value.trim();
+            let name = document.getElementById('newRoomName').value.trim();
+            const passwordRaw = document.getElementById('newRoomPassword').value.trim(); 
 
-    if(!id) {
-        alert("O ID da sala é obrigatório.");
-        return;
-    }
+            if(!id) {
+                alert("O ID da sala é obrigatório.");
+                return;
+            }
+            if(!name) name = id;
+            if(allRoomsRaw[id]) {
+                alert("Já existe uma sala com este ID. Escolha outro.");
+                return;
+            }
 
-    if(!name) name = id;
+            let finalPassword = null;
+            let isPrivate = false;
 
-    if(allRoomsRaw[id]) {
-        alert("Já existe uma sala com este ID. Escolha outro.");
-        return;
-    }
+            if (passwordRaw) {
+                isPrivate = true;
+                finalPassword = CryptoJS.SHA256(passwordRaw).toString();
+            }
 
-    // --- CORREÇÃO AQUI ---
-    let finalPassword = null;
-    let isPrivate = false;
-
-    if (passwordRaw) {
-        isPrivate = true;
-        // Cria o HASH da senha para bater com a verificação do session.js
-        finalPassword = CryptoJS.SHA256(passwordRaw).toString();
-    }
-    // ---------------------
-
-    // Criar no Firebase
-    database.ref('rooms/' + id).set({
-        roomName: name,
-        creatorName: "Lucas Silva",
-        createdAt: firebase.database.ServerValue.TIMESTAMP,
-        
-        // Salva os campos corrigidos
-        password: finalPassword, 
-        isPrivate: isPrivate,
-        
-        videoQueue: {},
-        presence: {}
-    }).then(() => {
-        closeModal('createRoomModal');
-        alert(`Sala "${name}" criada com sucesso! (ID: ${id})`);
-        
-        // Limpa os campos
-        document.getElementById('newRoomId').value = '';
-        document.getElementById('newRoomName').value = '';
-        document.getElementById('newRoomPassword').value = '';
-        
-    }).catch(e => alert("Erro ao criar: " + e.message));
-}
-
-        // --- LISTENERS DE FILTRO ---
-        document.getElementById('searchInput').addEventListener('input', updateRoomsList);
-        document.getElementById('sortFilter').addEventListener('change', updateRoomsList);
+            database.ref('rooms/' + id).set({
+                roomName: name,
+                creatorName: "Lucas Silva",
+                createdAt: firebase.database.ServerValue.TIMESTAMP,
+                password: finalPassword, 
+                isPrivate: isPrivate,
+                videoQueue: {},
+                presence: {}
+            }).then(() => {
+                closeModal('createRoomModal');
+                alert(`Sala "${name}" criada com sucesso! (ID: ${id})`);
+                document.getElementById('newRoomId').value = '';
+                document.getElementById('newRoomName').value = '';
+                document.getElementById('newRoomPassword').value = '';
+            }).catch(e => alert("Erro ao criar: " + e.message));
+        }
 
         // --- MODAL DETALHES ---
         function openDetails(id) {
@@ -807,10 +782,10 @@
                 '<span style="color:var(--accent)"><i class="fas fa-lock"></i> Protegida</span>' : 
                 '<span style="color:var(--success)"><i class="fas fa-lock-open"></i> Pública</span>';
 
-            renderUserList(room.presence);
+            // ATUALIZAÇÃO: Passando o ID e a lista de banidos também
+            renderUserList(room.presence, room.banned, id);
             renderQueueList(room.videoQueue);
 
-            // Botões de Ação
             document.getElementById('btnOpenRoom').onclick = () => {
                 sessionStorage.setItem(`bypass_pw_${id}`, 'true');
                 window.open(`index.html?room=${id}`, '_blank');
@@ -827,11 +802,9 @@
             switchTab('tabInfo');
         }
 
-        // Função de Copiar ID
         function copyId() {
             if(!currentRoomId) return;
             navigator.clipboard.writeText(currentRoomId).then(() => {
-                // Feedback visual simples
                 const btn = document.querySelector('.btn-icon-sm');
                 const original = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-check" style="color:var(--success)"></i>';
@@ -839,29 +812,80 @@
             }).catch(err => alert("Erro ao copiar: " + err));
         }
 
-        function renderUserList(presence) {
+        // --- SISTEMA DE BANIMENTO IMPLEMENTADO AQUI ---
+        function renderUserList(presence, banned, roomId) {
             const container = document.getElementById('usersListContainer');
             container.innerHTML = '';
             const users = presence ? Object.values(presence) : [];
             document.getElementById('countUsersModal').textContent = users.length;
 
-            if(users.length === 0) {
+            // 1. ONLINE USERS
+            if(users.length > 0) {
+                const h = document.createElement('h4'); h.innerText = "Online"; h.style.color="#10b981"; h.style.marginTop="10px";
+                container.appendChild(h);
+
+                users.forEach((u, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'list-item';
+                    const initial = (u.name || '?').charAt(0).toUpperCase();
+                    const color = ['#6366f1', '#ec4899', '#10b981', '#f59e0b'][i % 4];
+                    const devId = u.deviceId || 'unknown';
+
+                    div.innerHTML = `
+                        <div class="list-avatar" style="background:${color}">${initial}</div>
+                        <div style="min-width:0; flex:1;">
+                            <div style="font-weight:600" class="truncate">${escapeHtml(u.name)}</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted)">ID: ${escapeHtml(devId.substr(0,10))}...</div>
+                        </div>
+                        <button class="btn-icon-sm" style="color: #ef4444; background: rgba(239, 68, 68, 0.1);" 
+                            onclick="executeBan('${escapeHtml(u.name)}', '${roomId}', '${devId}')" title="Banir">
+                            <i class="fas fa-ban"></i>
+                        </button>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
                 container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px;">Sala vazia.</p>';
-                return;
             }
 
-            users.forEach(u => {
-                const div = document.createElement('div');
-                div.className = 'list-item';
-                div.innerHTML = `
-                    <div class="list-avatar">${(u.name||'?').charAt(0).toUpperCase()}</div>
-                    <div style="min-width:0; flex:1;">
-                        <div style="font-weight:600" class="truncate">${escapeHtml(u.name)}</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted)" class="truncate">${escapeHtml(u.phone || 'Sem dispositivo')}</div>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
+            // 2. BANNED USERS
+            if(banned) {
+                const keys = Object.keys(banned);
+                if(keys.length > 0) {
+                    const h = document.createElement('h4'); h.innerText = `Banidos (${keys.length})`; h.style.color="#ef4444"; h.style.marginTop="20px";
+                    container.appendChild(h);
+                    
+                    keys.forEach(k => {
+                        const div = document.createElement('div');
+                        div.style.cssText = "display:flex; justify-content:space-between; background:rgba(239,68,68,0.1); padding:10px; margin-bottom:5px; border-radius:8px;";
+                        div.innerHTML = `
+                            <span style="color:#fca5a5; font-weight:600;">🚫 ${escapeHtml(k)}</span>
+                            <button onclick="executeUnban('${k}', '${roomId}')" style="background:white; border:none; border-radius:4px; padding:4px 10px; cursor:pointer; color:#333; font-weight:bold;">
+                                Desbanir
+                            </button>
+                        `;
+                        container.appendChild(div);
+                    });
+                }
+            }
+        }
+
+        function executeBan(targetName, roomId, targetDeviceId) {
+            if (!confirm(`Banir "${targetName}"?\nIsso bloqueará o dispositivo e o nome.`)) return;
+
+            const updates = {};
+            updates[`rooms/${roomId}/banned/${targetName}`] = true; // Bloqueio visual/nome
+            
+            if (targetDeviceId && targetDeviceId !== 'unknown') {
+                updates[`rooms/${roomId}/banned/${targetDeviceId}`] = true; // Bloqueio Real de Device
+            }
+
+            database.ref().update(updates).then(() => alert("Usuário Banido!"));
+        }
+
+        function executeUnban(target, roomId) {
+            if(!confirm(`Remover banimento de "${target}"?`)) return;
+            database.ref(`rooms/${roomId}/banned/${target}`).remove();
         }
 
         function renderQueueList(queue) {
@@ -889,7 +913,6 @@
             });
         }
 
-        // --- UTILIDADES ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -910,12 +933,9 @@
             document.getElementById(id).classList.remove('active');
         }
 
-        window.onclick = function(event) {
-            const modal = document.getElementById('detailsModal');
-            const modalCreate = document.getElementById('createRoomModal');
-            if (event.target == modal) closeModal('detailsModal');
-            if (event.target == modalCreate) closeModal('createRoomModal');
-        }
+        // --- CORREÇÃO DO CLIQUE FORA (MODAL FORTE) ---
+        // Removi o window.onclick anterior que fechava ao clicar fora.
+        // O modal agora só fecha via botão 'X' ou 'Cancelar' (função closeModal).
 
         function timeSince(date) {
             const seconds = Math.floor((new Date() - date) / 1000);
