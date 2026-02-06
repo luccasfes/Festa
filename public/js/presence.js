@@ -87,6 +87,11 @@ if (typeof firebase !== "undefined" && window.roomId) {
 if (typeof presenceRef !== "undefined") {
     presenceRef.on("value", (snap) => {
         const users = snap.val();
+        window.currentOnlineUsers = users || {}; // Guarda a lista globalmente
+        // 2. Força a atualização do select em tempo real
+        if (typeof populateReportUserDropdown === 'function') {
+            populateReportUserDropdown();
+        }
         onlineUserCount = snap.numChildren();
 
         // UI
@@ -128,6 +133,7 @@ if (typeof connectedRef !== "undefined") {
             window.myPresenceRef
                 .set({
                     name,
+                    isAdmin: window.isAdminLoggedIn || false,
                     joinedAt: firebase.database.ServerValue.TIMESTAMP,
                 })
                 .then(() => {

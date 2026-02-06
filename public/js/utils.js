@@ -98,12 +98,56 @@ document.addEventListener('keydown', function(event) {
 });
 
 // ====================================================================
-// LÓGICA DO SISTEMA DE REPORT (NOVO)
+// LÓGICA DO SISTEMA DE REPORT (NOVO - COM SUPORTE TEMPO REAL)
 // ====================================================================
 
 function openReportModal() {
     const modal = document.getElementById('reportModal');
-    if(modal) modal.style.display = 'flex';
+    if(modal) {
+        modal.style.display = 'flex';
+        populateReportUserDropdown(); // Atualiza a lista ao abrir
+    }
+}
+
+function populateReportUserDropdown() {
+    const select = document.getElementById('reportUser');
+    if (!select) return;
+
+    const previousValue = select.value;
+
+    select.innerHTML = '<option value="" disabled selected>Selecione o usuário...</option>';
+    
+    const users = window.currentOnlineUsers || {};
+    const myName = sessionStorage.getItem('ytSessionUser');
+
+    const userNames = Object.values(users)
+        .filter(u => {
+            // Filtra: 
+            // 1. Se tem nome
+            // 2. Se não é você mesmo
+            // 3. Se NÃO é admin (!u.isAdmin)
+            return u.name && u.name !== myName && !u.isAdmin;
+        })
+        .map(u => u.name);
+    // ---------------------------
+
+    if (userNames.length === 0) {
+        const opt = document.createElement('option');
+        opt.disabled = true;
+        opt.textContent = "(Ninguém mais online)"; // Ou "Nenhum usuário comum online"
+        select.appendChild(opt);
+    } else {
+        userNames.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            select.appendChild(opt);
+        });
+    }
+
+    if (previousValue && Array.from(select.options).some(opt => opt.value === previousValue)) {
+        select.value = previousValue;
+    }
 }
 
 function closeReportModal() {
@@ -125,8 +169,8 @@ function checkReportValidity() {
     const submitBtn = document.getElementById('submitReportBtn');
 
     if (confirmCheck && reportUserParams && submitBtn) {
-        // Regra: Checkbox marcado E nome do usuário preenchido
-        if (confirmCheck.checked && reportUserParams.value.trim() !== "") {
+        // Verifica se o valor não é vazio e não é a opção default
+        if (confirmCheck.checked && reportUserParams.value && reportUserParams.value.trim() !== "") {
             submitBtn.disabled = false;
             submitBtn.style.opacity = "1";
             submitBtn.style.pointerEvents = "auto";
@@ -144,7 +188,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const reportUserParams = document.getElementById('reportUser');
 
     if(confirmCheck) confirmCheck.addEventListener('change', checkReportValidity);
-    if(reportUserParams) reportUserParams.addEventListener('input', checkReportValidity);
+    if(reportUserParams) reportUserParams.addEventListener('input', checkReportValidity); // Input serve para select também
+    if(reportUserParams) reportUserParams.addEventListener('change', checkReportValidity); // Garante que a mudança no select ative
 });
 
 // Função Principal de Envio (Conectada ao novo Modal Compacto)

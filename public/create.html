@@ -627,7 +627,8 @@
                 };
 
                 await roomsRef.child(roomId).set(roomData);
-
+                // Salva o nome na sessão para não perguntar de novo na próxima tela
+                sessionStorage.setItem('ytSessionUser', creatorName);
                 // Salvar no Histórico Local
                 saveToHistory(roomId, roomName, creatorName);
 

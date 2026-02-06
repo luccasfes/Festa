@@ -318,6 +318,10 @@ window.loginAdminSession = async function () {
     try {
         await firebase.auth().signInWithEmailAndPassword(email, pass);
         window.isAdminLoggedIn = true;
+        // esconder o admin do report
+        if (window.myPresenceRef) {
+            window.myPresenceRef.update({ isAdmin: true });
+        }
         document.body.classList.remove('non-admin');
         
         updateAdminDisplay(email.split('@')[0]);
@@ -349,6 +353,11 @@ window.loginAdminSession = async function () {
 
 window.logoutAdminSession = function () {
     window.isAdminLoggedIn = false;
+
+    if (window.myPresenceRef) {
+        window.myPresenceRef.update({ isAdmin: false });
+    }
+    
     document.body.classList.add('non-admin');
     updateAdminDisplay(null);
     
