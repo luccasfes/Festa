@@ -441,33 +441,66 @@
     </div>
 
     <div id="panelModal" class="modal admin-panel-modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="closePanelModal()">×</span>
-            <div class="admin-panel-header">
-                <h3><i class="fas fa-user-shield"></i> Painel Admin - FlowLink</h3>
-            </div>
-            <div class="admin-panel-body">
-                <h4 style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fas fa-server"></i> Salas Ativas</span>
-                    <div style="display: flex; align-items: center;">
+    <div class="modal-content" style="max-height: 90vh; display: flex; flex-direction: column;">
+        <span class="close-button" onclick="closePanelModal()">×</span>
+
+        <div class="admin-panel-header">
+            <h3><i class="fas fa-user-shield"></i> Painel Admin - FlowLink</h3>
+        </div>
+
+        <div class="admin-panel-body" style="flex: 1; overflow-y: auto; padding: 15px;">
+
+            <div id="adminRoomsView">
+                
+                <div class="admin-header-row">
+                    
+                    <h4><i class="fas fa-server"></i> Salas Ativas</h4>
+
+                    <div class="admin-btn-group">
+                        
                         <button class="btn small secondary" onclick="loadAdminPanelRooms()" title="Atualizar lista">
                             <i class="fas fa-sync-alt"></i> Atualizar
                         </button>
-                        <a href="admin.html" target="_blank" class="btn small secondary" style="margin-left: 10px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;" title="Abrir Painel Completo">
+                        
+                        <a href="admin.html" target="_blank" class="btn small secondary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;" title="Abrir Painel Completo">
                             <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> Abrir Admin
                         </a>
-                        <button class="btn small warning" onclick="limparSalasVazias()" title="Apagar apenas salas vazias" style="margin-left: 10px; background:#ff9800; color:white;">
+                        
+                        <button class="btn small warning" onclick="limparSalasVazias()" title="Apagar apenas salas vazias" style="background:#ff9800; color:white;">
                             <i class="fas fa-broom"></i> Limpar Salas Vazias
                         </button>
+
                     </div>
-                </h4>
+                </div>
+
                 <div id="adminRoomLoader" class="loading-yt" style="display: none; padding: 40px 0;">
                     Carregando salas...
                 </div>
                 <div id="adminRoomList" class="admin-room-list"></div>
             </div>
+
+            <div id="adminUsersView" style="display:none; flex-direction: column; height: 100%;">
+                
+                <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                    <button class="btn small secondary" onclick="backToRooms()" style="display: inline-flex; align-items: center; gap: 5px;">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </button>
+                    <div>
+                        <h4 id="adminUsersRoomTitle" style="margin:0; color: white;">Nome da Sala</h4>
+                        <span id="adminUsersRoomId" style="font-size: 0.8rem; color: #aaa; font-family: monospace;">ID: ...</span>
+                    </div>
+                </div>
+
+                <div id="adminUsersListLoader" style="display:none; text-align:center; padding:20px; color:#aaa;">
+                    <i class="fas fa-spinner fa-spin"></i> Carregando usuários...
+                </div>
+                
+                <div id="adminUsersList" style="flex: 1; overflow-y: auto;"></div>
+            </div>
+
         </div>
     </div>
+</div>
 
     <div id="roomPasswordModal" class="modal" style="display: none; background: rgba(0,0,0,0.98); z-index: 9999; align-items: center; justify-content: center;">
         <div class="modal-content" style="border: 1px solid var(--accent-color); box-shadow: 0 0 50px rgba(0, 210, 255, 0.3); max-width: 400px; text-align: center; position: relative;">

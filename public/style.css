@@ -2675,6 +2675,67 @@ body:not(.non-admin) .player-overlay-controls {
         padding: 12px; /* Área de toque maior */
     }
 }
+/* --- HEADER DO ADMIN (Responsivo) --- */
+
+/* O container que segura o Título e os Botões */
+.admin-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap; /* Garante que não quebre em telas médias */
+}
+
+/* O título */
+.admin-header-row h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* O grupo de botões */
+.admin-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Substitui o margin-left inline */
+}
+
+/* --- MOBILE (Telas menores que 600px) --- */
+@media (max-width: 600px) {
+    /* Transforma a linha em coluna */
+    .admin-header-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* Título centralizado com linha embaixo */
+    .admin-header-row h4 {
+        justify-content: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        width: 100%;
+    }
+
+    /* Botões viram uma grade (um embaixo do outro) */
+    .admin-btn-group {
+        display: grid !important;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    /* Ajuste fino nos botões para ficarem grandes no dedo */
+    .admin-btn-group .btn {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 12px !important;
+        margin: 0 !important; /* Remove qualquer margem antiga */
+    }
+}
+
 /* Style para celualr aqui em  cima fim do style para celualr style do Painel */
 
 /* Lista de Salas */
