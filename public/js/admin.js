@@ -175,7 +175,10 @@ function renderRoomUsers(roomId, roomData) {
     var onlineUsers = Object.values(presence);
     var bannedKeys = Object.keys(banned);
 
-    // 1. USUÁRIOS ONLINE
+    // --- CORREÇÃO: Usa a chave EXATA que seu session.js usa ---
+    var myDeviceId = localStorage.getItem('flowLinkDeviceId');
+
+    // --- SEÇÃO: ONLINE ---
     html += `<h5 style="color:#00e676; margin: 10px 0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;">
                 <i class="fas fa-wifi"></i> ONLINE (${onlineUsers.length})
              </h5>`;
@@ -185,28 +188,48 @@ function renderRoomUsers(roomId, roomData) {
             var uName = escapeHtml(u.name || 'Sem Nome');
             var uDevice = u.deviceId || 'unknown';
             
+            // Compara o seu ID local com o ID do usuário da lista
+            var isMe = (myDeviceId && uDevice === myDeviceId);
+
+            // Se for você: Nome verde + Texto "(Você)"
+            var nameDisplay = isMe 
+                ? `<span style="color:#00e676; font-weight:bold;">${uName} (Você)</span>` 
+                : `<span style="color:#eee; font-weight:500;">${uName}</span>`;
+
+            // Se for você: NÃO mostra botão de banir
+            var actionButton = isMe
+                ? `<span style="font-size:0.75rem; color:#666; background:rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; font-style:italic;">Seu Usuário</span>`
+                : `<button onclick="adminBanUser('${roomId}', '${uName}', '${uDevice}')" 
+                           style="background:rgba(239,68,68,0.2); color:#ef4444; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">
+                       <i class="fas fa-ban"></i> Banir
+                   </button>`;
+            
+            // Visual: Se for você, adiciona uma borda verde sutil
+            var cardStyle = isMe 
+                ? 'border: 1px solid rgba(0, 230, 118, 0.3); background: rgba(0, 230, 118, 0.05);' 
+                : 'background:rgba(255,255,255,0.03);';
+
             html += `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); margin-bottom:5px; padding:10px; border-radius:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; padding:10px; border-radius:6px; ${cardStyle}">
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width:30px; height:30px; background:#333; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">
+                    <div style="width:30px; height:30px; background:#333; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; color: #fff;">
                         ${uName.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                        <div style="color:#eee; font-weight:500;">${uName}</div>
-                        <div style="color:#666; font-size:0.75rem; font-family:monospace;">${uDevice.substr(0,10)}...</div>
+                        <div>${nameDisplay}</div>
+                        <div style="color:#666; font-size:0.75rem; font-family:monospace;">${uDevice.substr(0,8)}...</div>
                     </div>
                 </div>
-                <button onclick="adminBanUser('${roomId}', '${uName}', '${uDevice}')" 
-                        style="background:rgba(239,68,68,0.2); color:#ef4444; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">
-                    <i class="fas fa-ban"></i> Banir
-                </button>
+                <div>
+                    ${actionButton}
+                </div>
             </div>`;
         });
     } else {
-        html += `<div style="padding:15px; color:#666; text-align:center; font-style:italic;">Nenhum usuário online no momento.</div>`;
+        html += `<div style="padding:15px; color:#666; text-align:center; font-style:italic;">Nenhum usuário online.</div>`;
     }
 
-    // 2. USUÁRIOS BANIDOS
+    // --- SEÇÃO: BANIDOS ---
     html += `<h5 style="color:#ef4444; margin: 25px 0 10px 0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;">
                 <i class="fas fa-user-slash"></i> BANIDOS (${bannedKeys.length})
              </h5>`;
