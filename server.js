@@ -37,28 +37,88 @@ app.post('/api/report', async (req, res) => {
             return res.status(500).json({ error: "Configuração de e-mail ausente" });
         }
 
+        
+        const baseUrl = process.env.SITE_URL || 'http://localhost:3000';
+        const painelLink = `${baseUrl}/admin.html`; 
+        // ------------------------
+
         const mailOptions = {
-            from: `"FlowLink System" <${process.env.EMAIL_USER}>`,
+            from: `"FlowLink Security" <${process.env.EMAIL_USER}>`,
             to: process.env.EMAIL_USER,
-            subject: `⚠️ REPORT: ${room}`,
+            subject: `🛡️ REPORT: ${room} - Ação Necessária`,
             html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                    <h2 style="color: #d32f2f;">🚨 Novo Report de Usuário</h2>
-                    <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-                        <p><strong>Quem Reportou:</strong> ${reporter}</p>
-                        <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
-                        <p><strong>Sala:</strong> ${room}</p>
-                        <p><strong>ID da Sala:</strong> <code>${roomId}</code></p>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f7; }
+                    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 20px; margin-bottom: 20px; }
+                    .header { background-color: #d32f2f; padding: 20px; text-align: center; color: white; }
+                    .content { padding: 30px; color: #333333; }
+                    .info-grid { display: table; width: 100%; margin-bottom: 20px; font-size: 14px; }
+                    .info-item { display: table-cell; width: 50%; padding-bottom: 10px; color: #666; }
+                    .info-value { font-weight: bold; color: #333; display: block; margin-top: 4px; }
+                    .alert-box { background-color: #fff5f5; border-left: 5px solid #d32f2f; padding: 15px; border-radius: 4px; margin: 20px 0; }
+                    .footer { background-color: #f9f9f9; padding: 15px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; }
+                    .btn { display: inline-block; padding: 10px 20px; background-color: #333; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px; margin-top: 10px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h2 style="margin:0; font-size: 24px;">🚨 Novo Report</h2>
+                        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">FlowLink Safety System</p>
                     </div>
-                    <div style="background: #fff0f0; padding: 15px; border-radius: 5px; border: 1px solid #ffcdd2;">
-                        <p style="font-size: 1.1em;"><strong>Usuário Denunciado:</strong> ${userReported}</p>
-                        <p><strong>Motivo:</strong></p>
-                        <blockquote style="border-left: 4px solid #d32f2f; padding-left: 10px; color: #555;">
-                            ${reason}
-                        </blockquote>
+
+                    <div class="content">
+                        <p style="margin-top: 0;">Olá Admin,</p>
+                        <p>Uma nova denúncia foi registrada e requer atenção.</p>
+
+                        <div class="alert-box">
+                            <p style="margin: 0; font-size: 12px; text-transform: uppercase; color: #d32f2f; font-weight: bold;">Usuário Denunciado</p>
+                            <h3 style="margin: 5px 0 10px 0; color: #333;">${userReported}</h3>
+                            
+                            <p style="margin: 0; font-size: 12px; text-transform: uppercase; color: #d32f2f; font-weight: bold;">Motivo</p>
+                            <p style="margin: 5px 0 0 0; font-style: italic; color: #555;">"${reason}"</p>
+                        </div>
+
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;">
+
+                        <div class="info-grid">
+                            <div style="display:table-row">
+                                <div class="info-item">
+                                    Reportado por:
+                                    <span class="info-value">${reporter || 'Anônimo'}</span>
+                                </div>
+                                <div class="info-item">
+                                    Data/Hora:
+                                    <span class="info-value">${new Date().toLocaleString('pt-BR')}</span>
+                                </div>
+                            </div>
+                            <div style="display:table-row">
+                                <div class="info-item" style="padding-top: 15px;">
+                                    Nome da Sala:
+                                    <span class="info-value">${room}</span>
+                                </div>
+                                <div class="info-item" style="padding-top: 15px;">
+                                    ID da Sala:
+                                    <span class="info-value"><code style="background:#eee; padding:2px 5px; border-radius:3px;">${roomId}</code></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; margin-top: 30px;">
+                            <a href="${painelLink}" class="btn">Acessar Painel</a>
+                        </div>
                     </div>
-                    <p style="font-size: 0.8em; color: #888; margin-top: 20px;">Enviado automaticamente pelo sistema FlowLink.</p>
+
+                    <div class="footer">
+                        <p style="margin:0;">Este é um email automático do FlowLink.</p>
+                    </div>
                 </div>
+            </body>
+            </html>
             `
         };
 
