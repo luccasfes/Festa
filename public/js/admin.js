@@ -1,5 +1,5 @@
 // ====================================================================
-// PAINEL DE ADMINISTRAÇÃO & GERENCIAMENTO (VERSÃO COM SUB-VIEW)
+// PAINEL DE ADMINISTRAÇÃO & GERENCIAMENTO (VERSÃO BLINDADA XSS)
 // ====================================================================
 
 // Variável global para saber qual sala está aberta no gerenciador
@@ -15,7 +15,7 @@ function FuncaoParaAbrirPainel() {
     if (modal) {
         modal.style.display = 'flex';
         // Sempre reseta para a visão de lista ao abrir
-        backToRooms(false); 
+        backToRooms(false);
         loadAdminPanelRooms();
     }
 }
@@ -31,7 +31,7 @@ function backToRooms(reload = true) {
     document.getElementById('adminUsersView').style.display = 'none';
     document.getElementById('adminRoomsView').style.display = 'block';
     currentAdminRoomId = null;
-    if(reload) loadAdminPanelRooms();
+    if (reload) loadAdminPanelRooms();
 }
 
 function openRoomManager(roomId, roomName) {
@@ -55,34 +55,34 @@ function openRoomManager(roomId, roomName) {
 function loadAdminPanelRooms() {
     var list = document.getElementById('adminRoomList');
     var loader = document.getElementById('adminRoomLoader');
-    
+
     if (!list) return;
     if (loader) loader.style.display = 'block';
     list.innerHTML = '';
 
     firebase.database().ref('rooms').once('value')
-        .then(function(snapshot) {
+        .then(function (snapshot) {
             if (loader) loader.style.display = 'none';
-            
+
             if (!snapshot.exists()) {
                 list.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">Nenhuma sala ativa.</div>';
                 return;
             }
 
-            snapshot.forEach(function(childSnapshot) {
+            snapshot.forEach(function (childSnapshot) {
                 var key = childSnapshot.key;
                 var val = childSnapshot.val();
 
                 // Dados
                 var roomName = val.roomName || 'Sala sem Nome';
                 var creatorName = val.creatorName || 'Desconhecido';
-                
+
                 // Contagens
                 var presence = val.presence || {};
                 var userCount = Object.keys(presence).length;
                 var videoCount = val.videoQueue ? Object.keys(val.videoQueue).length : 0;
                 var chatCount = (val.chat && val.chat.messages) ? Object.keys(val.chat.messages).length : 0;
-                var statusColor = userCount > 0 ? '#00e676' : '#666'; 
+                var statusColor = userCount > 0 ? '#00e676' : '#666';
 
                 // --- CARD SIMPLIFICADO (Sem lista de users) ---
                 var item = document.createElement('div');
@@ -92,7 +92,8 @@ function loadAdminPanelRooms() {
                 item.style.border = '1px solid rgba(255,255,255,0.1)';
                 item.style.borderRadius = '8px';
                 item.style.padding = '15px';
-                
+
+                // Correção de segurança: data-* attributes para todos os botões
                 item.innerHTML = `
                     <div class="room-header">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
@@ -118,17 +119,24 @@ function loadAdminPanelRooms() {
                     </div>
 
                     <div style="display:flex; gap:8px;">
-                        <button class="btn small" onclick="openRoomManager('${key}', '${escapeHtml(roomName)}')" 
+                        <button class="btn small" 
+                                data-id="${key}" 
+                                data-name="${escapeHtml(roomName)}"
+                                onclick="openRoomManager(this.dataset.id, this.dataset.name)" 
                                 style="flex:1; background:rgba(255,255,255,0.1); color:#fff; border:none; padding:8px; border-radius:4px; cursor:pointer;">
                             <i class="fas fa-user-cog"></i> Gerenciar
                         </button>
                         
-                        <button class="btn small secondary" onclick="entrarNaSalaPeloAdmin('${key}')" 
+                        <button class="btn small secondary" 
+                                data-id="${key}"
+                                onclick="entrarNaSalaPeloAdmin(this.dataset.id)" 
                                 style="flex:1; background:#2196f3; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">
                             <i class="fas fa-sign-in-alt"></i> Entrar
                         </button>
                         
-                        <button class="btn small danger" onclick="confirmDeleteRoom('${key}')" 
+                        <button class="btn small danger" 
+                                data-id="${key}"
+                                onclick="confirmDeleteRoom(this.dataset.id)" 
                                 style="width: 40px; background:rgba(244,67,54,0.2); color:#ff5252; border:none; borderRadius:4px; cursor:pointer;">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -150,17 +158,17 @@ function loadAdminPanelRooms() {
 function loadRoomUsersData(roomId) {
     var listDiv = document.getElementById('adminUsersList');
     var loader = document.getElementById('adminUsersListLoader');
-    
+
     loader.style.display = 'block';
-    
+
     firebase.database().ref('rooms/' + roomId).once('value')
-        .then(function(snapshot) {
+        .then(function (snapshot) {
             loader.style.display = 'none';
-            if(!snapshot.exists()) {
+            if (!snapshot.exists()) {
                 listDiv.innerHTML = "<p>Sala não encontrada ou deletada.</p>";
                 return;
             }
-            
+
             var val = snapshot.val();
             renderRoomUsers(roomId, val);
         });
@@ -182,31 +190,35 @@ function renderRoomUsers(roomId, roomData) {
     html += `<h5 style="color:#00e676; margin: 10px 0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;">
                 <i class="fas fa-wifi"></i> ONLINE (${onlineUsers.length})
              </h5>`;
-    
+
     if (onlineUsers.length > 0) {
         onlineUsers.forEach(u => {
             var uName = escapeHtml(u.name || 'Sem Nome');
             var uDevice = u.deviceId || 'unknown';
-            
+
             // Compara o seu ID local com o ID do usuário da lista
             var isMe = (myDeviceId && uDevice === myDeviceId);
 
             // Se for você: Nome verde + Texto "(Você)"
-            var nameDisplay = isMe 
-                ? `<span style="color:#00e676; font-weight:bold;">${uName} (Você)</span>` 
+            var nameDisplay = isMe
+                ? `<span style="color:#00e676; font-weight:bold;">${uName} (Você)</span>`
                 : `<span style="color:#eee; font-weight:500;">${uName}</span>`;
 
-            // Se for você: NÃO mostra botão de banir
+            // Correção de segurança no botão de Banir (Dataset)
             var actionButton = isMe
                 ? `<span style="font-size:0.75rem; color:#666; background:rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; font-style:italic;">Seu Usuário</span>`
-                : `<button onclick="adminBanUser('${roomId}', '${uName}', '${uDevice}')" 
-                           style="background:rgba(239,68,68,0.2); color:#ef4444; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">
-                       <i class="fas fa-ban"></i> Banir
+                : `<button 
+                      data-room="${roomId}" 
+                      data-name="${uName}" 
+                      data-device="${uDevice}" 
+                      onclick="adminBanUser(this.dataset.room, this.dataset.name, this.dataset.device)" 
+                      style="background:rgba(239,68,68,0.2); color:#ef4444; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">
+                      <i class="fas fa-ban"></i> Banir
                    </button>`;
-            
+
             // Visual: Se for você, adiciona uma borda verde sutil
-            var cardStyle = isMe 
-                ? 'border: 1px solid rgba(0, 230, 118, 0.3); background: rgba(0, 230, 118, 0.05);' 
+            var cardStyle = isMe
+                ? 'border: 1px solid rgba(0, 230, 118, 0.3); background: rgba(0, 230, 118, 0.05);'
                 : 'background:rgba(255,255,255,0.03);';
 
             html += `
@@ -217,7 +229,7 @@ function renderRoomUsers(roomId, roomData) {
                     </div>
                     <div>
                         <div>${nameDisplay}</div>
-                        <div style="color:#666; font-size:0.75rem; font-family:monospace;">${uDevice.substr(0,8)}...</div>
+                        <div style="color:#666; font-size:0.75rem; font-family:monospace;">${uDevice.substr(0, 8)}...</div>
                     </div>
                 </div>
                 <div>
@@ -239,8 +251,11 @@ function renderRoomUsers(roomId, roomData) {
             html += `
             <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(60,20,20,0.3); margin-bottom:5px; padding:10px; border-radius:6px; border-left: 3px solid #ef4444;">
                 <span style="color:#fca5a5;">🚫 ${escapeHtml(bName)}</span>
-                <button onclick="adminUnbanUser('${roomId}', '${escapeHtml(bName)}')" 
-                        style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">
+                <button 
+                    data-room="${roomId}"
+                    data-target="${escapeHtml(bName)}"
+                    onclick="adminUnbanUser(this.dataset.room, this.dataset.target)" 
+                    style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">
                     Desbanir
                 </button>
             </div>`;
@@ -255,37 +270,37 @@ function renderRoomUsers(roomId, roomData) {
 // --- Ações: Banir / Desbanir / Apagar ---
 
 function adminBanUser(roomId, userName, deviceId) {
-    if(!confirm(`Banir "${userName}"? Ele será removido da sala.`)) return;
+    if (!confirm(`Banir "${userName}"? Ele será removido da sala.`)) return;
 
     var updates = {};
     updates[`rooms/${roomId}/banned/${userName}`] = true;
-    if(deviceId && deviceId !== 'unknown') {
+    if (deviceId && deviceId !== 'unknown') {
         updates[`rooms/${roomId}/banned/${deviceId}`] = true;
     }
 
     // Remove também da presence para "chutar" imediatamente (opcional, mas recomendado)
     // Para remover da presence, precisamos achar a chave do usuario, mas o update acima previne reentrada.
-    
+
     firebase.database().ref().update(updates).then(() => {
         // Recarrega a view de detalhes se estivermos nela
-        if(currentAdminRoomId === roomId) {
+        if (currentAdminRoomId === roomId) {
             loadRoomUsersData(roomId);
         }
     }).catch(e => alert("Erro: " + e.message));
 }
 
 function adminUnbanUser(roomId, target) {
-    if(!confirm(`Desbanir "${target}"?`)) return;
-    
+    if (!confirm(`Desbanir "${target}"?`)) return;
+
     firebase.database().ref(`rooms/${roomId}/banned/${target}`).remove().then(() => {
-        if(currentAdminRoomId === roomId) {
+        if (currentAdminRoomId === roomId) {
             loadRoomUsersData(roomId);
         }
     });
 }
 
 function confirmDeleteRoom(roomId) {
-    if(confirm('Apagar sala permanentemente?')) {
+    if (confirm('Apagar sala permanentemente?')) {
         firebase.database().ref('rooms/' + roomId).remove()
             .then(() => {
                 // Se apagou a sala que estava aberta no gerenciador, volta
@@ -309,17 +324,17 @@ function escapeHtml(text) {
 // --- FAXINEIRO (LIMPEZA DE SALAS VAZIAS) ---
 async function limparSalasVazias() {
     // 1. Confirmação de segurança
-    if(!confirm("Isso fará uma varredura nas salas vazias.\nDeseja continuar?")) return;
+    if (!confirm("Isso fará uma varredura nas salas vazias.\nDeseja continuar?")) return;
 
     var loader = document.getElementById('adminRoomLoader');
-    if(loader) loader.style.display = 'block';
+    if (loader) loader.style.display = 'block';
 
     try {
         // 2. Busca todas as salas
         const snapshot = await firebase.database().ref('rooms').once('value');
-        
+
         if (!snapshot.exists()) {
-            if(loader) loader.style.display = 'none';
+            if (loader) loader.style.display = 'none';
             return alert("Não há salas para verificar.");
         }
 
@@ -339,9 +354,9 @@ async function limparSalasVazias() {
             if (userCount > 0) {
                 // Se ela estava marcada como vazia antes, removemos a marcação (pois voltou a ter gente)
                 if (r.emptySince) updates[`rooms/${id}/emptySince`] = null;
-                return; 
+                return;
             }
-            
+
             // Lógica de Exclusão:
             // Se não tem ninguém...
             if (userCount === 0) {
@@ -349,15 +364,15 @@ async function limparSalasVazias() {
                 if (r.emptySince && (agora - r.emptySince) >= H24) {
                     updates[`rooms/${id}`] = null;
                     deleted++;
-                } 
+                }
                 // B) Se não tem a flag, marca que está vazia a partir de AGORA
                 else if (!r.emptySince) {
                     updates[`rooms/${id}/emptySince`] = agora;
                 }
                 // C) Se a sala foi criada há muito tempo e não tem 'createdAt' (salas antigas bugadas), deleta direto
                 else if (!r.createdAt && !r.emptySince) {
-                     updates[`rooms/${id}`] = null;
-                     deleted++;
+                    updates[`rooms/${id}`] = null;
+                    deleted++;
                 }
             }
         });
@@ -366,8 +381,8 @@ async function limparSalasVazias() {
         if (Object.keys(updates).length > 0) {
             await firebase.database().ref().update(updates);
         }
-        
-        if(loader) loader.style.display = 'none';
+
+        if (loader) loader.style.display = 'none';
 
         if (deleted > 0) {
             alert(`Limpeza concluída! ${deleted} salas antigas foram removidas.`);
@@ -380,7 +395,7 @@ async function limparSalasVazias() {
 
     } catch (error) {
         console.error(error);
-        if(loader) loader.style.display = 'none';
+        if (loader) loader.style.display = 'none';
         alert("Erro na faxina: " + error.message);
     }
 }
@@ -390,14 +405,14 @@ async function limparSalasVazias() {
 // ==========================================================
 // Adiciona o listener para impedir fechar clicando fora
 // Aplica para o Modal de Senha E para o Painel Admin
-window.addEventListener('click', function(e) {
+window.addEventListener('click', function (e) {
     const passModal = document.getElementById('roomPasswordModal');
     const adminModal = document.getElementById('panelModal');
-    
+
     // Função para aplicar o efeito de "não pode fechar"
     const shakeModal = (modalElement) => {
         const content = modalElement.querySelector('.modal-content') || modalElement.querySelector('.admin-panel-content');
-        if(content) {
+        if (content) {
             content.style.transition = "transform 0.1s";
             content.style.transform = "scale(1.02)";
             setTimeout(() => content.style.transform = "scale(1)", 150);
