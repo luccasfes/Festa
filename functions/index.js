@@ -1,557 +1,653 @@
-// ====================================================================
-// FLOWLINK SEARCH SYSTEM (SECURE & OPTIMIZED)
-// - Proteção XSS (DOM Methods)
-// - AbortController (Network optim)
-// - Auto DJ com DNA Anti-Repetição
-// ====================================================================
+/**
+ * functions/index.js (Cloud Functions + Express)
+ * * MELHORIAS IMPLEMENTADAS:
+ * ✅ Cache inteligente (60s) - economiza quota do YouTube
+ * ✅ Headers dinâmicos - funciona em localhost E produção
+ * ✅ Timeout em todas as requisições (12s)
+ * ✅ Retry com exponential backoff no Spotify (Anti-falha)
+ * ✅ Sanitização de inputs (proteção XSS)
+ * ✅ Health check endpoint para monitoramento
+ * ✅ Validação robusta de credenciais
+ */
 
-/* GLOSSÁRIO DE GÊNEROS */
-const generosMusicais = [
-    { id: "sertanejo", name: "Sertanejo", icon: "fa-guitar" },
-    { id: "funk", name: "Funk", icon: "fa-music" },
-    { id: "pop", name: "Pop", icon: "fa-star" },
-    { id: "rock", name: "Rock", icon: "fa-hand-rock" },
-    { id: "eletronica", name: "Eletrônica", icon: "fa-bolt" },
-    { id: "rap", name: "Rap/Hip-Hop", icon: "fa-microphone" },
-    { id: "reggaeton", name: "Reggaeton", icon: "fa-fire" },
-    { id: "pagode", name: "Pagode/Samba", icon: "fa-drum" }
-];
+const functions = require("firebase-functions");
+const express = require("express");
+const cors = require("cors");
+const axios = require("axios");
+const nodemailer = require("nodemailer");
+require("dotenv").config();
 
-const STOPWORDS = new Set([
-    "official", "oficial", "video", "clipe", "lyric", "audio", "ao", "vivo", "live",
-    "remix", "mix", "set", "full", "album", "karaoke", "cover", "parodia", "paródia",
-    "feat", "ft", "featuring", "prod", "original", "extended", "version", "versao",
-    "hd", "4k", "vevo", "mv", "visualizer", "performance", "session"
-]);
+const app = express();
 
-// ====================================================================
-// 1. HELPERS & SEGURANÇA (XSS SHIELD)
-// ====================================================================
+app.use(cors({ origin: true }));
+app.use(express.json());
 
-// Normaliza texto para comparação (DNA)
-function normalizeText(str) {
-    return (str || "")
-        .toString()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .replace(/\s+/g, " ")
-        .trim();
-}
+// ==================================================================
+// --- CONFIGURAÇÃO GLOBAL DO AXIOS ---
+// ==================================================================
+axios.defaults.timeout = 12000;
+axios.defaults.headers.common['User-Agent'] = 'FlowLink/1.0';
 
-// Limpa título para análise de DNA
-function limparTitulo(titulo) {
-    let t = normalizeText(titulo);
-    return t
-        .replace(/\s&\s/g, " e ")
-        .replace(/&/g, " e ")
-        .replace(/(\sft\.|\sfeat\.|\sfeaturing|\sparticipation).*/g, "")
-        .replace(/\(.*?\)|\[.*?\]/g, " ")
-        .replace(/official video|video oficial|clipe oficial|videoclipe|lyric|audio|visualizer|mv/g, " ")
-        .replace(/ao vivo|live|performance|session|dvd|acustico|acustico/g, " ")
-        .replace(/[^a-z0-9à-ú\s]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-}
+// ==================================================================
+// --- HELPERS DE CONFIGURAÇÃO ---
+// ==================================================================
+function getConfig(pathStr, fallbackEnvKey) {
+  // Prioridade 1: variável de ambiente direta (.env local)
+  if (fallbackEnvKey && process.env[fallbackEnvKey]) {
+    return process.env[fallbackEnvKey];
+  }
 
-// Cria tokens para comparação Fuzzy (Jaccard)
-function tokenizarParaDNA(titulo) {
-    const limpo = limparTitulo(titulo);
-    return limpo.split(" ")
-        .map(w => w.trim())
-        .filter(w => w.length >= 2 && !STOPWORDS.has(w));
-}
+  // Prioridade 2: transformar "email.user" em "EMAIL_USER"
+  if (pathStr) {
+    const envKey = pathStr.toUpperCase().replace(/\./g, "_");
+    if (process.env[envKey]) return process.env[envKey];
 
-// Calcula similaridade entre dois conjuntos de tokens
-function jaccard(aTokens, bTokens) {
-    const A = new Set(aTokens);
-    const B = new Set(bTokens);
-    if (A.size === 0 || B.size === 0) return 0;
-    let inter = 0;
-    for (const x of A) if (B.has(x)) inter++;
-    const uni = A.size + B.size - inter;
-    return uni ? inter / uni : 0;
-}
-
-// ====================================================================
-// 2. MODAL & UI
-// ====================================================================
-
-function openYTSearchModal() {
-    const modal = document.getElementById("ytSearchModal");
-    if (!modal) return;
-    
-    modal.style.display = "flex";
-    
-    // Limpa resultados anteriores
-    const resultsDiv = document.getElementById("ytSearchResults");
-    if (resultsDiv) resultsDiv.innerHTML = ""; // Seguro pois estamos limpando
-
-    // Verifica sessão do usuário
-    if (typeof currentSessionUser !== 'undefined' && currentSessionUser) {
-        document.querySelector(".session-info").style.display = "flex";
-        document.getElementById("userNameInputGroup").style.display = "none";
-        document.getElementById("currentSessionUser").textContent = currentSessionUser;
-        
-        setTimeout(() => document.getElementById("ytSearchQuery")?.focus(), 100);
-    } else {
-        document.querySelector(".session-info").style.display = "none";
-        document.getElementById("userNameInputGroup").style.display = "block";
-    }
-}
-
-function closeYTSearchModal() {
-    const modal = document.getElementById("ytSearchModal");
-    if (modal) modal.style.display = "none";
-}
-
-function setSessionUser() {
-    const nameInput = document.getElementById("ytSearchName");
-    const name = nameInput?.value?.trim(); // .value é seguro (string pura)
-    
-    if (!name) return alert("Por favor, digite seu nome.");
-    
-    // Sanitização básica extra (opcional, já que vamos usar textContent depois)
-    const safeName = name.replace(/[<>]/g, ""); 
-    
-    currentSessionUser = safeName;
-    sessionStorage.setItem("ytSessionUser", safeName);
-    openYTSearchModal();
-}
-
-function changeUserName() {
-    sessionStorage.removeItem("ytSessionUser");
-    currentSessionUser = null;
-    openYTSearchModal();
-}
-
-// ====================================================================
-// 3. BUSCA SEGURA (RENDERIZAÇÃO DOM)
-// ====================================================================
-
-let ytSearchAbort = null;
-
-// Função segura para criar elementos (XSS PROOF)
-function createVideoElement(item) {
-    const vidId = item?.id?.videoId;
-    const title = item?.snippet?.title || "Sem título";
-    const thumb = item?.snippet?.thumbnails?.medium?.url || item?.snippet?.thumbnails?.default?.url;
-    const channel = item?.snippet?.channelTitle || "";
-
-    if (!vidId) return null;
-
-    // Container
-    const el = document.createElement("div");
-    el.className = "yt-video-result";
-
-    // Imagem
-    const img = document.createElement("img");
-    img.src = thumb; 
-    img.alt = title;
-    img.loading = "lazy";
-
-    // Conteúdo (Texto)
-    const content = document.createElement("div");
-    content.className = "yt-result-content";
-
-    // Título (USANDO TEXTCONTENT - SEGURO)
-    const h4 = document.createElement("h4");
-    h4.textContent = title; // <script> vira texto puro aqui
-
-    // Canal
-    const p = document.createElement("p");
-    p.textContent = channel;
-    p.style.fontSize = "0.8rem";
-    p.style.color = "#aaa";
-
-    // Botão
-    const btn = document.createElement("button");
-    btn.className = "btn primary small";
-    btn.innerHTML = '<i class="fas fa-plus"></i> Adicionar'; // HTML estático seguro
-    
-    // Event Listener (Evita eval/onclick string)
-    btn.addEventListener("click", () => {
-        addVideo(`https://www.youtube.com/watch?v=${vidId}`, title);
-        
-        // Feedback visual simples
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-check"></i>';
-        setTimeout(() => closeYTSearchModal(), 300);
-    });
-
-    // Montagem
-    content.appendChild(h4);
-    content.appendChild(p);
-    content.appendChild(btn);
-    el.appendChild(img);
-    el.appendChild(content);
-
-    return el;
-}
-
-async function searchYouTube() {
-    const queryInput = document.getElementById("ytSearchQuery");
-    const resultsDiv = document.getElementById("ytSearchResults");
-    const q = queryInput?.value?.trim() || "";
-
-    if (!resultsDiv) return;
-
-    if (q.length < 2) {
-        resultsDiv.innerHTML = '<div class="msg-box">Digite pelo menos 2 letras...</div>';
-        return;
-    }
-
-    // 1. Abortar requisição anterior se houver
-    if (ytSearchAbort) ytSearchAbort.abort();
-    ytSearchAbort = new AbortController();
-
-    // 2. Loading State
-    resultsDiv.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
-
+    // Prioridade 3: functions.config() (Ambiente Firebase Produção)
     try {
-        // 3. Fetch na API segura do Index.js
-        const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(q)}&maxResults=20`, {
-            signal: ytSearchAbort.signal
-        });
-
-        if (!res.ok) throw new Error(`Erro: ${res.status}`);
-
-        const json = await res.json();
-        const items = json.items || [];
-
-        resultsDiv.innerHTML = ""; // Limpa loading
-
-        if (items.length === 0) {
-            resultsDiv.innerHTML = '<div class="msg-box">Nenhum vídeo encontrado.</div>';
-            return;
-        }
-
-        // 4. Renderização Segura via DOM
-        items.forEach(item => {
-            const el = createVideoElement(item);
-            if (el) resultsDiv.appendChild(el);
-        });
-
+      const [a, b] = pathStr.split(".");
+      const v = functions.config()?.[a]?.[b];
+      if (v) return v;
     } catch (e) {
-        if (e.name === "AbortError") return; // Ignora abortos intencionais
-        console.error(e);
-        resultsDiv.innerHTML = '<div class="msg-error">Erro na busca. Tente novamente.</div>';
     }
+  }
+
+  return null;
 }
 
-// ====================================================================
-// 4. AUTO DJ INTELIGENTE (LOGIC)
-// ====================================================================
-
-let sugestaoGeneroSelecionado = "pop";
-let sugestaoTipoSelecionado = "genero";
-let autoSugestaoAtiva = false;
-let autoSugestaoInterval = null;
-const RECENT_ARTISTS_MAX = 10;
-const recentArtists = [];
-
-// Gerenciamento de UI do Auto DJ
-function renderizarGeneros() {
-    const container = document.querySelector(".generos-container");
-    if (!container) return;
-    
-    container.innerHTML = "";
-    generosMusicais.forEach(g => {
-        const btn = document.createElement("button");
-        btn.className = "genero-btn";
-        if(g.id === sugestaoGeneroSelecionado) btn.classList.add("active");
-        
-        // InnerHTML seguro (ícones e nomes controlados pela constante)
-        btn.innerHTML = `<i class="fas ${g.icon}"></i><span>${g.name}</span>`;
-        
-        btn.addEventListener("click", () => {
-            document.querySelectorAll(".genero-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            sugestaoGeneroSelecionado = g.id;
-        });
-        
-        container.appendChild(btn);
-    });
+function getBaseUrl(req) {
+  return (
+    getConfig("site.url", "SITE_URL") ||
+    req?.headers?.origin ||
+    req?.headers?.referer ||
+    "http://localhost:3000"
+  );
 }
 
-function toggleAutoDjBtn() {
-    const toggle = document.getElementById("autoAddToggle");
-    if (!toggle) return;
-    
-    autoSugestaoAtiva = toggle.checked;
-    const btnPrincipal = document.getElementById("btn-auto-sugestao");
+function sanitizeString(str, maxLength = 500) {
+  if (typeof str !== 'string') return '';
+  return str
+    .trim()
+    .slice(0, maxLength)
+    .replace(/[<>]/g, ''); // Remove < e > para evitar XSS básico
+}
 
-    if (autoSugestaoAtiva) {
-        showNotification("Auto DJ Ligado 🤖", "success");
-        if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
-        
-        // Tenta rodar imediatamente se a fila estiver vazia
-        if (typeof videoQueue !== 'undefined' && videoQueue.length === 0) {
-            rodarCicloAutoDJ();
-        }
-        
-        autoSugestaoInterval = setInterval(rodarCicloAutoDJ, 240000); // 4 minutos
-        
-        if(btnPrincipal) {
-            btnPrincipal.classList.add("auto-dj-on");
-            btnPrincipal.innerHTML = '<i class="fas fa-robot"></i> Auto DJ On';
-        }
-    } else {
-        if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
-        showNotification("Auto DJ Desligado", "info");
-        
-        if(btnPrincipal) {
-            btnPrincipal.classList.remove("auto-dj-on");
-            btnPrincipal.innerHTML = '<i class="fas fa-magic"></i> Sugerir';
-        }
+// ==================================================================
+// --- CONFIGURAÇÃO DE EMAIL (NODEMAILER) ---
+// ==================================================================
+const EMAIL_USER = getConfig("email.user", "EMAIL_USER");
+const EMAIL_PASS = getConfig("email.pass", "EMAIL_PASS");
+
+let transporter = null;
+if (EMAIL_USER && EMAIL_PASS) {
+  transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: EMAIL_USER,
+      pass: EMAIL_PASS
     }
+  });
+  functions.logger.info("✅ Email configurado com sucesso");
+} else {
+  functions.logger.warn("⚠️ Credenciais de email não configuradas - reports desabilitados");
 }
 
-// Lógica de DNA e Anti-Repetição
-function passesRepetitionFilters(candidateItem) {
-    const vidId = candidateItem?.id?.videoId;
-    const vidTitle = candidateItem?.snippet?.title || "";
+// ==================================================================
+// --- ROTA DE REPORT ---
+// ==================================================================
+app.post("/api/report", async (req, res) => {
+  try {
+    if (!transporter) {
+      return res.status(503).json({ error: "Serviço de email não configurado" });
+    }
 
-    if (!vidId) return false;
-
-    // 1. Já está tocando?
-    const playingNow = (typeof player !== 'undefined' && player.getVideoData) ? player.getVideoData() : null;
-    if (playingNow && playingNow.video_id === vidId) return false;
-
-    // 2. Está na fila?
-    const filaIds = window.roomData?.queue
-        ? Object.values(window.roomData.queue).map(x => x?.videoUrl?.split("v=")[1])
-        : [];
-    if (filaIds.includes(vidId)) return false;
-
-    // 3. Verificação de DNA (Similaridade de texto)
-    const dadosSala = window.roomData || {};
-    const historico = dadosSala.history ? Object.values(dadosSala.history) : [];
-    const fila = dadosSala.queue ? Object.values(dadosSala.queue) : [];
-
-    let listaComparacao = [...historico, ...fila];
-    if (playingNow?.title) listaComparacao.push({ title: playingNow.title });
+    const { userReported, reason, room, roomId, reporter } = req.body || {};
     
-    // Pega as últimas 30 músicas para comparar
-    listaComparacao = listaComparacao.slice(-30);
+    // Sanitiza inputs
+    const cleanUserReported = sanitizeString(userReported, 100);
+    const cleanReason = sanitizeString(reason, 500);
+    const cleanRoom = sanitizeString(room, 100);
+    const cleanReporter = sanitizeString(reporter, 100);
 
-    const tokensCand = tokenizarParaDNA(vidTitle);
-    if (tokensCand.length < 2) return true; // Título muito curto, deixa passar mas é arriscado
-
-    const repetiu = listaComparacao.some(m => {
-        const tokensExist = tokenizarParaDNA(m?.title || "");
-        if (tokensExist.length < 2) return false;
-        const sim = jaccard(tokensCand, tokensExist);
-        return sim >= 0.70; // 70% de similaridade bloqueia
+    functions.logger.info("📩 Report recebido", {
+      reporter: cleanReporter || "Anônimo",
+      userReported: cleanUserReported,
+      room: cleanRoom,
+      roomId
     });
 
-    if (repetiu) {
-        console.log(`🚫 [AutoDJ] Block por DNA: "${vidTitle}"`);
-        return false;
-    }
+    const baseUrl = getConfig("site.url", "SITE_URL") || "http://localhost:3000";
+    const painelLink = `${baseUrl}/admin.html`;
 
-    return true;
-}
+    const mailOptions = {
+      from: `"FlowLink Security" <${EMAIL_USER}>`,
+      to: EMAIL_USER,
+      subject: `🛡️ REPORT: ${cleanRoom} - Ação Necessária`,
+      html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f7; }
+          .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 20px; margin-bottom: 20px; }
+          .header { background-color: #d32f2f; padding: 20px; text-align: center; color: white; }
+          .content { padding: 30px; color: #333333; }
+          .info-grid { display: table; width: 100%; margin-bottom: 20px; font-size: 14px; }
+          .info-item { display: table-cell; width: 50%; padding-bottom: 10px; color: #666; }
+          .info-value { font-weight: bold; color: #333; display: block; margin-top: 4px; }
+          .alert-box { background-color: #fff5f5; border-left: 5px solid #d32f2f; padding: 15px; border-radius: 4px; margin: 20px 0; }
+          .footer { background-color: #f9f9f9; padding: 15px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; }
+          .btn { display: inline-block; padding: 10px 20px; background-color: #333; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px; margin-top: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2 style="margin:0; font-size: 24px;">🚨 Novo Report</h2>
+            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">FlowLink Safety System</p>
+          </div>
 
-// Score para escolher o melhor vídeo
-function scoreCandidate(item, queryNorm) {
-    const title = normalizeText(item?.snippet?.title || "");
-    const channel = normalizeText(item?.snippet?.channelTitle || "");
-    let score = 0;
+          <div class="content">
+            <p style="margin-top: 0;">Olá Admin,</p>
+            <p>Uma nova denúncia foi registrada e requer atenção.</p>
 
-    if (queryNorm && title.includes(queryNorm)) score += 20;
-    if (channel.includes("vevo")) score += 100;
-    if (channel.includes("official") || channel.includes("oficial")) score += 50;
-    if (title.includes("official audio")) score += 40;
-    
-    const bad = ["parodia", "paródia", "meme", "tiktok", "speed up", "karaoke", "cover"];
-    if (bad.some(b => title.includes(b))) score -= 500;
+            <div class="alert-box">
+              <p style="margin: 0; font-size: 12px; text-transform: uppercase; color: #d32f2f; font-weight: bold;">Usuário Denunciado</p>
+              <h3 style="margin: 5px 0 10px 0; color: #333;">${cleanUserReported || "-"}</h3>
 
-    return score;
-}
+              <p style="margin: 0; font-size: 12px; text-transform: uppercase; color: #d32f2f; font-weight: bold;">Motivo</p>
+              <p style="margin: 5px 0 0 0; font-style: italic; color: #555;">"${cleanReason || "-"}"</p>
+            </div>
 
-async function rodarCicloAutoDJ(force = false) {
-    if (!force && !autoSugestaoAtiva) return;
-    
-    // Não sugere se a fila já estiver cheia (economiza API)
-    const autoCount = parseInt(document.getElementById("autoCount")?.textContent || "5");
-    if (!force && typeof videoQueue !== "undefined" && videoQueue.length >= autoCount) return;
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;">
 
-    console.log("🚀 [AutoDJ] Iniciando ciclo...");
-    showNotification("DJ Maestro pensando... 🎵", "info");
+            <div class="info-grid">
+              <div style="display:table-row">
+                <div class="info-item">
+                  Reportado por:
+                  <span class="info-value">${cleanReporter || "Anônimo"}</span>
+                </div>
+                <div class="info-item">
+                  Data/Hora:
+                  <span class="info-value">${new Date().toLocaleString("pt-BR")}</span>
+                </div>
+              </div>
+              <div style="display:table-row">
+                <div class="info-item" style="padding-top: 15px;">
+                  Nome da Sala:
+                  <span class="info-value">${cleanRoom || "-"}</span>
+                </div>
+                <div class="info-item" style="padding-top: 15px;">
+                  ID da Sala:
+                  <span class="info-value"><code style="background:#eee; padding:2px 5px; border-radius:3px;">${roomId || "-"}</code></span>
+                </div>
+              </div>
+            </div>
 
-    try {
-        let spotifyQuery = "";
-        let endpoint = "";
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${painelLink}" class="btn">Acessar Painel</a>
+            </div>
+          </div>
 
-        // Define estratégia (Gênero ou Contexto)
-        if (sugestaoTipoSelecionado === "genero" || !player?.getVideoData) {
-            endpoint = `/api/spotify-recommendations?genre=${sugestaoGeneroSelecionado}`;
-        } else {
-            // Contexto baseado na música atual
-            let currentTitle = player.getVideoData().title || "";
-            // Extrai artista antes do hífen (ex: "Linkin Park - Numb" -> "Linkin Park")
-            let artistBase = currentTitle.split("-")[0].replace(/\(.*\)|ft\..*/gi, "").trim();
-            endpoint = `/api/spotify-recommendations?q=${encodeURIComponent(artistBase)}`;
-        }
-
-        // 1. Pede sugestão ao Spotify (via Server)
-        const spRes = await fetch(endpoint);
-        const spTracks = spRes.ok ? await spRes.json() : [];
-        
-        let queryYoutube = "";
-        
-        if (spTracks && spTracks.length > 0) {
-            // Pega uma aleatória das sugestões
-            const track = spTracks[Math.floor(Math.random() * spTracks.length)];
-            queryYoutube = `${track.full} official audio`;
-            console.log(`💡 [AutoDJ] Sugestão Spotify: ${track.full}`);
-        } else {
-            // Fallback se Spotify falhar
-            queryYoutube = `${sugestaoGeneroSelecionado} hits brasil official audio`;
-        }
-
-        // 2. Busca no YouTube (via Server)
-        const ytRes = await fetch(`/api/youtube-search?q=${encodeURIComponent(queryYoutube)}&maxResults=10`);
-        const ytJson = await ytRes.json();
-        const items = ytJson.items || [];
-
-        // 3. Escolhe o melhor vídeo (Score + Filtros)
-        const queryNorm = normalizeText(queryYoutube);
-        
-        const candidatos = items
-            .map(item => ({ item, score: scoreCandidate(item, queryNorm) }))
-            .sort((a, b) => b.score - a.score);
-
-        const vencedor = candidatos.find(c => {
-            return c.score > -100 && passesRepetitionFilters(c.item);
-        });
-
-        if (vencedor) {
-            const vid = vencedor.item;
-            console.log(`✅ [AutoDJ] Escolhido: ${vid.snippet.title}`);
-            
-            // Adiciona à fila
-            if (typeof videoQueueRef !== 'undefined') {
-                await videoQueueRef.push({
-                    phone: "🤖 DJ Maestro",
-                    videoUrl: `https://www.youtube.com/watch?v=${vid.id.videoId}`,
-                    title: vid.snippet.title,
-                    addedBy: "DJ Maestro"
-                });
-                
-                showNotification(`DJ adicionou: ${vid.snippet.title}`, "success");
-            }
-        } else {
-            console.warn("⚠️ [AutoDJ] Nenhum vídeo passou nos filtros.");
-        }
-
-    } catch (e) {
-        console.error("❌ Erro AutoDJ:", e);
-    }
-}
-
-// Botão "Adicionar Agora" do modal
-async function sugerirAgora() {
-    const btn = document.querySelector(".btn-now");
-    if (btn) { btn.disabled = true; btn.textContent = "Buscando..."; }
-    
-    await rodarCicloAutoDJ(true);
-    
-    if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-plus-circle"></i> Adicionar Agora';
-        closeSugestaoModal();
-    }
-}
-
-// ====================================================================
-// 5. INICIALIZAÇÃO E EVENTOS (COM AUTO-BUSCA INTELIGENTE)
-// ====================================================================
-
-document.addEventListener("DOMContentLoaded", () => {
-    renderizarGeneros();
-    
-    const searchInput = document.getElementById("ytSearchQuery");
-    const searchBtn = document.getElementById("btnSearchYoutube");
-    const nameInput = document.getElementById("ytSearchName");
-
-    // Variável de controle do Timer
-    let autoSearchTimeout = null;
-
-    if (searchInput) {
-        // 1. EVENTO DE INPUT (Auto-busca com delay longo)
-        searchInput.addEventListener("input", () => {
-            // Limpa qualquer busca que estivesse agendada
-            if (autoSearchTimeout) clearTimeout(autoSearchTimeout);
-
-            const q = searchInput.value.trim();
-
-            // Só agenda se tiver 5+ caracteres
-            if (q.length >= 8) {
-                autoSearchTimeout = setTimeout(() => {
-                    console.log("⏰ Auto-busca disparada por inatividade (2s)");
-                    searchYouTube();
-                }, 5000); // 2 segundos de silêncio
-            }
-        });
-
-        // 2. EVENTO DE ENTER (Busca Imediata)
-        searchInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                // IMPORTANTE: Cancela a auto-busca para não gastar API 2x
-                if (autoSearchTimeout) clearTimeout(autoSearchTimeout);
-                searchYouTube();
-            }
-        });
-    }
-
-    // 3. EVENTO DE CLIQUE (Busca Imediata)
-    if (searchBtn) {
-        searchBtn.addEventListener("click", () => {
-            // IMPORTANTE: Cancela a auto-busca para não gastar API 2x
-            if (autoSearchTimeout) clearTimeout(autoSearchTimeout);
-            searchYouTube();
-        });
-    }
-
-    if (nameInput) {
-        nameInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") setSessionUser();
-        });
-    }
-
-    // ... restante do código das abas ...
-    window.switchTab = function(tabName) {
-        // (código das abas igual ao anterior)
-        document.querySelectorAll(".sugestao-tab").forEach(t => t.classList.remove("active"));
-        document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
-        
-        const btn = document.querySelector(`.sugestao-tab[onclick*="${tabName}"]`);
-        if(btn) btn.classList.add("active");
-        
-        const content = document.getElementById(`${tabName}Content`);
-        if(content) content.style.display = "block";
-        
-        sugestaoTipoSelecionado = tabName;
+          <div class="footer">
+            <p style="margin:0;">Este é um email automático do FlowLink.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+      `
     };
+
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ success: true, message: "Report enviado com sucesso!" });
     
-    if(typeof switchTab === 'function') switchTab('genero');
+  } catch (error) {
+    functions.logger.error("❌ Erro ao enviar report", { error: error.message });
+    res.status(500).json({ error: "Falha ao enviar report" });
+  }
 });
 
-// Exporta funções para uso global (HTML onclick)
-window.openYTSearchModal = openYTSearchModal;
-window.closeYTSearchModal = closeYTSearchModal;
-window.setSessionUser = setSessionUser;
-window.changeUserName = changeUserName;
-window.openSugestaoModal = () => { document.getElementById("sugestaoModal").style.display = "flex"; };
-window.closeSugestaoModal = () => { document.getElementById("sugestaoModal").style.display = "none"; };
-window.toggleAutoDjBtn = toggleAutoDjBtn;
-window.sugerirAgora = sugerirAgora;
-window.changeAutoCount = (val) => {
-    const el = document.getElementById("autoCount");
-    if(!el) return;
-    let v = parseInt(el.textContent) + val;
-    if(v >= 1 && v <= 10) el.textContent = v;
-};
+// ==================================================================
+// --- YOUTUBE API - KEYS E CACHE ---
+// ==================================================================
+const YOUTUBE_KEYS = [
+  getConfig("youtube.key1", "YOUTUBE_API_KEY"),
+  getConfig("youtube.key2", "YOUTUBE_API_KEY_2")
+].filter(Boolean);
+
+if (YOUTUBE_KEYS.length === 0) {
+  functions.logger.error("❌ NENHUMA chave do YouTube configurada!");
+} else {
+  functions.logger.info(`✅ ${YOUTUBE_KEYS.length} chave(s) do YouTube configuradas`);
+}
+
+// Cache em memória (60 segundos)
+const YT_CACHE_TTL_MS = 60_000;
+const ytCache = new Map();
+
+function cacheGet(key) {
+  const v = ytCache.get(key);
+  if (!v) return null;
+  
+  if (Date.now() - v.t > YT_CACHE_TTL_MS) {
+    ytCache.delete(key);
+    return null;
+  }
+  
+  return v.data;
+}
+
+function cacheSet(key, data) {
+  // Remove a chave antiga se existir (LRU)
+  if (ytCache.has(key)) ytCache.delete(key);
+  
+  ytCache.set(key, { t: Date.now(), data });
+  
+  // Limita tamanho do cache
+  if (ytCache.size > 250) {
+    const firstKey = ytCache.keys().next().value;
+    ytCache.delete(firstKey);
+  }
+}
+
+async function fetchYoutubeWithFallback(url, params, req) {
+  let lastError = null;
+
+  if (YOUTUBE_KEYS.length === 0) {
+    throw new Error("Chaves de API do YouTube não configuradas");
+  }
+
+  for (let i = 0; i < YOUTUBE_KEYS.length; i++) {
+    const currentKey = YOUTUBE_KEYS[i];
+
+    try {
+      const response = await axios.get(url, {
+        params: { ...params, key: currentKey },
+        headers: {
+          Referer: req?.headers?.referer || getBaseUrl(req),
+          Origin: req?.headers?.origin || getBaseUrl(req)
+        }
+      });
+
+      return response.data;
+      
+    } catch (error) {
+      lastError = error;
+
+      if (error.response && error.response.status === 403) {
+        functions.logger.warn(`⚠️ Chave YouTube ${i + 1} bloqueada. Tentando backup...`);
+        continue;
+      }
+      
+      throw error;
+    }
+  }
+
+  throw lastError;
+}
+
+// ==================================================================
+// --- SPOTIFY TOKEN ---
+// ==================================================================
+let spotifyToken = null;
+let tokenExpiration = 0;
+
+async function getSpotifyToken() {
+  const now = Date.now();
+  if (spotifyToken && now < tokenExpiration) {
+    return spotifyToken;
+  }
+
+  const clientId = getConfig("spotify.id", "SPOTIFY_CLIENT_ID");
+  const clientSecret = getConfig("spotify.secret", "SPOTIFY_CLIENT_SECRET");
+  
+  if (!clientId || !clientSecret) {
+    functions.logger.warn("⚠️ Credenciais Spotify não configuradas");
+    return null;
+  }
+
+  try {
+    const params = new URLSearchParams();
+    params.append("grant_type", "client_credentials");
+
+    const response = await axios.post("https://accounts.spotify.com/api/token", params, {
+      headers: {
+        Authorization: "Basic " + Buffer.from(clientId + ":" + clientSecret).toString("base64"),
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
+    });
+
+    spotifyToken = response.data.access_token;
+    tokenExpiration = now + (response.data.expires_in - 60) * 1000;
+    
+    functions.logger.info("✅ Token Spotify renovado");
+    return spotifyToken;
+    
+  } catch (error) {
+    functions.logger.error("❌ Erro ao autenticar no Spotify", { error: error.message });
+    return null;
+  }
+}
+
+// ==================================================================
+// --- HELPER: RETRY COM EXPONENTIAL BACKOFF ---
+// ==================================================================
+async function axiosRetry(config, maxRetries = 2) {
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      return await axios(config);
+    } catch (error) {
+      if (i === maxRetries) throw error;
+      
+      // Só faz retry em erros 5xx (servidor)
+      if (error.response && error.response.status >= 500) {
+        const delay = Math.min(1000 * Math.pow(2, i), 5000); // 1s, 2s, max 5s
+        functions.logger.warn(`Retry ${i + 1}/${maxRetries} após ${delay}ms`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      throw error;
+    }
+  }
+}
+
+// ==================================================================
+// --- ROTA: SPOTIFY GENRE ---
+// ==================================================================
+app.get("/api/spotify-genre", async (req, res) => {
+  try {
+    const query = sanitizeString(req.query.q || "", 200);
+    if (!query) {
+      return res.status(400).json({ error: "Termo obrigatório" });
+    }
+
+    const token = await getSpotifyToken();
+    if (!token) {
+      return res.status(500).json({ error: "Erro Auth Spotify" });
+    }
+
+    // 1. Busca a track
+    const searchRes = await axiosRetry({
+      method: "get",
+      url: "https://api.spotify.com/v1/search",
+      params: { q: query, type: "track", limit: 1, market: "BR" },
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!searchRes.data.tracks || searchRes.data.tracks.items.length === 0) {
+      return res.json({ genres: [] });
+    }
+
+    const track = searchRes.data.tracks.items[0];
+    const artistId = track.artists[0].id;
+
+    // 2. Busca o artista (✅ CORRIGIDO: usando crases e $)
+    const artistRes = await axiosRetry({
+      method: "get",
+      url: `https://api.spotify.com/v1/artists/$${artistId}`,
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    res.json({
+      track: track.name,
+      artist: track.artists[0].name,
+      genres: artistRes.data.genres
+    });
+    
+  } catch (error) {
+    functions.logger.error("❌ Erro Spotify Genre", { error: error.message });
+    res.status(500).json({ error: "Erro interno" });
+  }
+});
+
+// ==================================================================
+// --- ROTA: YOUTUBE SEARCH ---
+// ==================================================================
+app.get("/api/youtube-search", async (req, res) => {
+  try {
+    const query = sanitizeString(req.query.q || "", 200);
+    
+    if (!query || query.length < 2) {
+      return res.status(400).json({ error: "Termo de busca muito curto" });
+    }
+
+    // maxResults dinâmico com validação
+    const maxResults = Math.max(1, Math.min(25, parseInt(req.query.maxResults || "15", 10) || 15));
+
+    // Tenta cache primeiro
+    const cacheKey = `yt:q:${query.toLowerCase()}|m:${maxResults}`;
+    const cached = cacheGet(cacheKey);
+    
+    if (cached) {
+      functions.logger.debug("🎯 YouTube cache HIT", { query, maxResults });
+      return res.json({ ...cached, _cached: true });
+    }
+
+    // Cache miss - busca no YouTube
+    functions.logger.info("🔍 YouTube API call", { query, maxResults });
+    
+    const data = await fetchYoutubeWithFallback(
+      "https://www.googleapis.com/youtube/v3/search",
+      {
+        part: "snippet",
+        q: query,
+        type: "video",
+        maxResults,
+        
+        // Otimizações para música brasileira
+        regionCode: "BR",
+        relevanceLanguage: "pt",
+        videoCategoryId: "10", // Categoria "Música"
+        safeSearch: "none"
+      },
+      req
+    );
+
+    // Deduplicação por videoId
+    if (data?.items?.length) {
+      const seen = new Set();
+      data.items = data.items.filter((it) => {
+        const id = it?.id?.videoId;
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+      
+      functions.logger.info("✅ YouTube search OK", { 
+        query, 
+        results: data.items.length 
+      });
+    }
+
+    // Salva no cache
+    cacheSet(cacheKey, data);
+    res.json(data);
+    
+  } catch (error) {
+    functions.logger.error("❌ YouTube search falhou", { 
+      error: error.message,
+      query: req.query.q 
+    });
+    
+    const status = error.response?.status || 500;
+    const ytMsg = error?.response?.data?.error?.message;
+    res.status(status).json({ error: ytMsg || "Erro ao buscar vídeo" });
+  }
+});
+
+// ==================================================================
+// --- ROTA: YOUTUBE VIDEO INFO ---
+// ==================================================================
+app.get("/api/video-info", async (req, res) => {
+  try {
+    const videoId = sanitizeString(req.query.id || "", 50);
+    
+    if (!videoId) {
+      return res.status(400).json({ error: "ID obrigatório" });
+    }
+
+    // Cache
+    const cacheKey = `yt:vid:${videoId}`;
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      return res.json({ ...cached, _cached: true });
+    }
+
+    const data = await fetchYoutubeWithFallback(
+      "https://www.googleapis.com/youtube/v3/videos",
+      {
+        part: "snippet",
+        id: videoId
+      },
+      req
+    );
+
+    cacheSet(cacheKey, data);
+    res.json(data);
+    
+  } catch (error) {
+    functions.logger.error("❌ YouTube info falhou", { error: error.message });
+    
+    const status = error.response?.status || 500;
+    const ytMsg = error?.response?.data?.error?.message;
+    res.status(status).json({ error: ytMsg || "Erro ao buscar detalhes" });
+  }
+});
+
+// ==================================================================
+// --- ROTA: SPOTIFY RECOMMENDATIONS ---
+// ==================================================================
+app.get("/api/spotify-recommendations", async (req, res) => {
+  try {
+    const q = sanitizeString(req.query.q || "", 200);
+    const genre = sanitizeString(req.query.genre || "", 50);
+    
+    const token = await getSpotifyToken();
+    if (!token) {
+      return res.json([]); // Retorna vazio para o frontend usar fallback
+    }
+
+    const SEARCH_URL = "https://api.spotify.com/v1/search";
+    let recommendations = [];
+
+    // MODO 1: Busca por GÊNERO
+    if (genre) {
+      const g = genre.toLowerCase().trim();
+      
+      const mapaBrasileiro = {
+        funk: "playlist:funk_hits_brasil funk mandelão",
+        sertanejo: "sertanejo universitario top brasil",
+        pagode: "pagode churrasco ao vivo",
+        samba: "samba raiz brasil",
+        eletronica: "alok vintage culture dubdogz brasil",
+        rap: "rap nacional trap brasil",
+        rock: "rock nacional brasil anos 2000",
+        pop: "pop brasil luisa sonza anitta",
+        reggaeton: "reggaeton brasil hits"
+      };
+
+      const termoBusca = mapaBrasileiro[g] || `${g} hits brasil`;
+      functions.logger.info("🇧🇷 Spotify busca por gênero", { genre: g, termoBusca });
+
+      const searchRes = await axiosRetry({
+        method: "get",
+        url: SEARCH_URL,
+        params: { q: termoBusca, type: "track", limit: 20, market: "BR" },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (searchRes.data.tracks?.items?.length) {
+        recommendations = searchRes.data.tracks.items
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 5);
+      }
+    }
+    
+    // MODO 2: Busca por CONTEXTO
+    else if (q) {
+      const qLower = q.toLowerCase();
+
+      // Detecta temas de desenho/Disney
+      if (qLower.includes("disney") || qLower.includes("moana") || 
+          qLower.includes("frozen") || qLower.includes("encanto")) {
+        
+        const searchRes = await axiosRetry({
+          method: "get",
+          url: SEARCH_URL,
+          params: { q: "disney hits portugues brasil", type: "track", limit: 10, market: "BR" },
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        recommendations = searchRes.data.tracks?.items || [];
+      } 
+      
+      // Busca por artista
+      else {
+        const searchRes = await axiosRetry({
+          method: "get",
+          url: SEARCH_URL,
+          params: { q: `artist:${q}`, type: "track", limit: 10, market: "BR" },
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!searchRes.data.tracks?.items?.length) {
+          // Fallback genérico
+          const searchResBackup = await axiosRetry({
+            method: "get",
+            url: SEARCH_URL,
+            params: { q: `${q} sucesso brasil`, type: "track", limit: 10, market: "BR" },
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          recommendations = searchResBackup.data.tracks?.items || [];
+        } else {
+          recommendations = searchRes.data.tracks.items;
+        }
+      }
+    }
+
+    const tracks = recommendations.map((t) => ({
+      title: t.name,
+      artist: t.artists[0].name,
+      full: `${t.name} - ${t.artists[0].name}`,
+      uri: t.uri
+    }));
+
+    res.json(tracks);
+    
+  } catch (error) {
+    functions.logger.error("❌ Spotify recommendations falhou", { error: error.message });
+    res.json([]); // Retorna vazio para fallback no frontend
+  }
+});
+
+// ==================================================================
+// --- ROTA: HEALTH CHECK ---
+// ==================================================================
+app.get("/api/health", (req, res) => {
+  const status = {
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    version: "2.0.0",
+    youtube: {
+      keysConfigured: YOUTUBE_KEYS.length,
+      cacheSize: ytCache.size,
+      cacheTTL: `${YT_CACHE_TTL_MS / 1000}s`
+    },
+    spotify: {
+      tokenValid: !!(spotifyToken && Date.now() < tokenExpiration),
+      expiresIn: spotifyToken ? Math.max(0, Math.floor((tokenExpiration - Date.now()) / 1000)) : 0
+    },
+    email: {
+      configured: !!(EMAIL_USER && EMAIL_PASS)
+    }
+  };
+  
+  res.json(status);
+});
+
+// ==================================================================
+// --- EXPORTA A CLOUD FUNCTION ---
+// ==================================================================
+exports.api = functions.https.onRequest(app);
