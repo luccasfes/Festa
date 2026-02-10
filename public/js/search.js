@@ -493,7 +493,7 @@ async function rodarCicloAutoDJ(force = false) {
         // ===== A) MODO GÊNERO =====
         if (sugestaoTipoSelecionado === "genero" && sugestaoGeneroSelecionado) {
             console.log(`[AutoDJ] Modo Gênero: ${sugestaoGeneroSelecionado}`);
-            apiEndpoint = `/api/spotify-recommendations?genre=${sugestaoGeneroSelecionado}`;
+            apiEndpoint = `/api/spotify-recommendations?genre=${encodeURIComponent(sugestaoGeneroSelecionado)}`;
         }
 
         // ===== B) MODO CONTEXTO =====
