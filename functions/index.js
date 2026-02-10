@@ -382,10 +382,10 @@ app.get("/api/spotify-genre", async (req, res) => {
     const track = searchRes.data.tracks.items[0];
     const artistId = track.artists[0].id;
 
-    // 2. Busca o artista (✅ CORRIGIDO: usando crases e $)
+    // 2. Busca o artista 
     const artistRes = await axiosRetry({
       method: "get",
-      url: `https://api.spotify.com/v1/artists/$${artistId}`,
+      url: `https://api.spotify.com/v1/artists/${artistId}`,
       headers: { Authorization: `Bearer ${token}` }
     });
 
