@@ -115,7 +115,7 @@ function onPlayerStateChange(event) {
             }, 500);
         }
 
-        // 3. CHAMA O DJ MAESTRO (Importante!)
+        // 3. CHAMA O DJ MAESTRO 
         // Se a função existir e estiver ativa, ele já prepara a próxima
         if (typeof rodarCicloAutoDJ === 'function') {
              // Passamos o título apenas se precisar forçar contexto, 

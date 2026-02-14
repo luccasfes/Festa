@@ -1,5 +1,5 @@
 // ====================================================================
-// SISTEMA DE PLAYER SINCRONIZADO — VERSÃO FINAL (CORRIGIDA)
+// SISTEMA DE PLAYER SINCRONIZADO 
 // ====================================================================
 
 // --- ESTADO GLOBAL ---
@@ -71,7 +71,7 @@ function determineAndApplyPlayerMode() {
 
 // Listener do estado do vídeo (CORRIGIDO PARA playerState)
 if (typeof firebase !== "undefined" && window.roomId) {
-    // CORREÇÃO 1: Aponta para 'playerState', onde o player.js realmente salva os dados
+    // Aponta para 'playerState', onde o player.js realmente salva os dados
     window.currentVideoRef = firebase.database().ref(`rooms/${window.roomId}/playerState`);
 
     currentVideoRef.on("value", (snap) => {
@@ -187,7 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 500);
     }
     
-    // CORREÇÃO 2: Garante que a fila carregue assim que possível
+    // Garante que a fila carregue assim que possível
     if (typeof loadVideoQueue === 'function') {
         loadVideoQueue(); 
     }

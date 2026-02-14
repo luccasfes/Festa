@@ -127,8 +127,6 @@ function createMessageElement(key, msg) {
     const safeUser = escapeHtml(msg.userName);
     const safeText = escapeHtml(msg.text);
     
-    // --- REMOVIDO: safeTextForJs/safeUserForJs (Causa de XSS) ---
-    // Agora usamos safeUser e safeText diretamente nos atributos data-*
 
     const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     const color = msg.userIsAdmin ? '#000000' : getUserColor(safeUser);
