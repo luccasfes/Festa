@@ -328,8 +328,7 @@ function toggleAutoDjBtn() {
     if (!toggle) return;
 
     // 1. DETECÇÃO INTELIGENTE: QUEM CLICOU?
-    // Se o evento não for do tipo 'change' (ou seja, foi um clique no botão),
-    // nós precisamos inverter o checkbox manualmente.
+    // Optei por manter assim o event para não alterar a assinatura da função no HTML (onclick), mas garantindo que o toggle funcione tanto no clique quanto na mudança de estado real do checkbox.
     const evt = window.event;
     if (evt && evt.type !== 'change') {
         toggle.checked = !toggle.checked;
@@ -339,8 +338,8 @@ function toggleAutoDjBtn() {
     autoSugestaoAtiva = toggle.checked;
     
     // Elementos visuais
-    const btnPrincipal = document.getElementById("btn-auto-sugestao"); // Botão pequeno da tela
-    const btnModal = document.querySelector(".btn-auto"); // O Botão grande do Modal
+    const btnPrincipal = document.getElementById("btn-auto-sugestao"); 
+    const btnModal = document.querySelector(".btn-auto"); 
 
     if (autoSugestaoAtiva) {
         // === LIGANDO ===
