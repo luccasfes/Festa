@@ -98,10 +98,10 @@ function onPlayerStateChange(event) {
 
         // 1. Tenta pegar o título para o DJ Maestro (antes de remover da fila)
         // Isso é crucial para o DJ saber o que buscar
-        let tituloAcabou = "";
+        let endedVideoTitle = "";
         try {
             if (playerSeguro.getVideoData) {
-                tituloAcabou = playerSeguro.getVideoData().title;
+                endedVideoTitle = playerSeguro.getVideoData().title;
             }
         } catch(e) {}
 
@@ -117,11 +117,11 @@ function onPlayerStateChange(event) {
 
         // 3. CHAMA O DJ MAESTRO 
         // Se a função existir e estiver ativa, ele já prepara a próxima
-        if (typeof rodarCicloAutoDJ === 'function') {
+        if (typeof runAutoDJCycle === 'function') {
              // Passamos o título apenas se precisar forçar contexto, 
              // mas o search.js atualizado já pega do player se não passarmos nada.
              // O delay garante que o player status já atualizou
-             setTimeout(() => rodarCicloAutoDJ(), 1000);
+             setTimeout(() => runAutoDJCycle(), 1000);
         }
     }
 

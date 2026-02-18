@@ -7,9 +7,7 @@ let currentAdminRoomId = null;
 
 // --- Abertura/Fechamento do Modal ---
 
-function FuncaoParaAbrirPainel() {
-    // Verificação de Auth (ajuste conforme seu sistema)
-    // if (!window.isAdminLoggedIn) return alert("Faça login como Admin.");
+function openAdminPanel() {
 
     var modal = document.getElementById('panelModal');
     if (modal) {
@@ -129,7 +127,7 @@ function loadAdminPanelRooms() {
                         
                         <button class="btn small secondary" 
                                 data-id="${key}"
-                                onclick="entrarNaSalaPeloAdmin(this.dataset.id)" 
+                                onclick="adminJoinRoom(this.dataset.id)" 
                                 style="flex:1; background:#2196f3; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">
                             <i class="fas fa-sign-in-alt"></i> Entrar
                         </button>
@@ -310,7 +308,7 @@ function confirmDeleteRoom(roomId) {
     }
 }
 
-function entrarNaSalaPeloAdmin(roomId) {
+function adminJoinRoom(roomId) {
     sessionStorage.setItem(`bypass_pw_${roomId}`, 'true');
     window.location.href = 'index.html?room=' + roomId;
 }
@@ -322,15 +320,14 @@ function escapeHtml(text) {
 }
 
 // --- FAXINEIRO (LIMPEZA DE SALAS VAZIAS) ---
-async function limparSalasVazias() {
-    // 1. Confirmação de segurança
+async function pruneEmptyRooms() {
     if (!confirm("Isso fará uma varredura nas salas vazias.\nDeseja continuar?")) return;
 
     var loader = document.getElementById('adminRoomLoader');
     if (loader) loader.style.display = 'block';
 
     try {
-        // 2. Busca todas as salas
+        // Busca todas as salas
         const snapshot = await firebase.database().ref('rooms').once('value');
 
         if (!snapshot.exists()) {

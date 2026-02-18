@@ -312,41 +312,72 @@ function selectGenero(genero) {
     sugestaoGeneroSelecionado = genero;
 }
 
-function openSugestaoModal() {
-    const m = document.getElementById("sugestaoModal");
+function openSuggestionModal() {
+    const m = document.getElementById("suggestionModal");
     if (m) m.style.display = "flex";
     detectarGeneroAtual();
 }
 
-function closeSugestaoModal() {
-    const m = document.getElementById("sugestaoModal");
+function closeSuggestionModal() {
+    const m = document.getElementById("suggestionModal");
     if (m) m.style.display = "none";
 }
 
 function toggleAutoDjBtn() {
     const toggle = document.getElementById("autoAddToggle");
     if (!toggle) return;
-    
+
+    // 1. DETECÇÃO INTELIGENTE: QUEM CLICOU?
+    // Se o evento não for do tipo 'change' (ou seja, foi um clique no botão),
+    // nós precisamos inverter o checkbox manualmente.
+    const evt = window.event;
+    if (evt && evt.type !== 'change') {
+        toggle.checked = !toggle.checked;
+    }
+
+    // 2. ATUALIZA O ESTADO GLOBAL
     autoSugestaoAtiva = toggle.checked;
-    const btnPrincipal = document.getElementById("btn-auto-sugestao");
+    
+    // Elementos visuais
+    const btnPrincipal = document.getElementById("btn-auto-sugestao"); // Botão pequeno da tela
+    const btnModal = document.querySelector(".btn-auto"); // O Botão grande do Modal
 
     if (autoSugestaoAtiva) {
+        // === LIGANDO ===
         showNotification("Auto DJ Ligado 🤖", "success");
-        if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
-        rodarCicloAutoDJ();
-        autoSugestaoInterval = setInterval(rodarCicloAutoDJ, 240000); // 4 min
         
+        // Reinicia ciclo
+        if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
+        runAutoDJCycle(); // Executa um agora
+        autoSugestaoInterval = setInterval(() => runAutoDJCycle(), 150000); // 2 min
+
+        // Atualiza visual do Botão Principal 
         if(btnPrincipal) {
             btnPrincipal.classList.add("auto-dj-on");
             btnPrincipal.innerHTML = '<i class="fas fa-robot"></i> Auto DJ On';
         }
+
+        // Atualiza visual do Botão do Modal 
+        if (btnModal) {
+            btnModal.classList.add("active"); // Fica verde (definido no CSS)
+            btnModal.innerHTML = '<i class="fas fa-stop-circle"></i> Auto (Ligado)';
+        }
+
     } else {
+        // === DESLIGANDO ===
         if (autoSugestaoInterval) clearInterval(autoSugestaoInterval);
         showNotification("Auto DJ Desligado", "info");
         
+        // Atualiza visual do Botão Principal (Pequeno)
         if(btnPrincipal) {
             btnPrincipal.classList.remove("auto-dj-on");
             btnPrincipal.innerHTML = '<i class="fas fa-magic"></i> Sugerir';
+        }
+
+        // Atualiza visual do Botão do Modal (Grande)
+        if (btnModal) {
+            btnModal.classList.remove("active");
+            btnModal.innerHTML = '<i class="fas fa-play-circle"></i> Auto (Ligar/Desligar)';
         }
     }
 }
@@ -473,7 +504,8 @@ function passesRepetitionFilters(candidateItem) {
     return true;
 }
 
-async function rodarCicloAutoDJ(force = false) {
+// Rodar Ciclo autoDJ
+async function runAutoDJCycle(force = false) {
     if (!force && !autoSugestaoAtiva) return;
     
     // Verifica limite da fila
@@ -585,16 +617,16 @@ async function rodarCicloAutoDJ(force = false) {
     }
 }
 
-async function sugerirAgora() {
+async function suggestNow() {
     const btn = document.querySelector(".btn-now");
     if (btn) { btn.disabled = true; btn.textContent = "Buscando..."; }
     
-    await rodarCicloAutoDJ(true);
+    await runAutoDJCycle(true);
     
     if (btn) {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-plus-circle"></i> Adicionar Agora';
-        closeSugestaoModal();
+        closeSuggestionModal();
     }
 }
 
@@ -678,10 +710,10 @@ window.openYTSearchModal = openYTSearchModal;
 window.closeYTSearchModal = closeYTSearchModal;
 window.setSessionUser = setSessionUser;
 window.changeUserName = changeUserName;
-window.openSugestaoModal = openSugestaoModal;
-window.closeSugestaoModal = closeSugestaoModal;
+window.openSuggestionModal = openSuggestionModal;
+window.closeSuggestionModal = closeSuggestionModal;
 window.toggleAutoDjBtn = toggleAutoDjBtn;
-window.sugerirAgora = sugerirAgora;
+window.suggestNow = suggestNow;
 window.changeAutoCount = (val) => {
     const el = document.getElementById("autoCount");
     if(!el) return;

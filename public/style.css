@@ -3056,261 +3056,482 @@ body:not(.non-admin) .player-overlay-controls {
     }
 }
 
-/* ================================
-   MODAL DE SUGESTÃO — DESKTOP FIRST
-   ================================ */
-.sugestao-modal {
+/* ==========================================================================
+   MODAL DE SUGESTÃO INTELIGENTE (SUGGESTION MODAL)
+   Módulo: Interface de Recomendação e Auto DJ
+   ========================================================================== */
+
+/* Overlay do Modal (Fundo Escuro)
+   - Utiliza 'position: fixed' para cobrir toda a viewport independente do scroll.
+   - Aplica 'backdrop-filter' para efeito de desfoque (Glassmorphism),
+     melhorando o foco visual no conteúdo do modal.
+*/
+.suggestion-modal {
     position: fixed;
     inset: 0;
-    z-index: 10000;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(6px);
-    display: none;
+    z-index: 10000; /* Garante sobreposição sobre outros elementos de UI */
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: none; /* Controlado via JavaScript (Flex/None) */
     align-items: center;
     justify-content: center;
-    padding: 10px;
+    padding: 15px;
 }
 
-.sugestao-modal .modal-content {
+/* Container do Conteúdo (Card Principal)
+   - Estrutura Flexbox em coluna para garantir cabeçalho e rodapé fixos
+     enquanto o conteúdo central (abas) é rolável.
+*/
+.suggestion-modal .modal-content {
     width: 100%;
     max-width: 900px;
-    height: 100%;
-    max-height: 90vh;
-
+    height: 85vh; /* Altura relativa à viewport para responsividade */
+    max-height: 800px;
+    
     background: #1a1a1a;
     color: #fff;
     border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7); /* Profundidade visual */
+    border: 1px solid var(--glass-border);
 
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: hidden; /* Impede vazamento de conteúdo e quebra de layout */
+    animation: modalAppear 0.3s ease-out; /* Animação de entrada */
 }
 
-/* HEADER */
-.sugestao-modal h3 {
+/* Header do Modal */
+.suggestion-modal h3 {
     margin: 0;
-    padding: 14px 20px;
-    background: rgba(0, 0, 0, 0.4);
+    padding: 18px 24px;
+    background: linear-gradient(to right, rgba(0,0,0,0.4), transparent);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
+    gap: 12px;
+    flex-shrink: 0; /* Impede compressão do cabeçalho em telas pequenas */
+    font-size: 1.4rem;
+    color: var(--accent-color);
 }
 
-.sugestao-modal .close-button {
+.suggestion-modal .close-button {
     position: absolute;
-    right: 16px;
-    top: 12px;
-    font-size: 26px;
+    right: 20px;
+    top: 18px;
+    font-size: 24px;
+    width: 32px;
+    height: 32px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    opacity: 0.7;
+    transition: 0.2s;
+    color: #aaa;
 }
 
-.sugestao-modal .close-button:hover {
-    opacity: 1;
+.suggestion-modal .close-button:hover {
+    background: rgba(255, 82, 82, 0.2);
+    color: #ff5252;
+    transform: rotate(90deg);
 }
 
-/* TABS */
-.sugestao-tabs {
+/* --- NAVEGAÇÃO POR ABAS (TABS) --- */
+.suggestion-tabs {
     display: flex;
     flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(0, 0, 0, 0.25);
+    padding: 0 10px;
 }
 
-.sugestao-tab {
-    flex: 1;
-    padding: 12px;
+.suggestion-tab {
+    flex: 1; /* Distribuição equitativa de espaço */
+    padding: 16px;
     background: none;
     border: none;
-    color: #aaa;
+    border-bottom: 3px solid transparent; /* Indicador de estado ativo invisível por padrão */
+    color: #888;
     cursor: pointer;
     font-weight: 600;
+    font-size: 0.95rem;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
-.sugestao-tab.active {
-    color: #fff;
-    border-bottom: 3px solid #7B1FA2;
+.suggestion-tab:hover {
+    color: #ddd;
+    background: rgba(255,255,255,0.02);
 }
 
-/* ÁREA DE CONTEÚDO COM SCROLL */
+.suggestion-tab.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color); /* Feedback visual de seleção */
+}
+
+/* Área de Conteúdo Rolável
+   - 'flex: 1' faz esta área ocupar todo o espaço vertical disponível.
+   - 'overflow-y: auto' habilita scroll apenas nesta seção, mantendo
+     controles e cabeçalhos sempre visíveis.
+*/
 .tab-content {
-    flex: 1;
-    overflow-y: auto;
-    /* ÚNICA barra de rolagem vertical permitida */
-    padding: 16px;
-    min-height: 0;
-
-    /* Estilo da barra de rolagem */
+    flex: 1; 
+    overflow-y: auto; 
+    padding: 20px;
+    min-height: 0; /* Correção para bug de Flexbox no Firefox */
+    
+    /* Customização da Scrollbar (Webkit) */
     scrollbar-width: thin;
-    scrollbar-color: var(--accent-color) #2a2a2a;
+    scrollbar-color: var(--accent-color) #1a1a1a;
 }
 
 .tab-content::-webkit-scrollbar {
     width: 8px;
 }
-
 .tab-content::-webkit-scrollbar-track {
-    background: #2a2a2a;
-    border-radius: 4px;
+    background: #121212;
 }
-
 .tab-content::-webkit-scrollbar-thumb {
     background: var(--accent-color);
     border-radius: 4px;
 }
 
-
+/* Grid Responsivo de Gêneros */
+.generos-container {
+    display: grid;
+    /* 'repeat(auto-fill)' cria colunas responsivas baseadas na largura mínima */
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 15px;
+}
 
 .genero-btn {
-    height: 100px;
+    height: 110px;
     border-radius: 12px;
-    background: #252525;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     color: #ccc;
     cursor: pointer;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-
-    transition: 0.2s;
+    gap: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .genero-btn i {
-    font-size: 22px;
+    font-size: 24px;
+    margin-bottom: 2px;
+    transition: transform 0.3s;
 }
 
 .genero-btn span {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 
+/* Microinterações de Hover */
 .genero-btn:hover {
-    transform: translateY(-2px);
-    border-color: #7B1FA2;
+    transform: translateY(-4px);
+    background: rgba(255,255,255,0.1);
+    border-color: var(--accent-color);
     color: #fff;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
-.genero-btn.active,
+.genero-btn:hover i {
+    transform: scale(1.1);
+    color: var(--accent-color);
+}
+
+/* Estado Selecionado (Feedback visual) */
 .genero-btn.selected {
-    background: rgba(123, 31, 162, 0.2);
-    border-color: #7B1FA2;
-    color: #fff;
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    border-color: transparent;
+    color: white !important;
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+.genero-btn.selected i {
+    color: white !important;
 }
 
-/* AUTOPLAY */
+/* --- CONTROLES DE AUTOPLAY --- */
 .autoplay-controls {
     flex-shrink: 0;
-    margin: 12px;
-    padding: 12px;
-    background: #111;
-    border-radius: 12px;
+    padding: 15px 25px;
+    background: rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* RODAPÉ */
-.sugestao-actions {
-    flex-shrink: 0;
-    padding: 12px;
+.autoplay-option {
     display: flex;
-    gap: 12px;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.95rem;
+    color: #ddd;
+}
+
+/* Componente Switch (Toggle) Customizado */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+}
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #444;
+    transition: .4s;
+    border-radius: 34px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+input:checked + .slider {
+    background-color: var(--accent-color);
+}
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+/* Contador Numérico */
+.autoplay-count {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 2px;
+}
+.count-btn {
+    background: none;
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+.count-btn:hover { background: rgba(255,255,255,0.1); border-radius: 6px; }
+.count-display {
+    min-width: 25px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* --- RODAPÉ DE AÇÕES (CTA) --- */
+.suggestion-actions {
+    flex-shrink: 0;
+    padding: 20px;
+    display: flex;
+    gap: 15px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .btn-now,
 .btn-auto {
     flex: 1;
-    padding: 12px;
+    padding: 14px;
     border-radius: 10px;
     border: none;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .btn-now {
     background: #333;
     color: #fff;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.btn-now:hover {
+    background: #444;
+    transform: translateY(-2px);
 }
 
 .btn-auto {
     background: linear-gradient(135deg, #7B1FA2, #512DA8);
     color: #fff;
+    box-shadow: 0 4px 12px rgba(123, 31, 162, 0.3);
+}
+.btn-auto:hover {
+    background: linear-gradient(135deg, #8E24AA, #5C35B5);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(123, 31, 162, 0.5);
 }
 
-/* MOBILE */
-@media (max-width: 600px) {
-    .sugestao-modal .modal-content {
-        max-height: 95vh;
-        border-radius: 12px;
-    }
-
-    .genero-btn {
-        height: 90px;
-    }
-
-    .genero-btn span {
-        font-size: 0.8rem;
-    }
-}
-
-/* --- Estado ATIVO do botão principal (na tela inicial) --- */
-.btn-sugestao.active-dj {
-    background-color: #00c853;
-    /* Verde Sucesso */
-    color: white;
-    border-color: #00c853;
-    box-shadow: 0 0 15px rgba(0, 200, 83, 0.6);
-    /* Brilho verde */
-    transition: all 0.3s ease;
-}
-
-/* Animação suave no ícone para indicar funcionamento */
-.btn-sugestao.active-dj i {
-    animation: pulse-icon 2s infinite;
-}
-
-@keyframes pulse-icon {
-    0% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.2);
-    }
-
-    100% {
-        transform: scale(1);
-    }
-}
-
-/* --- Estado ATIVO do botão dentro do modal --- */
+/* Variação de estado ativo para o botão Auto DJ */
 .btn-auto.active {
-    background-color: #00c853 !important;
-    border-color: #00c853 !important;
-    color: white !important;
+    background: linear-gradient(135deg, #00c853, #009624) !important;
+    box-shadow: 0 0 15px rgba(0, 200, 83, 0.4) !important;
+    border: 1px solid #00e676;
 }
 
-/* --- Css para fazer com que o botão de auto sugestão fale que o DJ está ativo --- */
-/* Estado normal */
-.btn-sugestao {
-    transition: all 0.3s ease;
-}
+/* ======================================================= */
+/* ADAPTAÇÃO MOBILE (RESPONSIVIDADE)                       */
+/* Estratégia: Transformação de Modal para Fullscreen      */
+/* ======================================================= */
 
-/* Quando Auto DJ está ligado */
-.btn-sugestao.auto-dj-on {
-    background: linear-gradient(135deg, #00e676, #00c853) !important;
-    color: #000 !important;
-    font-weight: 800;
-    box-shadow: 0 0 15px rgba(0, 255, 150, 0.6);
-}
+@media (max-width: 768px) {
 
-/* Efeito pulsando */
-.btn-sugestao.auto-dj-on {
-    animation: pulseAutoDJ 1.5s infinite;
+    /* Ajuste do Container
+       - Remove padding externo para aproveitar 100% da tela.
+    */
+    .suggestion-modal {
+        padding: 0 !important;
+        align-items: flex-end; /* UX: Pode simular uma sheet bottom-up */
+    }
+
+    /* Modal Fullscreen
+       - Altera o comportamento de cartão flutuante para tela cheia
+       - Melhora a usabilidade em touch screens removendo bordas desnecessárias
+    */
+    .suggestion-modal .modal-content {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
+        border: none !important;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Redução de escala do Header para mobile */
+    .suggestion-modal h3 {
+        padding: 12px 15px !important;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .suggestion-modal .close-button {
+        top: 10px;
+        right: 10px;
+    }
+
+    /* Solução para Abas em Telas Pequenas
+       - Habilita scroll horizontal ('overflow-x: auto')
+       - Impede quebra de linha ('white-space: nowrap')
+       - Garante que todas as opções sejam acessíveis sem quebrar o layout
+    */
+    .suggestion-tabs {
+        overflow-x: auto !important; 
+        white-space: nowrap !important;
+        justify-content: flex-start !important;
+        padding: 0 5px !important;
+        
+        /* Oculta scrollbar nativa para visual mais limpo */
+        scrollbar-width: none; 
+        -ms-overflow-style: none;
+    }
+    
+    .suggestion-tabs::-webkit-scrollbar { 
+        display: none; 
+    }
+
+    .suggestion-tab {
+        padding: 12px 8px !important;
+        font-size: 0.8rem !important;
+        flex: 1 0 auto !important;
+        min-width: fit-content; 
+        gap: 5px !important;
+    }
+    
+    .suggestion-tab i {
+        font-size: 0.85rem !important;
+    }
+
+    /* Área de rolagem principal */
+    .tab-content {
+        flex: 1 1 auto !important;
+        overflow-y: auto !important;
+        padding: 15px !important;
+        display: block;
+    }
+
+    /* Grid Mobile
+       - Fixa em 2 colunas para equilíbrio entre tamanho de toque e densidade de informação 
+    */
+    .generos-container {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+        padding-bottom: 20px;
+        height: auto !important;
+    }
+    
+    .genero-btn {
+        height: 90px !important;
+    }
+
+    /* Controles Compactos
+       - Reorganiza os controles de Auto DJ para economizar altura vertical
+       - Usa 'flex-wrap' para adaptar a larguras de tela variáveis
+    */
+    .autoplay-controls {
+        flex-shrink: 0;
+        padding: 10px 15px !important;
+        gap: 10px !important;
+        background: #121212;
+        
+        flex-direction: row !important; 
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .autoplay-option {
+        width: 48% !important;
+        font-size: 0.8rem !important;
+        justify-content: center;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    /* Ajuste de área de toque (Touch Targets) no rodapé */
+    .suggestion-actions {
+        flex-shrink: 0;
+        padding: 10px 15px 20px 15px !important; /* Padding extra inferior para barras de navegação (iOS) */
+        gap: 10px !important;
+        background: #121212;
+    }
+
+    .btn-now, .btn-auto {
+        padding: 12px !important;
+        font-size: 0.9rem !important;
+    }
 }
 
 @keyframes pulseAutoDJ {

@@ -1,6 +1,6 @@
 // Entrada do Portal / FlowLink
 
-(function() {
+(function () {
     const params = new URLSearchParams(window.location.search);
     const roomIdFromUrl = params.get('room');
 
@@ -8,7 +8,7 @@
         const loader = document.getElementById('initialLoader');
         if (loader) loader.style.display = 'none';
 
-        document.body.className = 'theme-transition'; 
+        document.body.className = 'theme-transition';
         document.body.style.display = 'flex';
         document.body.style.alignItems = 'center';
         document.body.style.justifyContent = 'center';
@@ -61,13 +61,13 @@
 
                         <div class="join-input-group">
                             <input type="text" id="joinRoomInput" placeholder="Código da sala...">
-                            <button class="btn enter-btn" onclick="irParaSala()">
+                            <button class="btn enter-btn" onclick="joinRoom()">
                                 <i class="fas fa-arrow-right"></i>
                             </button>
                         </div>
                         
                         <p class="terms-disclaimer">
-                            Ao entrar, você concorda com os <a href="#" onclick="abrirTermos(event)">Termos de Uso e Segurança</a>.
+                            Ao entrar, você concorda com os <a href="#" onclick="openTermsModal(event)">Termos de Uso e Segurança</a>.
                         </p>
                     </div>
                 </main>
@@ -78,7 +78,7 @@
                             <i class="fas fa-music"></i> <span>FlowLink</span>
                         </div>
                         <div class="footer-links">
-                            <a href="#" onclick="abrirTermos(event)"><i class="fas fa-shield-alt"></i> Termos & Privacidade</a>
+                            <a href="#" onclick="openTermsModal(event)"><i class="fas fa-shield-alt"></i> Termos & Privacidade</a>
                         </div>
                     </div>
                 </footer>
@@ -89,7 +89,7 @@
                     
                     <div class="modal-header" style="justify-content: space-between; display: flex; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
                         <h3 style="margin:0; color:var(--accent-color); font-size: 1.4rem;"><i class="fas fa-file-contract"></i> Termos de Uso</h3>
-                        <span class="close-button" onclick="fecharTermos()" style="cursor:pointer; font-size:1.8rem; line-height: 1; color: #aaa;">&times;</span>
+                        <span class="close-button" onclick="closeTermsModal()" style="cursor:pointer; font-size:1.8rem; line-height: 1; color: #aaa;">&times;</span>
                     </div>
 
                     <div class="terms-body" style="line-height: 1.6; color: #e0e0e0; font-size: 0.95rem; padding-right: 10px;">
@@ -131,7 +131,7 @@
                     </div>
 
                     <div style="margin-top: 25px; text-align: right; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                        <button class="btn primary" onclick="fecharTermos()" style="padding: 12px 30px; border-radius: 8px;">Li e Concordo</button>
+                        <button class="btn primary" onclick="closeTermsModal()" style="padding: 12px 30px; border-radius: 8px;">Li e Concordo</button>
                     </div>
                 </div>
             </div>
@@ -191,63 +191,63 @@
         `;
 
         // 3. FUNÇÕES GLOBAIS
-        
-        window.irParaSala = async function() {
-    const input = document.getElementById('joinRoomInput');
-    const btn = document.querySelector('.enter-btn');
-    if (!input || !btn) return;
 
-    const roomId = input.value.trim();
-    if (!roomId) {
-        // Mantemos este alert apenas porque o campo está vazio
-        alert("Por favor, digite o código da sala.");
-        return;
-    }
+        window.joinRoom = async function () {
+            const input = document.getElementById('joinRoomInput');
+            const btn = document.querySelector('.enter-btn');
+            if (!input || !btn) return;
 
-    // Feedback visual de carregamento
-    input.disabled = true;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            const roomId = input.value.trim();
+            if (!roomId) {
+                // Mantemos este alert apenas porque o campo está vazio
+                alert("Por favor, digite o código da sala.");
+                return;
+            }
 
-    try {
-        // Verifica a existência da sala no Firebase
-        const snapshot = await firebase.database().ref('rooms/' + roomId).once('value');
+            // Feedback visual de carregamento
+            input.disabled = true;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-        if (snapshot.exists()) {
-            // Se existir, vai para a sala
-            window.location.href = `index.html?room=${roomId}`;
-        } else {
-            // SE NÃO EXISTIR: Redireciona para a página visual 404
-            console.log("Sala não encontrada, redirecionando...");
-            window.location.href = '/404.html'; 
-        }
-    } catch (error) {
-        console.error("Erro técnico:", error);
-        // Se as Regras JSON bloquearem (sala inexistente), também vai para o 404
-        if (error.code === "PERMISSION_DENIED") {
-            window.location.href = '/404.html';
-        } else {
-            // Erros de internet/conexão
-            input.disabled = false;
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-arrow-right"></i>';
-            alert("Erro de conexão. Verifique sua internet.");
-        }
-    }
-};
+            try {
+                // Verifica a existência da sala no Firebase
+                const snapshot = await firebase.database().ref('rooms/' + roomId).once('value');
+
+                if (snapshot.exists()) {
+                    // Se existir, vai para a sala
+                    window.location.href = `index.html?room=${roomId}`;
+                } else {
+                    // SE NÃO EXISTIR: Redireciona para a página visual 404
+                    console.log("Sala não encontrada, redirecionando...");
+                    window.location.href = '/404.html';
+                }
+            } catch (error) {
+                console.error("Erro técnico:", error);
+                // Se as Regras JSON bloquearem (sala inexistente), também vai para o 404
+                if (error.code === "PERMISSION_DENIED") {
+                    window.location.href = '/404.html';
+                } else {
+                    // Erros de internet/conexão
+                    input.disabled = false;
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-arrow-right"></i>';
+                    alert("Erro de conexão. Verifique sua internet.");
+                }
+            }
+        };
 
         // Funções do Modal de Termos
-        window.abrirTermos = function(e) {
-            if(e) e.preventDefault();
+        window.openTermsModal = function (e) {
+            if (e) e.preventDefault();
             document.getElementById('termsModal').style.display = 'flex';
         };
 
-        window.fecharTermos = function() {
+        window.closeTermsModal = function () {
             document.getElementById('termsModal').style.display = 'none';
         };
 
         // Fechar ao clicar fora
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             const modal = document.getElementById('termsModal');
             if (event.target === modal) {
                 modal.style.display = 'none';
@@ -255,11 +255,11 @@
         };
 
         // 4. SUPORTE PARA TECLA ENTER
-        document.addEventListener('keypress', function(e) {
+        document.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 const input = document.getElementById('joinRoomInput');
                 if (document.activeElement === input) {
-                    window.irParaSala();
+                    window.joinRoom();
                 }
             }
         });

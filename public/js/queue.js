@@ -69,7 +69,7 @@ function loadVideoQueue() {
         const data = snapshot.val();
         let fetchedQueue = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
 
-        const BOT_NAME = '🤖 DJ Flow';
+        const BOT_NAME = '🤖 DJ Maestro';
         const currentPlayingId = videoQueue.length > 0 ? videoQueue[0].id : null;
         const currentStillExists = fetchedQueue.find(v => v.id === currentPlayingId);
 
@@ -110,7 +110,7 @@ function renderQueue() {
         li.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(255, 255, 255, 0.05); margin-bottom: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);";
         
         if (index === 0) li.classList.add('playing');
-        if (video.phone === '🤖 DJ Flow') {
+        if (video.phone === '🤖 DJ Maestro') {
             li.style.opacity = '0.8';
             li.style.borderLeft = '3px solid #777';
         }

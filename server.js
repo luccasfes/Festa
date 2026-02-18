@@ -38,7 +38,7 @@ app.post("/api/report", async (req, res) => {
     }
 
     const baseUrl = process.env.SITE_URL || "http://localhost:3000";
-    const painelLink = `${baseUrl}/admin.html`;
+    const adminPanelLink = `${baseUrl}/admin.html`;
 
     const mailOptions = {
       from: `"FlowLink Security" <${process.env.EMAIL_USER}>`,
@@ -107,7 +107,7 @@ app.post("/api/report", async (req, res) => {
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-              <a href="${painelLink}" class="btn">Acessar Painel</a>
+              <a href="${adminPanelLink}" class="btn">Acessar Painel</a>
             </div>
           </div>
 
@@ -352,9 +352,9 @@ app.get("/api/spotify-recommendations", async (req, res) => {
     // CASO 1: Busca por GÊNERO
     if (genre) {
       const g = genre.toLowerCase().trim();
-      let termoBusca = "";
+      let searchTerm = "";
 
-      const mapaBrasileiro = {
+      const brazilianGenreMap = {
         funk: "playlist:funk_hits_brasil funk mandelão",
         sertanejo: "sertanejo universitario top brasil",
         pagode: "pagode churrasco ao vivo",
@@ -366,11 +366,11 @@ app.get("/api/spotify-recommendations", async (req, res) => {
         reggaeton: "reggaeton brasil hits"
       };
 
-      termoBusca = mapaBrasileiro[g] || `${g} hits brasil`;
-      console.log(`🇧🇷 [Server] Buscando Gênero BR: "${termoBusca}"`);
+      searchTerm = brazilianGenreMap[g] || `${g} hits brasil`;
+      console.log(`🇧🇷 [Server] Buscando Gênero BR: "${searchTerm}"`);
 
       const searchRes = await axios.get(SEARCH_URL, {
-        params: { q: termoBusca, type: "track", limit: 20, market: "BR" },
+        params: { q: searchTerm, type: "track", limit: 20, market: "BR" },
         headers: { Authorization: `Bearer ${token}` }
       });
 

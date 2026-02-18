@@ -43,7 +43,7 @@
                 <button id="adminUnlockBtn" class="btn-icon" onclick="openAdminUnlockModal()" title="Admin">
                     <i class="fas fa-lock"></i>
                 </button>
-                <button class="btn small" id="panelBtn" onclick="FuncaoParaAbrirPainel()" style="display: none;">
+                <button class="btn small" id="panelBtn" onclick="openAdminPanel()" style="display: none;">
                     <i class="fas fa-cog"></i> <span>Painel</span>
                 </button>
                 <button class="btn small secondary" onclick="openThemeModal()" title="Mudar Tema">
@@ -124,7 +124,7 @@
                     <button class="btn bulk-remove-button" onclick="removeSelectedVideos()" id="bulkRemoveBtn" style="display: none;">
                         <i class="fas fa-eraser"></i> Remover Selecionados
                     </button>
-                    <button id="btn-auto-sugestao" class="btn-sugestao" onclick="openSugestaoModal()" style="display:none;">
+                    <button id="btn-auto-sugestao" class="btn-sugestao" onclick="openSuggestionModal()" style="display:none;">
                         <i class="fas fa-magic"></i> Sugerir Música
                     </button>
                 </h2>
@@ -362,14 +362,14 @@
         <span id="notificationMessage"></span>
     </div>
 
-    <div id="sugestaoModal" class="modal sugestao-modal">
+    <div id="suggestionModal" class="modal suggestion-modal">
         <div class="modal-content">
-            <span class="close-button" onclick="closeSugestaoModal()">×</span>
+            <span class="close-button" onclick="closeSuggestionModal()">×</span>
             <h3><i class="fas fa-magic"></i> Sugestão Inteligente</h3>
-            <div class="sugestao-tabs">
-                <button class="sugestao-tab active" onclick="switchTab('genero')"><i class="fas fa-music"></i> Por Gênero</button>
-                <button class="sugestao-tab" onclick="switchTab('similar')"><i class="fas fa-random"></i> Similares</button>
-                <button class="sugestao-tab" onclick="switchTab('tendencia')"><i class="fas fa-chart-line"></i> Tendências</button>
+            <div class="suggestion-tabs">
+                <button class="suggestion-tab active" onclick="switchTab('genero')"><i class="fas fa-music"></i> Por Gênero</button>
+                <button class="suggestion-tab" onclick="switchTab('similar')"><i class="fas fa-random"></i> Similares</button>
+                <button class="suggestion-tab" onclick="switchTab('tendencia')"><i class="fas fa-chart-line"></i> Tendências</button>
             </div>
             <div id="generoContent" class="tab-content active">
                 <div class="generos-container">
@@ -392,7 +392,7 @@
             <div class="autoplay-controls">
                 <div class="autoplay-option">
                     <span>Ligar Auto DJ</span>
-                    <label class="switch"><input type="checkbox" id="autoAddToggle" onchange="ativarAutoSugestao()"><span class="slider"></span></label>
+                   <label class="switch"><input type="checkbox" id="autoAddToggle" onchange="toggleAutoDjBtn()"><span class="slider"></span></label>
                 </div>
                 <div class="autoplay-option">
                     <span>Manter na fila:</span>
@@ -403,8 +403,8 @@
                     </div>
                 </div>
             </div>
-            <div class="sugestao-actions">
-                <button class="btn btn-now" onclick="sugerirAgora()"><i class="fas fa-plus-circle"></i> Adicionar Agora</button>
+            <div class="suggestion-actions">
+                <button class="btn btn-now" onclick="suggestNow()"><i class="fas fa-plus-circle"></i> Adicionar Agora</button>
                 <button class="btn btn-auto" onclick="toggleAutoDjBtn()"><i class="fas fa-play-circle"></i> Auto (Ligar/Desligar)</button>
             </div>
         </div>
@@ -466,7 +466,7 @@
                             <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> Abrir Admin
                         </a>
                         
-                        <button class="btn small warning" onclick="limparSalasVazias()" title="Apagar apenas salas vazias" style="background:#ff9800; color:white;">
+                        <button class="btn small warning" onclick="pruneEmptyRooms()" title="Apagar apenas salas vazias" style="background:#ff9800; color:white;">
                             <i class="fas fa-broom"></i> Limpar Salas Vazias
                         </button>
 

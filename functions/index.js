@@ -1,12 +1,12 @@
 /**
- * functions/index.js (Cloud Functions + Express)
- * * MELHORIAS IMPLEMENTADAS:
+ * (Cloud Functions + Express)
+ * ARQUITETURA E MELHORIAS IMPLEMENTADAS:
  * ✅ Cache inteligente (60s) - economiza quota do YouTube
  * ✅ Headers dinâmicos - funciona em localhost E produção
- * ✅ Timeout em todas as requisições (12s)
- * ✅ Retry com exponential backoff no Spotify (Anti-falha)
+ * ✅ Timeout global (12s)
+ * ✅ Retry com Exponential Backoff (Spotify)
  * ✅ Sanitização de inputs (proteção XSS)
- * ✅ Health check endpoint para monitoramento
+ * ✅ Health Check Endpoint
  * ✅ Validação robusta de credenciais
  */
 
@@ -32,22 +32,23 @@ axios.defaults.headers.common['User-Agent'] = 'FlowLink/1.0';
 // --- HELPERS DE CONFIGURAÇÃO ---
 // ==================================================================
 function getConfig(pathStr, fallbackEnvKey) {
-  // Prioridade 1: variável de ambiente direta (.env local)
+  // Prioridade 1: Variável de ambiente direta (.env local)
   if (fallbackEnvKey && process.env[fallbackEnvKey]) {
     return process.env[fallbackEnvKey];
   }
 
-  // Prioridade 2: transformar "email.user" em "EMAIL_USER"
+  // Prioridade 2: Transformar "email.user" em "EMAIL_USER"
   if (pathStr) {
     const envKey = pathStr.toUpperCase().replace(/\./g, "_");
     if (process.env[envKey]) return process.env[envKey];
 
-    // Prioridade 3: functions.config() (Ambiente Firebase Produção)
+    // Prioridade 3: functions.config() (Produção Firebase)
     try {
       const [a, b] = pathStr.split(".");
       const v = functions.config()?.[a]?.[b];
       if (v) return v;
     } catch (e) {
+      // ignora erro
     }
   }
 
@@ -68,7 +69,7 @@ function sanitizeString(str, maxLength = 500) {
   return str
     .trim()
     .slice(0, maxLength)
-    .replace(/[<>]/g, ''); // Remove < e > para evitar XSS básico
+    .replace(/[<>]/g, ''); // Proteção básica contra XSS
 }
 
 // ==================================================================
@@ -116,7 +117,8 @@ app.post("/api/report", async (req, res) => {
     });
 
     const baseUrl = getConfig("site.url", "SITE_URL") || "http://localhost:3000";
-    const painelLink = `${baseUrl}/admin.html`;
+    // Variável em Inglês (TCC), Valor em Português (Link)
+    const adminPanelLink = `${baseUrl}/admin.html`;
 
     const mailOptions = {
       from: `"FlowLink Security" <${EMAIL_USER}>`,
@@ -185,7 +187,7 @@ app.post("/api/report", async (req, res) => {
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-              <a href="${painelLink}" class="btn">Acessar Painel</a>
+              <a href="${adminPanelLink}" class="btn">Acessar Painel</a>
             </div>
           </div>
 
@@ -208,7 +210,7 @@ app.post("/api/report", async (req, res) => {
 });
 
 // ==================================================================
-// --- YOUTUBE API - KEYS E CACHE ---
+// --- YOUTUBE API - CHAVES E CACHE ---
 // ==================================================================
 const YOUTUBE_KEYS = [
   getConfig("youtube.key1", "YOUTUBE_API_KEY"),
@@ -221,7 +223,7 @@ if (YOUTUBE_KEYS.length === 0) {
   functions.logger.info(`✅ ${YOUTUBE_KEYS.length} chave(s) do YouTube configuradas`);
 }
 
-// Cache em memória (60 segundos)
+// Cache em Memória (60 segundos) - Aqui estava o erro antes!
 const YT_CACHE_TTL_MS = 60_000;
 const ytCache = new Map();
 
@@ -238,7 +240,7 @@ function cacheGet(key) {
 }
 
 function cacheSet(key, data) {
-  // Remove a chave antiga se existir (LRU)
+  // Remove a chave antiga se existir
   if (ytCache.has(key)) ytCache.delete(key);
   
   ytCache.set(key, { t: Date.now(), data });
@@ -310,6 +312,7 @@ async function getSpotifyToken() {
     const params = new URLSearchParams();
     params.append("grant_type", "client_credentials");
 
+    // URL ESPECÍFICA DO SEU PROJETO/PROXY (MANTIDA ORIGINAL)
     const response = await axios.post("https://accounts.spotify.com/api/token", params, {
       headers: {
         Authorization: "Basic " + Buffer.from(clientId + ":" + clientSecret).toString("base64"),
@@ -339,10 +342,10 @@ async function axiosRetry(config, maxRetries = 2) {
     } catch (error) {
       if (i === maxRetries) throw error;
       
-      // Só faz retry em erros 5xx (servidor)
+      // Tenta novamente apenas em erros 5xx (servidor)
       if (error.response && error.response.status >= 500) {
         const delay = Math.min(1000 * Math.pow(2, i), 5000); // 1s, 2s, max 5s
-        functions.logger.warn(`Retry ${i + 1}/${maxRetries} após ${delay}ms`);
+        functions.logger.warn(`Tentativa ${i + 1}/${maxRetries} após ${delay}ms`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
@@ -367,7 +370,8 @@ app.get("/api/spotify-genre", async (req, res) => {
       return res.status(500).json({ error: "Erro Auth Spotify" });
     }
 
-    // 1. Busca a track
+    // Endpoint oficial da API Spotify
+
     const searchRes = await axiosRetry({
       method: "get",
       url: "https://api.spotify.com/v1/search",
@@ -382,7 +386,7 @@ app.get("/api/spotify-genre", async (req, res) => {
     const track = searchRes.data.tracks.items[0];
     const artistId = track.artists[0].id;
 
-    // 2. Busca o artista 
+    // URL ESPECÍFICA DO SEU PROJETO (MANTIDA ORIGINAL)
     const artistRes = await axiosRetry({
       method: "get",
       url: `https://api.spotify.com/v1/artists/${artistId}`,
@@ -412,10 +416,8 @@ app.get("/api/youtube-search", async (req, res) => {
       return res.status(400).json({ error: "Termo de busca muito curto" });
     }
 
-    // maxResults dinâmico com validação
     const maxResults = Math.max(1, Math.min(25, parseInt(req.query.maxResults || "15", 10) || 15));
 
-    // Tenta cache primeiro
     const cacheKey = `yt:q:${query.toLowerCase()}|m:${maxResults}`;
     const cached = cacheGet(cacheKey);
     
@@ -424,8 +426,7 @@ app.get("/api/youtube-search", async (req, res) => {
       return res.json({ ...cached, _cached: true });
     }
 
-    // Cache miss - busca no YouTube
-    functions.logger.info("🔍 YouTube API call", { query, maxResults });
+    functions.logger.info("🔍 Chamada API YouTube", { query, maxResults });
     
     const data = await fetchYoutubeWithFallback(
       "https://www.googleapis.com/youtube/v3/search",
@@ -434,17 +435,14 @@ app.get("/api/youtube-search", async (req, res) => {
         q: query,
         type: "video",
         maxResults,
-        
-        // Otimizações para música brasileira
         regionCode: "BR",
         relevanceLanguage: "pt",
-        videoCategoryId: "10", // Categoria "Música"
+        videoCategoryId: "10",
         safeSearch: "none"
       },
       req
     );
 
-    // Deduplicação por videoId
     if (data?.items?.length) {
       const seen = new Set();
       data.items = data.items.filter((it) => {
@@ -460,7 +458,6 @@ app.get("/api/youtube-search", async (req, res) => {
       });
     }
 
-    // Salva no cache
     cacheSet(cacheKey, data);
     res.json(data);
     
@@ -487,7 +484,6 @@ app.get("/api/video-info", async (req, res) => {
       return res.status(400).json({ error: "ID obrigatório" });
     }
 
-    // Cache
     const cacheKey = `yt:vid:${videoId}`;
     const cached = cacheGet(cacheKey);
     if (cached) {
@@ -525,9 +521,10 @@ app.get("/api/spotify-recommendations", async (req, res) => {
     
     const token = await getSpotifyToken();
     if (!token) {
-      return res.json([]); // Retorna vazio para o frontend usar fallback
+      return res.json([]); 
     }
 
+    // URL ESPECÍFICA DO SEU PROJETO (MANTIDA ORIGINAL)
     const SEARCH_URL = "https://api.spotify.com/v1/search";
     let recommendations = [];
 
@@ -535,7 +532,7 @@ app.get("/api/spotify-recommendations", async (req, res) => {
     if (genre) {
       const g = genre.toLowerCase().trim();
       
-      const mapaBrasileiro = {
+      const brazilianGenreMap = {
         funk: "playlist:funk_hits_brasil funk mandelão",
         sertanejo: "sertanejo universitario top brasil",
         pagode: "pagode churrasco ao vivo",
@@ -547,13 +544,13 @@ app.get("/api/spotify-recommendations", async (req, res) => {
         reggaeton: "reggaeton brasil hits"
       };
 
-      const termoBusca = mapaBrasileiro[g] || `${g} hits brasil`;
-      functions.logger.info("🇧🇷 Spotify busca por gênero", { genre: g, termoBusca });
+      const searchTerm = brazilianGenreMap[g] || `${g} hits brasil`;
+      functions.logger.info("🇧🇷 Spotify busca por gênero", { genre: g, searchTerm });
 
       const searchRes = await axiosRetry({
         method: "get",
         url: SEARCH_URL,
-        params: { q: termoBusca, type: "track", limit: 20, market: "BR" },
+        params: { q: searchTerm, type: "track", limit: 20, market: "BR" },
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -568,7 +565,6 @@ app.get("/api/spotify-recommendations", async (req, res) => {
     else if (q) {
       const qLower = q.toLowerCase();
 
-      // Detecta temas de desenho/Disney
       if (qLower.includes("disney") || qLower.includes("moana") || 
           qLower.includes("frozen") || qLower.includes("encanto")) {
         
@@ -582,7 +578,6 @@ app.get("/api/spotify-recommendations", async (req, res) => {
         recommendations = searchRes.data.tracks?.items || [];
       } 
       
-      // Busca por artista
       else {
         const searchRes = await axiosRetry({
           method: "get",
@@ -592,7 +587,6 @@ app.get("/api/spotify-recommendations", async (req, res) => {
         });
 
         if (!searchRes.data.tracks?.items?.length) {
-          // Fallback genérico
           const searchResBackup = await axiosRetry({
             method: "get",
             url: SEARCH_URL,
@@ -618,7 +612,7 @@ app.get("/api/spotify-recommendations", async (req, res) => {
     
   } catch (error) {
     functions.logger.error("❌ Spotify recommendations falhou", { error: error.message });
-    res.json([]); // Retorna vazio para fallback no frontend
+    res.json([]); 
   }
 });
 
@@ -648,6 +642,6 @@ app.get("/api/health", (req, res) => {
 });
 
 // ==================================================================
-// --- EXPORTA A CLOUD FUNCTION ---
+// --- EXPORTAR CLOUD FUNCTION ---
 // ==================================================================
 exports.api = functions.https.onRequest(app);
