@@ -30,7 +30,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.18.0/index.css" />
+    
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.18.0/index.js"></script>
 </head>
 
@@ -363,52 +363,61 @@
     </div>
 
     <div id="suggestionModal" class="modal suggestion-modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="closeSuggestionModal()">×</span>
-            <h3><i class="fas fa-magic"></i> Sugestão Inteligente</h3>
-            <div class="suggestion-tabs">
-                <button class="suggestion-tab active" onclick="switchTab('genero')"><i class="fas fa-music"></i> Por Gênero</button>
-                <button class="suggestion-tab" onclick="switchTab('similar')"><i class="fas fa-random"></i> Similares</button>
-                <button class="suggestion-tab" onclick="switchTab('tendencia')"><i class="fas fa-chart-line"></i> Tendências</button>
-            </div>
-            <div id="generoContent" class="tab-content active">
-                <div class="generos-container">
-                    <button class="genero-btn" onclick="selectGenero('sertanejo')" data-genero="sertanejo"><i class="fas fa-guitar"></i> Sertanejo</button>
-                    <button class="genero-btn" onclick="selectGenero('funk')" data-genero="funk"><i class="fas fa-fire"></i> Funk</button>
-                    <button class="genero-btn" onclick="selectGenero('pop')" data-genero="pop"><i class="fas fa-star"></i> Pop</button>
-                    <button class="genero-btn" onclick="selectGenero('rock')" data-genero="rock"><i class="fas fa-guitar"></i> Rock</button>
-                    <button class="genero-btn" onclick="selectGenero('eletronica')" data-genero="eletronica"><i class="fas fa-bolt"></i> Eletrônica</button>
-                    <button class="genero-btn" onclick="selectGenero('rap')" data-genero="rap"><i class="fas fa-microphone"></i> Rap/Hip-Hop</button>
-                    <button class="genero-btn" onclick="selectGenero('reggaeton')" data-genero="reggaeton"><i class="fas fa-fire"></i> Reggaeton</button>
-                    <button class="genero-btn" onclick="selectGenero('pagode')" data-genero="pagode"><i class="fas fa-drum"></i> Pagode</button>
-                </div>
-            </div>
-            <div id="similarContent" class="tab-content" style="display:none; text-align:center; padding:20px;">
-                <p>Sugestões baseadas no que está tocando agora.</p>
-            </div>
-            <div id="tendenciaContent" class="tab-content" style="display:none; text-align:center; padding:20px;">
-                <p>As músicas mais tocadas do momento no Brasil.</p>
-            </div>
-            <div class="autoplay-controls">
-                <div class="autoplay-option">
-                    <span>Ligar Auto DJ</span>
-                   <label class="switch"><input type="checkbox" id="autoAddToggle" onchange="toggleAutoDjBtn()"><span class="slider"></span></label>
-                </div>
-                <div class="autoplay-option">
-                    <span>Manter na fila:</span>
-                    <div class="autoplay-count">
-                        <button class="count-btn" onclick="changeAutoCount(-1)">-</button>
-                        <span class="count-display" id="autoCount">1</span>
-                        <button class="count-btn" onclick="changeAutoCount(1)">+</button>
-                    </div>
-                </div>
-            </div>
-            <div class="suggestion-actions">
-                <button class="btn btn-now" onclick="suggestNow()"><i class="fas fa-plus-circle"></i> Adicionar Agora</button>
-                <button class="btn btn-auto" onclick="toggleAutoDjBtn()"><i class="fas fa-play-circle"></i> Auto (Ligar/Desligar)</button>
+    <div class="modal-content">
+        <span class="close-button" onclick="closeSuggestionModal()">×</span>
+        <h3><i class="fas fa-magic"></i> Sugestão Inteligente</h3>
+        
+        <div class="suggestion-tabs">
+            <button class="suggestion-tab active" onclick="switchTab('genre')"><i class="fas fa-music"></i> Por Gênero</button>
+            <button class="suggestion-tab" onclick="switchTab('similar')"><i class="fas fa-random"></i> Similares</button>
+            <button class="suggestion-tab" onclick="switchTab('trending')"><i class="fas fa-chart-line"></i> Tendências</button>
+        </div>
+
+        <div id="genreContent" class="tab-content active">
+            <div class="generos-container">
+                <button class="genero-btn" onclick="selectGenre('sertanejo')" data-genre="sertanejo"><i class="fas fa-guitar"></i> Sertanejo</button>
+                <button class="genero-btn" onclick="selectGenre('funk')" data-genre="funk"><i class="fas fa-fire"></i> Funk</button>
+                <button class="genero-btn" onclick="selectGenre('pop')" data-genre="pop"><i class="fas fa-star"></i> Pop</button>
+                <button class="genero-btn" onclick="selectGenre('rock')" data-genre="rock"><i class="fas fa-guitar"></i> Rock</button>
+                <button class="genero-btn" onclick="selectGenre('electronic')" data-genre="electronic"><i class="fas fa-bolt"></i> Eletrônica</button>
+                <button class="genero-btn" onclick="selectGenre('rap')" data-genre="rap"><i class="fas fa-microphone"></i> Rap/Hip-Hop</button>
+                <button class="genero-btn" onclick="selectGenre('reggaeton')" data-genre="reggaeton"><i class="fas fa-fire"></i> Reggaeton</button>
+                <button class="genero-btn" onclick="selectGenre('pagode')" data-genre="pagode"><i class="fas fa-drum"></i> Pagode</button>
             </div>
         </div>
+
+        <div id="similarContent" class="tab-content" style="display:none; text-align:center; padding:20px;">
+            <p>Sugestões baseadas no que está tocando agora.</p>
+        </div>
+
+        <div id="trendingContent" class="tab-content" style="display:none; text-align:center; padding:20px;">
+            <p>As músicas mais tocadas do momento no Brasil.</p>
+        </div>
+
+        <div class="autoplay-controls">
+            <div class="autoplay-option">
+                <span>Ligar Auto DJ</span>
+                <label class="switch">
+                    <input type="checkbox" id="autoAddToggle" onchange="toggleAutoDj(event)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="autoplay-option">
+                <span>Manter na fila:</span>
+                <div class="autoplay-count">
+                    <button class="count-btn" onclick="changeAutoCount(-1)">-</button>
+                    <span class="count-display" id="autoCount">1</span>
+                    <button class="count-btn" onclick="changeAutoCount(1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="suggestion-actions">
+            <button class="btn btn-now" onclick="suggestNow()"><i class="fas fa-plus-circle"></i> Adicionar Agora</button>
+            <button class="btn btn-auto" onclick="toggleAutoDj(event)"><i class="fas fa-play-circle"></i> Auto (Ligar/Desligar)</button>
+        </div>
     </div>
+</div>
 
     <div id="themeModal" class="modal" style="display:none; opacity:0;">
         <div class="modal-content" style="max-width: 450px;">
