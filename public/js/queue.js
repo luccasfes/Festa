@@ -1,11 +1,11 @@
 // ====================================================================
-// FILA DE VÍDEOS (AJUSTADA - MODO SOLO & VOTAÇÃO 50%+1)
+// FILA DE VÍDEOS (AJUSTADA - MODO SOLO, AUTO-STOP E VOTAÇÃO CORRIGIDA)
 // ====================================================================
 
 let lastVoteCount = 0; 
 
 async function addVideo(urlArg = null, titleArg = null) {
-    let phone = document.getElementById('phone').value.trim(); 
+    let phone = document.getElementById('phone')?.value.trim(); 
     if (!phone) phone = sessionStorage.getItem('ytSessionUser') || '';
 
     const searchNameInput = document.getElementById('ytSearchName');
@@ -15,7 +15,7 @@ async function addVideo(urlArg = null, titleArg = null) {
         currentSessionUser = phone;
     }
 
-    let url = urlArg || document.getElementById('videoUrl').value.trim();
+    let url = urlArg || document.getElementById('videoUrl')?.value.trim();
     let title = titleArg || null;
 
     if (!phone) {
@@ -25,16 +25,16 @@ async function addVideo(urlArg = null, titleArg = null) {
             if (searchNameInput) searchNameInput.focus();
         } else {
             if(!urlArg) showNotification('Diga seu nome primeiro!', 'error');
-            openEditNameModal();
+            if(typeof openEditNameModal === 'function') openEditNameModal();
         }
         return;
     }
 
     if (!url) return showNotification('Cole a URL do vídeo.', 'error');
-    const videoId = extractVideoId(url);
+    const videoId = typeof extractVideoId === 'function' ? extractVideoId(url) : url.split('v=')[1]?.substring(0, 11);
     if (!videoId) return showNotification('URL inválida.', 'error');
 
-    toggleLoading('addVideoBtn', true);
+    if(typeof toggleLoading === 'function') toggleLoading('addVideoBtn', true);
 
     try {
         if (!title) {
@@ -48,7 +48,9 @@ async function addVideo(urlArg = null, titleArg = null) {
 
         await videoQueueRef.push({ phone, videoUrl: url, title });
         showNotification('Vídeo adicionado!', 'success');
-        if (!urlArg) document.getElementById('videoUrl').value = '';
+        
+        const urlInput = document.getElementById('videoUrl');
+        if (!urlArg && urlInput) urlInput.value = '';
         
         if(phone && !sessionStorage.getItem('ytSessionUser')) {
             sessionStorage.setItem('ytSessionUser', phone);
@@ -60,7 +62,7 @@ async function addVideo(urlArg = null, titleArg = null) {
         console.error(e);
         showNotification('Erro ao adicionar.', 'error');
     } finally {
-        toggleLoading('addVideoBtn', false);
+        if(typeof toggleLoading === 'function') toggleLoading('addVideoBtn', false);
     }
 }
 
@@ -70,7 +72,7 @@ function loadVideoQueue() {
         let fetchedQueue = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
 
         const BOT_NAME = '🤖 DJ Maestro';
-        const currentPlayingId = videoQueue.length > 0 ? videoQueue[0].id : null;
+        const currentPlayingId = videoQueue && videoQueue.length > 0 ? videoQueue[0].id : null;
         const currentStillExists = fetchedQueue.find(v => v.id === currentPlayingId);
 
         if (currentStillExists) {
@@ -90,15 +92,16 @@ function loadVideoQueue() {
 
 function renderQueue() {
     const list = document.getElementById('videoList');
+    if (!list) return;
+    
     list.innerHTML = '';
     
-    // Verifica Admin direto da variável global
     const isAdmin = (window.isAdminLoggedIn === true);
 
     if (isAdmin) list.classList.add('admin-mode');
     else list.classList.remove('admin-mode');
 
-    if (videoQueue.length === 0) {
+    if (!videoQueue || videoQueue.length === 0) {
         list.innerHTML = '<li class="empty-queue" style="text-align:center; padding:20px; color:#888;">Fila vazia.</li>';
         if(typeof updateAdminButtonsVisibility === 'function') updateAdminButtonsVisibility();
         return;
@@ -115,11 +118,17 @@ function renderQueue() {
             li.style.borderLeft = '3px solid #777';
         }
 
-        let vId = extractVideoId(video.videoUrl);
+        let vId = typeof extractVideoId === 'function' ? extractVideoId(video.videoUrl) : video.videoUrl.split('v=')[1]?.substring(0,11);
+        
+        // Escape seguro do HTML para evitar bugs com aspas duplas em títulos
+        const escapeTxt = typeof escapeHtml === 'function' ? escapeHtml : (t) => {
+            const div = document.createElement('div');
+            div.innerText = t;
+            return div.innerHTML;
+        };
+
         const displayTitle = video.title || `Vídeo (ID: ${vId})`;
         const thumbUrl = vId ? `https://img.youtube.com/vi/${vId}/mqdefault.jpg` : '';
-
-        // Se for admin, já deixa block. Se não, none.
         const displayStyle = isAdmin ? 'block' : 'none';
         
         const checkboxHtml = `
@@ -137,9 +146,9 @@ function renderQueue() {
             <div class="video-info-wrapper" style="display: flex; align-items: center; gap: 12px; flex: 1; overflow: hidden;">
                 <img src="${thumbUrl}" class="queue-thumb" alt="Capa">
                 <div class="video-info">
-                    <span class="video-title">${escapeHtml(displayTitle)}</span>
+                    <span class="video-title">${escapeTxt(displayTitle)}</span>
                     <div class="video-meta">
-                        <span class="video-added-by" style="color: #6c5ce7;">Por: ${escapeHtml(video.phone)}</span>
+                        <span class="video-added-by" style="color: #6c5ce7;">Por: ${escapeTxt(video.phone)}</span>
                     </div>
                 </div>
             </div>
@@ -152,36 +161,50 @@ function renderQueue() {
 }
 
 function checkCurrentVideo() {
-    if (videoQueue.length > 0) {
+    if (videoQueue && videoQueue.length > 0) {
         const currentVideo = videoQueue[0];
-        const queueVideoId = extractVideoId(currentVideo.videoUrl);
+        const queueVideoId = typeof extractVideoId === 'function' ? extractVideoId(currentVideo.videoUrl) : currentVideo.videoUrl.split('v=')[1]?.substring(0,11);
+        
         const u = document.getElementById('currentUser');
         if(u) u.textContent = currentVideo.phone;
+        
         const urlD = document.getElementById('currentVideoUrl');
         if(urlD) {
             urlD.textContent = currentVideo.title || 'Tocando...';
             urlD.style.display = 'block';
         }
+
         if (player && typeof player.loadVideoById === 'function') {
             let pid = null;
-            try { pid = player.getVideoData().video_id; } catch(e){}
-            if (pid !== queueVideoId && queueVideoId) {
+            let pState = null;
+            try { 
+                pid = player.getVideoData().video_id; 
+                pState = player.getPlayerState();
+            } catch(e){}
+            
+            // Força o play se for uma música diferente, OU se a música for a mesma mas o player estiver parado/terminado
+            if ((pid !== queueVideoId || pState === YT.PlayerState.ENDED || pState === YT.PlayerState.UNSTARTED || pState === YT.PlayerState.CUED) && queueVideoId) {
                 player.loadVideoById(queueVideoId);
-                if(typeof playedVideoHistory !== '') playedVideoHistory.add(queueVideoId);
+                if(typeof playedVideoHistory !== 'undefined') playedVideoHistory.add(queueVideoId);
             }
         }
     } else {
+        // === CORREÇÃO 1: PARA O PLAYER SE A FILA ESTIVER VAZIA ===
         const u = document.getElementById('currentUser');
         if(u) u.textContent = 'Nenhum vídeo';
         const urlD = document.getElementById('currentVideoUrl');
         if(urlD) urlD.style.display = 'none';
         lastVoteCount = 0; 
+
+        if (player && typeof player.stopVideo === 'function') {
+            player.stopVideo();
+        }
     }
 }
 
-// Agora verifica explicitamente se onlineUserCount <= 1 para liberar sem senha
+// === CORREÇÃO 2: VERIFICAÇÃO "ISSOLO" CORRIGIDA (undefined || <= 1) ===
 function handleRemoveVideo(id) {
-    const isSolo = (typeof onlineUserCount !== 'undefined' && onlineUserCount <= 1);
+    const isSolo = (typeof onlineUserCount === 'undefined' || onlineUserCount <= 1);
     
     if (window.isAdminLoggedIn || isSolo) {
         videoQueueRef.child(id).remove()
@@ -192,20 +215,23 @@ function handleRemoveVideo(id) {
     }
 }
 
-// === CORREÇÃO: Botão de Pular ===
 function handleSkipOrVote() {
-    // Verifica se é Admin OU se está Sozinho na sala
-    const isSolo = (typeof onlineUserCount !== 'undefined' && onlineUserCount <= 1);
+    // Corrige bug onde onlineUserCount undefined bloqueava o botão
+    const isSolo = (typeof onlineUserCount === 'undefined' || onlineUserCount <= 1);
 
     if (window.isAdminLoggedIn || isSolo) {
         // PULA DIRETO
-        if (videoQueue.length > 0) {
-            toggleLoading('skipVoteBtn', true); // Mostra loading
-            videoQueueRef.child(videoQueue[0].id).remove()
+        if (videoQueue && videoQueue.length > 0) {
+            if(typeof toggleLoading === 'function') toggleLoading('skipVoteBtn', true);
+            const idToRemove = videoQueue[0].id; // Salva o ID para não dar erro
+            
+            videoQueueRef.child(idToRemove).remove()
                 .then(() => {
-                    showNotification(window.isAdminLoggedIn ? 'Pulado pelo Admin!' : 'Pulado (Modo Solo)!', 'success');
+                    showNotification(window.isAdminLoggedIn ? 'Pulado pelo Admin!' : 'Pulado!', 'success');
                 })
-                .finally(() => toggleLoading('skipVoteBtn', false));
+                .finally(() => {
+                    if(typeof toggleLoading === 'function') toggleLoading('skipVoteBtn', false);
+                });
         } else {
             showNotification('Fila vazia.', 'info');
         }
@@ -215,10 +241,8 @@ function handleSkipOrVote() {
     }
 }
 
-// === Limpar Fila ===
-// Agora verifica explicitamente se onlineUserCount <= 1 para liberar sem senha
 function handleClearQueue() {
-    const isSolo = (typeof onlineUserCount !== 'undefined' && onlineUserCount <= 1);
+    const isSolo = (typeof onlineUserCount === 'undefined' || onlineUserCount <= 1);
 
     if (window.isAdminLoggedIn || isSolo) {
         if(confirm('Limpar toda a fila?')) {
@@ -226,7 +250,8 @@ function handleClearQueue() {
             showNotification('Fila limpa!', 'success');
         }
     } else {
-        document.getElementById('modal').style.display = 'flex';
+        const modal = document.getElementById('modal');
+        if(modal) modal.style.display = 'flex';
     }
 }
 
@@ -250,101 +275,116 @@ let userVoteId = sessionStorage.getItem('userVoteId') || ('user_' + Date.now());
 sessionStorage.setItem('userVoteId', userVoteId);
 
 function castVoteToSkip() {
-    if (videoQueue.length === 0 || onlineUserCount < 2) return showNotification('Não dá pra votar agora.', 'info');
+    if (!videoQueue || videoQueue.length === 0 || (typeof onlineUserCount !== 'undefined' && onlineUserCount < 2)) {
+        return showNotification('Não dá pra votar agora.', 'info');
+    }
     const votesRef = roomRef.child('currentSong/votes');
-    toggleLoading('skipVoteBtn', true);
+    if(typeof toggleLoading === 'function') toggleLoading('skipVoteBtn', true);
+    
     votesRef.child(userVoteId).set({
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         userName: currentSessionUser || 'Anônimo'
-    }).finally(() => toggleLoading('skipVoteBtn', false));
+    }).finally(() => {
+        if(typeof toggleLoading === 'function') toggleLoading('skipVoteBtn', false);
+    });
 }
 
-// === Função para Atualizar Votos Necessários ===
 function updateVotesNeeded() {
     const safeUserCount = (typeof onlineUserCount !== 'undefined' && onlineUserCount > 0) ? onlineUserCount : 1;
     let needed = Math.floor(safeUserCount / 2) + 1;
-    if (needed < 2) needed = 2; // Mínimo 2 para mais de 1 pessoa
+    if (needed < 2) needed = 2;
 
     const nEl = document.getElementById('votesNeeded');
     if (nEl) nEl.textContent = needed;
 }
 
-// === Lógica de Votação (50% + 1) ===
-roomRef.child('currentSong/votes').on('value', snap => {
-    const votes = snap.val() || {};
-    const count = Object.keys(votes).length;
-    
-    // Atualiza votos necessários sempre (caso o número de usuários tenha mudado)
-    updateVotesNeeded();
-    
-    const safeUserCount = (typeof onlineUserCount !== 'undefined' && onlineUserCount > 0) ? onlineUserCount : 1;
-    let needed = Math.floor(safeUserCount / 2) + 1;
-    if (needed < 2) needed = 2;
+if (typeof roomRef !== 'undefined') {
+    roomRef.child('currentSong/votes').on('value', snap => {
+        const votes = snap.val() || {};
+        const count = Object.keys(votes).length;
+        
+        updateVotesNeeded();
+        
+        const safeUserCount = (typeof onlineUserCount !== 'undefined' && onlineUserCount > 0) ? onlineUserCount : 1;
+        let needed = Math.floor(safeUserCount / 2) + 1;
+        if (needed < 2) needed = 2;
 
-    const cEl = document.getElementById('voteCount');
-    if(cEl) cEl.textContent = count;
-    
-    if (count > lastVoteCount && count > 0 && safeUserCount > 1) {
-        if (count < needed) showNotification(`Voto registrado (${count}/${needed})`, 'info');
-    }
-    lastVoteCount = count;
-    
-    const btn = document.getElementById('skipVoteBtn');
-    const txt = document.getElementById('skipVoteBtnText');
-    
-    if (btn) {
-        if (votes[userVoteId]) {
-            btn.disabled = true;
-            btn.classList.add('voted');
-            if(txt) txt.textContent = 'Você Votou';
-        } else {
-            btn.disabled = false;
-            btn.classList.remove('voted');
-            // Verifica Admin ou Modo Solo para definir texto
-            const isSolo = safeUserCount <= 1;
-            if(txt && !window.isAdminLoggedIn && !isSolo) txt.textContent = 'Votar para Pular';
+        const cEl = document.getElementById('voteCount');
+        if(cEl) cEl.textContent = count;
+        
+        if (count > lastVoteCount && count > 0 && safeUserCount > 1) {
+            if (count < needed) showNotification(`Voto registrado (${count}/${needed})`, 'info');
         }
-    }
-    
-    // Executa o Pulo se atingiu a meta
-    if (count >= needed && videoQueue.length > 0) {
-        videoQueueRef.child(videoQueue[0].id).remove().then(() => {
-            roomRef.child('currentSong/votes').remove();
-            showNotification('Pulado por votação!', 'success');
-            lastVoteCount = 0;
-        });
-    }
-});
+        lastVoteCount = count;
+        
+        const btn = document.getElementById('skipVoteBtn');
+        const txt = document.getElementById('skipVoteBtnText');
+        
+        if (btn) {
+            if (votes[userVoteId]) {
+                btn.disabled = true;
+                btn.classList.add('voted');
+                if(txt) txt.textContent = 'Você Votou';
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('voted');
+                const isSolo = (typeof onlineUserCount === 'undefined' || onlineUserCount <= 1);
+                if(txt && !window.isAdminLoggedIn && !isSolo) txt.textContent = 'Votar para Pular';
+            }
+        }
+        
+        if (count >= needed && videoQueue && videoQueue.length > 0) {
+            videoQueueRef.child(videoQueue[0].id).remove().then(() => {
+                roomRef.child('currentSong/votes').remove();
+                showNotification('Pulado por votação!', 'success');
+                lastVoteCount = 0;
+            });
+        }
+    });
+}
 
-videoQueueRef.on('child_removed', () => {
-    roomRef.child('currentSong/votes').remove();
-    lastVoteCount = 0;
-});
+if (typeof videoQueueRef !== 'undefined') {
+    videoQueueRef.on('child_removed', () => {
+        if (typeof roomRef !== 'undefined') {
+            roomRef.child('currentSong/votes').remove();
+        }
+        lastVoteCount = 0;
+    });
+}
 
 let videoToRemoveId = null;
-function openRemoveModalWithId(id) { videoToRemoveId = id; document.getElementById('removeModal').style.display = 'flex'; }
-function closeRemoveModal() { document.getElementById('removeModal').style.display = 'none'; videoToRemoveId = null; }
+function openRemoveModalWithId(id) { videoToRemoveId = id; const m = document.getElementById('removeModal'); if(m) m.style.display = 'flex'; }
+function closeRemoveModal() { const m = document.getElementById('removeModal'); if(m) m.style.display = 'none'; videoToRemoveId = null; }
 
 function removeVideo() { 
-    const e = document.getElementById('removeAdminName').value;
-    const p = document.getElementById('removePassword').value;
-    if(!e || !p) return showNotification('Preencha', 'error');
-    toggleLoading('removeVideoBtn', true);
+    const e = document.getElementById('removeAdminName')?.value;
+    const p = document.getElementById('removePassword')?.value;
+    if(!e || !p) return showNotification('Preencha os campos', 'error');
+    
+    if(typeof toggleLoading === 'function') toggleLoading('removeVideoBtn', true);
+    
     firebase.auth().signInWithEmailAndPassword(e,p).then(()=>{
-        if(videoToRemoveId) videoQueueRef.child(videoToRemoveId).remove();
+        if(videoToRemoveId && typeof videoQueueRef !== 'undefined') videoQueueRef.child(videoToRemoveId).remove();
         closeRemoveModal();
         showNotification('Removido', 'success');
-    }).catch(()=>showNotification('Senha errada', 'error')).finally(()=>toggleLoading('removeVideoBtn', false));
+    }).catch(()=>showNotification('Senha errada', 'error')).finally(()=>{
+        if(typeof toggleLoading === 'function') toggleLoading('removeVideoBtn', false);
+    });
 }
 
 function clearQueue() {
-    const e = document.getElementById('adminName').value;
-    const p = document.getElementById('clearPassword').value;
-    if(!e || !p) return showNotification('Preencha', 'error');
-    toggleLoading('clearQueueBtn', true);
+    const e = document.getElementById('adminName')?.value;
+    const p = document.getElementById('clearPassword')?.value;
+    if(!e || !p) return showNotification('Preencha os campos', 'error');
+    
+    if(typeof toggleLoading === 'function') toggleLoading('clearQueueBtn', true);
+    
     firebase.auth().signInWithEmailAndPassword(e,p).then(()=>{
-        videoQueueRef.remove();
-        document.getElementById('modal').style.display = 'none';
+        if (typeof videoQueueRef !== 'undefined') videoQueueRef.remove();
+        const m = document.getElementById('modal');
+        if(m) m.style.display = 'none';
         showNotification('Fila limpa', 'success');
-    }).catch(()=>showNotification('Senha errada', 'error')).finally(()=>toggleLoading('clearQueueBtn', false));
+    }).catch(()=>showNotification('Senha errada', 'error')).finally(()=>{
+        if(typeof toggleLoading === 'function') toggleLoading('clearQueueBtn', false);
+    });
 }
