@@ -240,7 +240,7 @@ function saveEdit(key) {
     if (!newText) { alert("A mensagem não pode ficar vazia."); return; }
     
     chatMessagesRef.child(key).update({ text: newText, isEdited: true })
-        .catch(err => { alert("Erro ao salvar."); });
+        .catch(err => { alert("Erro ao salvar mensagem."); });
 }
 
 function setReplyContext(id, user, text) {

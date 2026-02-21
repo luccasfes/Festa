@@ -557,9 +557,9 @@
                     console.warn("⚠️ O carregamento demorou demais. Forçando entrada.");
                     
                     if (typeof firebase === 'undefined') {
-                        alert("Erro Crítico: O Firebase não carregou. Verifique sua internet ou o arquivo config.js");
+                        alert("Erro de Conexão: Falha ao comunicar com o servidor. Por favor, verifique sua conexão com a internet.");
                     } else if (typeof checkRoomProtection === 'undefined') {
-                        alert("Erro: O arquivo 'js/session.js' não foi encontrado ou tem erro. Verifique a pasta 'js'.");
+                        alert("Erro de Sistema: Falha ao carregar os módulos de segurança da sala. Atualize a página e tente novamente.");
                     }
                     
                     loader.style.display = 'none';
