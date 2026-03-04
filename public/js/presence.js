@@ -55,7 +55,6 @@ function determineAndApplyPlayerMode() {
     }
 
    // Troca de modos
-
     if (targetMode === "ADMIN") {
         forceAdminPlayer();
     } else if (targetMode === "SOLO") {
@@ -69,9 +68,8 @@ function determineAndApplyPlayerMode() {
 // 2. LISTENERS FIREBASE (PRESENÇA, ESTADO DO VÍDEO)
 // ====================================================================
 
-// Listener do estado do vídeo (CORRIGIDO PARA playerState)
+// Listener do estado do vídeo
 if (typeof firebase !== "undefined" && window.roomId) {
-    // Aponta para 'playerState', onde o player.js realmente salva os dados
     window.currentVideoRef = firebase.database().ref(`rooms/${window.roomId}/playerState`);
 
     currentVideoRef.on("value", (snap) => {
@@ -88,7 +86,8 @@ if (typeof presenceRef !== "undefined") {
     presenceRef.on("value", (snap) => {
         const users = snap.val();
         window.currentOnlineUsers = users || {}; // Guarda a lista globalmente
-        // 2. Força a atualização do select em tempo real
+        
+        // Força a atualização do select em tempo real
         if (typeof populateReportUserDropdown === 'function') {
             populateReportUserDropdown();
         }
@@ -100,6 +99,8 @@ if (typeof presenceRef !== "undefined") {
 
         const elB = document.getElementById("onlineCount");
         if (elB) elB.textContent = onlineUserCount;
+
+        renderUserListDropdown(users);
 
         // Broadcaster
         if (users && onlineUserCount > 0) {
@@ -159,7 +160,7 @@ if (typeof roomRef !== "undefined") {
 }
 
 // ====================================================================
-// 3. LOGIN ADMIN (VIGIA)
+// 3. LOGIN ADMIN E INICIALIZAÇÃO
 // ====================================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -193,8 +194,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+// Inicialização de segurança
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+        if (typeof presenceRef !== "undefined") {
+            presenceRef.once("value", (snap) => {
+                onlineUserCount = snap.numChildren();
+                determineAndApplyPlayerMode();
+            });
+        }
+    }, 1000);
+});
+
 // ====================================================================
-// 4. VISIBILIDADE DE BOTÕES
+// 4. VISIBILIDADE DE BOTÕES E PLAYER
 // ====================================================================
 
 function updateAdminButtonsVisibility() {
@@ -239,20 +252,13 @@ function updateAdminButtonsVisibility() {
     }
 }
 
-// ====================================================================
-// 5. MODO DO PLAYER + SINCRONIZAÇÃO
-// ====================================================================
-
 function getCurrentVideoIdAndState() {
-    // 1. Prioridade: Estado Global (Firebase) - Essencial para Sincronia
     if (window.currentVideoState && window.currentVideoState.videoId) {
         return {
             videoId: window.currentVideoState.videoId,
             currentTime: window.currentVideoState.currentTime || 0,
         };
     }
-
-    // 2. Fallback: Player atual (se existir)
     if (typeof player !== "undefined" && player?.getVideoData) {
         try {
             return {
@@ -261,20 +267,14 @@ function getCurrentVideoIdAndState() {
             };
         } catch {}
     }
-
-    // 3. Fallback: Fila Local
     if (Array.isArray(videoQueue) && videoQueue.length > 0) {
         const url = videoQueue[0].videoUrl;
         const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/)([^#&?]*))/);
-        if (match) {
-            return { videoId: match[1], currentTime: 0 };
-        }
+        if (match) return { videoId: match[1], currentTime: 0 };
     }
-
     return { videoId: null, currentTime: 0 };
 }
 
-// --- MODOS ---
 function forceAdminPlayer() {
     if (!window.isAdminLoggedIn) return;
     recreatePlayerSafe(1);
@@ -290,15 +290,10 @@ function forceNormalPlayer() {
     recreatePlayerSafe(0);
 }
 
-// ====================================================================
-// 6. RECRIAÇÃO SEGURA DO PLAYER
-// ====================================================================
-
 function recreatePlayerSafe(controlsValue) {
     const data = getCurrentVideoIdAndState();
 
     if (!data.videoId) {
-        // Se não achou vídeo, tenta forçar o carregamento da fila se ela estiver vazia
         if ((!videoQueue || videoQueue.length === 0) && typeof loadVideoQueue === 'function') {
             loadVideoQueue();
         }
@@ -316,26 +311,23 @@ function recreatePlayerSafe(controlsValue) {
     setTimeout(() => {
         if (!YT?.Player) return;
 
-
         player = new YT.Player("videoPlayer", {
             height: "100%",
             width: "100%",
             videoId: data.videoId,
             playerVars: {
-    autoplay: 1,
-    controls: controlsValue,
-    disablekb: controlsValue === 0 ? 1 : 0,
-    rel: 0,
-    fs: 1,
-    iv_load_policy: 3, // Esconde anotações/cards de inscrição
-    modestbranding: 1, // Tenta esconder o logo do YouTube na barra
-    start: Math.floor(data.currentTime),
-},
+                autoplay: 1,
+                controls: controlsValue,
+                disablekb: controlsValue === 0 ? 1 : 0,
+                rel: 0,
+                fs: 1,
+                iv_load_policy: 3, 
+                modestbranding: 1, 
+                start: Math.floor(data.currentTime),
+            },
             events: {
                 onReady: (ev) => {
-                    // CORREÇÃO 3: Garante o carregamento da fila quando o player volta
                     if (typeof loadVideoQueue === 'function') loadVideoQueue();
-                    
                     ev.target.playVideo();
                     if (controlsValue === 0) {
                         const iframe = ev.target.getIframe();
@@ -352,14 +344,53 @@ function recreatePlayerSafe(controlsValue) {
     }, 150);
 }
 
-// Inicialização de segurança
-document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(() => {
-        if (typeof presenceRef !== "undefined") {
-            presenceRef.once("value", (snap) => {
-                onlineUserCount = snap.numChildren();
-                determineAndApplyPlayerMode();
-            });
-        }
-    }, 1000);
+
+// 5. FUNÇÕES DO MODAL DE USUÁRIOS ONLINE
+function openUsersModal() {
+    document.getElementById('usersModal').style.display = 'flex';
+}
+
+function closeUsersModal() {
+    document.getElementById('usersModal').style.display = 'none';
+}
+
+function renderUserListDropdown(usersObj) {
+    const container = document.getElementById('userListContent');
+    if (!container) return;
+
+    container.innerHTML = ''; 
+    
+    if (!usersObj) return;
+
+    const users = Object.values(usersObj);
+    
+    if (users.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #aaa;">Ninguém online.</p>';
+        return;
+    }
+
+    users.forEach((user, index) => {
+        const initial = (user.name || '?').charAt(0).toUpperCase();
+        const color = ['#6366f1', '#ec4899', '#10b981', '#f59e0b'][index % 4];
+        const adminBadge = user.isAdmin ? '<i class="fas fa-crown" style="color:#f59e0b; font-size: 0.9rem; margin-left: 8px;" title="Dono da Sala"></i>' : '';
+
+        const div = document.createElement('div');
+        div.className = 'user-list-item';
+        
+        const safeName = user.name ? user.name.replace(/</g, "&lt;").replace(/>/g, "&gt;") : 'Visitante';
+
+        div.innerHTML = `
+            <div class="user-list-avatar" style="background:${color}">${initial}</div>
+            <div class="user-list-name">${safeName}${adminBadge}</div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// Fecha o modal ao clicar fora dele
+window.addEventListener('click', (event) => {
+    const usersModal = document.getElementById('usersModal');
+    if (event.target === usersModal) {
+        closeUsersModal();
+    }
 });

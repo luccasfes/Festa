@@ -98,7 +98,7 @@ document.addEventListener('keydown', function(event) {
 });
 
 // ====================================================================
-// LÓGICA DO SISTEMA DE REPORT (NOVO - COM SUPORTE TEMPO REAL)
+// LÓGICA DO SISTEMA DE REPORT 
 // ====================================================================
 
 function openReportModal() {

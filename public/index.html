@@ -8,29 +8,33 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a237e">
     <title>FlowLink</title>
-    <meta name="description" content="Crie sua sala de música colaborativa no FlowLink. Assista vídeos do YouTube em sincronia com seus amigos, onde quer que estejam.">
+    <meta name="description"
+        content="Crie sua sala de música colaborativa no FlowLink. Assista vídeos do YouTube em sincronia com seus amigos, onde quer que estejam.">
     <meta name="keywords" content="FlowLink, música, youtube sync, watch together, festa online, player colaborativo">
     <meta name="author" content="FlowLink">
 
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://flowlink-7fd57.web.app/">
     <meta property="og:title" content="FlowLink - Sincronize a Vibe 🎵">
-    <meta property="og:description" content="A festa não para! Entre na sala, adicione vídeos e ouça música com a galera em tempo real.">
+    <meta property="og:description"
+        content="A festa não para! Entre na sala, adicione vídeos e ouça música com a galera em tempo real.">
     <meta property="og:image" content="https://flowlink-7fd57.web.app/assets/icon-512.png">
 
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://flowlink-7fd57.web.app/">
     <meta property="twitter:title" content="FlowLink - Sua Sala de Música">
-    <meta property="twitter:description" content="Venha ouvir música com a gente! Player sincronizado para festas virtuais.">
+    <meta property="twitter:description"
+        content="Venha ouvir música com a gente! Player sincronizado para festas virtuais.">
     <meta property="twitter:image" content="https://flowlink-7fd57.web.app/assets/icon-512.png">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    
+
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.18.0/index.js"></script>
 </head>
 
@@ -59,7 +63,8 @@
             </div>
 
             <div class="header-right">
-                <div class="presence-indicator">
+                <div class="presence-indicator" onclick="openUsersModal()" style="cursor: pointer;"
+                    title="Ver quem está na sala">
                     <i class="fas fa-users"></i>
                     <span id="userCount">0</span> online
                 </div>
@@ -97,7 +102,8 @@
                     <div id="videoPlayer"></div>
                     <div id="player-mask"></div>
                     <div class="player-overlay-controls" aria-hidden="false">
-                        <button id="overlayPlayBtn" title="Play/Pause"><i id="overlayPlayIcon" class="fas fa-play"></i></button>
+                        <button id="overlayPlayBtn" title="Play/Pause"><i id="overlayPlayIcon"
+                                class="fas fa-play"></i></button>
                         <label for="overlayVolume" style="color:var(--text-secondary);font-size:0.9rem;">Vol</label>
                         <input id="overlayVolume" type="range" min="0" max="100" step="1" value="50">
                         <button id="overlayFullscreenBtn" title="Tela cheia"><i class="fas fa-expand"></i></button>
@@ -121,10 +127,12 @@
                     <button class="btn danger clear-queue-button" onclick="handleClearQueue()" style="display:none;">
                         <i class="fas fa-trash-alt"></i> Limpar Fila
                     </button>
-                    <button class="btn bulk-remove-button" onclick="removeSelectedVideos()" id="bulkRemoveBtn" style="display: none;">
+                    <button class="btn bulk-remove-button" onclick="removeSelectedVideos()" id="bulkRemoveBtn"
+                        style="display: none;">
                         <i class="fas fa-eraser"></i> Remover Selecionados
                     </button>
-                    <button id="btn-auto-sugestao" class="btn-sugestao" onclick="openSuggestionModal()" style="display:none;">
+                    <button id="btn-auto-sugestao" class="btn-sugestao" onclick="openSuggestionModal()"
+                        style="display:none;">
                         <i class="fas fa-magic"></i> Sugerir Música
                     </button>
                 </h2>
@@ -144,7 +152,8 @@
                     </div>
                     <div class="user-info">
                         <span id="userNameDisplay">Visitante</span>
-                        <button class="btn small secondary" onclick="openEditNameModal()" style="margin-left: 10px;" title="Alterar seu nome">
+                        <button class="btn small secondary" onclick="openEditNameModal()" style="margin-left: 10px;"
+                            title="Alterar seu nome">
                             <i class="fas fa-edit"></i>
                         </button>
                     </div>
@@ -156,14 +165,16 @@
                     </div>
                 </div>
 
-                <div id="newMessagesIndicator" class="new-messages-indicator" style="display: none; position: sticky; bottom: 10px; margin: 10px auto; text-align: center;">
+                <div id="newMessagesIndicator" class="new-messages-indicator"
+                    style="display: none; position: sticky; bottom: 10px; margin: 10px auto; text-align: center;">
                     <button class="btn small primary" onclick="scrollToBottom()">
                         <span id="newMessagesCount">0</span> nova(s) mensagem(ns) <i class="fas fa-arrow-down"></i>
                     </button>
                 </div>
 
                 <div class="typing-indicator" id="typingIndicator">
-                    <span id="typingUser"></span> está digitando<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
+                    <span id="typingUser"></span> está digitando<span
+                        class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
                 </div>
 
                 <div class="chat-actions-bar" id="chatActionsBar" style="display: none;">
@@ -179,8 +190,9 @@
                 <div class="chat-input-group">
                     <button type="button" class="btn small" id="emojiBtn" title="Emojis">
                         <i class="far fa-smile"></i>
-                    </button> 
-                    <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." onkeypress="handleChatInput(event)">
+                    </button>
+                    <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..."
+                        onkeypress="handleChatInput(event)">
                     <button class="btn primary" onclick="sendChatMessage()" title="Enviar">
                         <i class="fas fa-paper-plane"></i>
                     </button>
@@ -209,11 +221,14 @@
         </div>
     </div>
 
-    <div id="editNameModal" class="modal" style="display: none; z-index: 10000; align-items: center; justify-content: center;">
-        <div class="modal-content" style="background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 350px; text-align: center;">
+    <div id="editNameModal" class="modal"
+        style="display: none; z-index: 10000; align-items: center; justify-content: center;">
+        <div class="modal-content"
+            style="background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 350px; text-align: center;">
             <h3 style="margin-top: 0; color: white;">Quem é você?</h3>
             <div class="input-group">
-                <input type="text" id="editNameInput" placeholder="Seu apelido..." maxlength="15" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: rgba(0,0,0,0.3); color: white; text-align: center; font-size: 1.1rem; margin-bottom: 20px;">
+                <input type="text" id="editNameInput" placeholder="Seu apelido..." maxlength="15"
+                    style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: rgba(0,0,0,0.3); color: white; text-align: center; font-size: 1.1rem; margin-bottom: 20px;">
             </div>
             <button class="btn primary" onclick="saveUserName()" style="width: 100%; padding: 12px; font-weight: bold;">
                 Salvar e Entrar
@@ -237,13 +252,14 @@
             <div class="modal-body-compact">
                 <div class="form-group-compact">
                     <div class="form-group-compact">
-                    <div class="input-wrapper-compact">
-                        <i class="fas fa-user-times input-icon"></i>
-                        <select id="reportUser" style="width: 100%; padding: 12px 12px 12px 40px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; outline: none; cursor: pointer;">
-                            <option value="" disabled selected>Selecione o usuário...</option>
-                        </select>
+                        <div class="input-wrapper-compact">
+                            <i class="fas fa-user-times input-icon"></i>
+                            <select id="reportUser"
+                                style="width: 100%; padding: 12px 12px 12px 40px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; outline: none; cursor: pointer;">
+                                <option value="" disabled selected>Selecione o usuário...</option>
+                            </select>
                         </div>
-                </div>
+                    </div>
                 </div>
 
                 <div class="form-group-compact">
@@ -270,7 +286,8 @@
 
                 <div class="form-group-compact">
                     <div class="textarea-wrapper-compact">
-                        <textarea id="reportReason" maxlength="500" oninput="updateCharCount(this)" placeholder="Detalhes adicionais (opcional)..."></textarea>
+                        <textarea id="reportReason" maxlength="500" oninput="updateCharCount(this)"
+                            placeholder="Detalhes adicionais (opcional)..."></textarea>
                         <span class="char-count-mini"><span id="charCountDisplay">0</span>/500</span>
                     </div>
                 </div>
@@ -306,7 +323,8 @@
             <span class="close-button" onclick="closeRemoveModal()">×</span>
             <h3>Remover Vídeo</h3>
             <div class="input-group"><input type="email" id="removeAdminName" placeholder="E-mail"></div>
-            <div class="input-group password-group"><input type="password" id="removePassword" placeholder="Senha"></div>
+            <div class="input-group password-group"><input type="password" id="removePassword" placeholder="Senha">
+            </div>
             <button class="btn primary" onclick="removeVideo()" id="removeVideoBtn">Confirmar</button>
         </div>
     </div>
@@ -363,61 +381,74 @@
     </div>
 
     <div id="suggestionModal" class="modal suggestion-modal">
-    <div class="modal-content">
-        <span class="close-button" onclick="closeSuggestionModal()">×</span>
-        <h3><i class="fas fa-magic"></i> Sugestão Inteligente</h3>
-        
-        <div class="suggestion-tabs">
-            <button class="suggestion-tab active" onclick="switchTab('genre')"><i class="fas fa-music"></i> Por Gênero</button>
-            <button class="suggestion-tab" onclick="switchTab('similar')"><i class="fas fa-random"></i> Similares</button>
-            <button class="suggestion-tab" onclick="switchTab('trending')"><i class="fas fa-chart-line"></i> Tendências</button>
-        </div>
+        <div class="modal-content">
+            <span class="close-button" onclick="closeSuggestionModal()">×</span>
+            <h3><i class="fas fa-magic"></i> Sugestão Inteligente</h3>
 
-        <div id="genreContent" class="tab-content active">
-            <div class="generos-container">
-                <button class="genero-btn" onclick="selectGenre('sertanejo')" data-genre="sertanejo"><i class="fas fa-guitar"></i> Sertanejo</button>
-                <button class="genero-btn" onclick="selectGenre('funk')" data-genre="funk"><i class="fas fa-fire"></i> Funk</button>
-                <button class="genero-btn" onclick="selectGenre('pop')" data-genre="pop"><i class="fas fa-star"></i> Pop</button>
-                <button class="genero-btn" onclick="selectGenre('rock')" data-genre="rock"><i class="fas fa-guitar"></i> Rock</button>
-                <button class="genero-btn" onclick="selectGenre('electronic')" data-genre="electronic"><i class="fas fa-bolt"></i> Eletrônica</button>
-                <button class="genero-btn" onclick="selectGenre('rap')" data-genre="rap"><i class="fas fa-microphone"></i> Rap/Hip-Hop</button>
-                <button class="genero-btn" onclick="selectGenre('reggaeton')" data-genre="reggaeton"><i class="fas fa-fire"></i> Reggaeton</button>
-                <button class="genero-btn" onclick="selectGenre('pagode')" data-genre="pagode"><i class="fas fa-drum"></i> Pagode</button>
+            <div class="suggestion-tabs">
+                <button class="suggestion-tab active" onclick="switchTab('genre')"><i class="fas fa-music"></i> Por
+                    Gênero</button>
+                <button class="suggestion-tab" onclick="switchTab('similar')"><i class="fas fa-random"></i>
+                    Similares</button>
+                <button class="suggestion-tab" onclick="switchTab('trending')"><i class="fas fa-chart-line"></i>
+                    Tendências</button>
             </div>
-        </div>
 
-        <div id="similarContent" class="tab-content" style="display:none; text-align:center; padding:20px;">
-            <p>Sugestões baseadas no que está tocando agora.</p>
-        </div>
-
-        <div id="trendingContent" class="tab-content" style="display:none; text-align:center; padding:20px;">
-            <p>As músicas mais tocadas do momento no Brasil.</p>
-        </div>
-
-        <div class="autoplay-controls">
-            <div class="autoplay-option">
-                <span>Ligar Auto DJ</span>
-                <label class="switch">
-                    <input type="checkbox" id="autoAddToggle" onchange="toggleAutoDj(event)">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="autoplay-option">
-                <span>Manter na fila:</span>
-                <div class="autoplay-count">
-                    <button class="count-btn" onclick="changeAutoCount(-1)">-</button>
-                    <span class="count-display" id="autoCount">1</span>
-                    <button class="count-btn" onclick="changeAutoCount(1)">+</button>
+            <div id="genreContent" class="tab-content active">
+                <div class="generos-container">
+                    <button class="genero-btn" onclick="selectGenre('sertanejo')" data-genre="sertanejo"><i
+                            class="fas fa-guitar"></i> Sertanejo</button>
+                    <button class="genero-btn" onclick="selectGenre('funk')" data-genre="funk"><i
+                            class="fas fa-fire"></i> Funk</button>
+                    <button class="genero-btn" onclick="selectGenre('pop')" data-genre="pop"><i class="fas fa-star"></i>
+                        Pop</button>
+                    <button class="genero-btn" onclick="selectGenre('rock')" data-genre="rock"><i
+                            class="fas fa-guitar"></i> Rock</button>
+                    <button class="genero-btn" onclick="selectGenre('electronic')" data-genre="electronic"><i
+                            class="fas fa-bolt"></i> Eletrônica</button>
+                    <button class="genero-btn" onclick="selectGenre('rap')" data-genre="rap"><i
+                            class="fas fa-microphone"></i> Rap/Hip-Hop</button>
+                    <button class="genero-btn" onclick="selectGenre('reggaeton')" data-genre="reggaeton"><i
+                            class="fas fa-fire"></i> Reggaeton</button>
+                    <button class="genero-btn" onclick="selectGenre('pagode')" data-genre="pagode"><i
+                            class="fas fa-drum"></i> Pagode</button>
                 </div>
             </div>
-        </div>
 
-        <div class="suggestion-actions">
-            <button class="btn btn-now" onclick="suggestNow()"><i class="fas fa-plus-circle"></i> Adicionar Agora</button>
-            <button class="btn btn-auto" onclick="toggleAutoDj(event)"><i class="fas fa-play-circle"></i> Auto (Ligar/Desligar)</button>
+            <div id="similarContent" class="tab-content" style="display:none; text-align:center; padding:20px;">
+                <p>Sugestões baseadas no que está tocando agora.</p>
+            </div>
+
+            <div id="trendingContent" class="tab-content" style="display:none; text-align:center; padding:20px;">
+                <p>As músicas mais tocadas do momento no Brasil.</p>
+            </div>
+
+            <div class="autoplay-controls">
+                <div class="autoplay-option">
+                    <span>Ligar Auto DJ</span>
+                    <label class="switch">
+                        <input type="checkbox" id="autoAddToggle" onchange="toggleAutoDj(event)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="autoplay-option">
+                    <span>Manter na fila:</span>
+                    <div class="autoplay-count">
+                        <button class="count-btn" onclick="changeAutoCount(-1)">-</button>
+                        <span class="count-display" id="autoCount">1</span>
+                        <button class="count-btn" onclick="changeAutoCount(1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="suggestion-actions">
+                <button class="btn btn-now" onclick="suggestNow()"><i class="fas fa-plus-circle"></i> Adicionar
+                    Agora</button>
+                <button class="btn btn-auto" onclick="toggleAutoDj(event)"><i class="fas fa-play-circle"></i> Auto
+                    (Ligar/Desligar)</button>
+            </div>
         </div>
     </div>
-</div>
 
     <div id="themeModal" class="modal" style="display:none; opacity:0;">
         <div class="modal-content" style="max-width: 450px;">
@@ -427,11 +458,13 @@
             </div>
             <div class="theme-grid">
                 <div class="theme-btn" onclick="applyTheme('default')" id="theme-btn-default">
-                    <div class="theme-preview" style="background: linear-gradient(135deg, #4e54c8 0%, #1a1a2e 100%);"></div>
+                    <div class="theme-preview" style="background: linear-gradient(135deg, #4e54c8 0%, #1a1a2e 100%);">
+                    </div>
                     <span>Padrão</span> <small>Clássico</small>
                 </div>
                 <div class="theme-btn" onclick="applyTheme('pink')" id="theme-btn-pink">
-                    <div class="theme-preview" style="background: linear-gradient(135deg, #ff007f 0%, #2d0a1e 100%);"></div>
+                    <div class="theme-preview" style="background: linear-gradient(135deg, #ff007f 0%, #2d0a1e 100%);">
+                    </div>
                     <span>Pink</span> <small>Vibrante</small>
                 </div>
                 <div class="theme-btn" onclick="applyTheme('light')" id="theme-btn-light">
@@ -444,83 +477,108 @@
                 </div>
             </div>
             <div style="margin-top:20px; border-top:1px solid #ffffff20; padding-top:10px;">
-                <button onclick="resetToDefault()" style="background:none; border:none; color:#aaa; cursor:pointer;">Redefinir</button>
+                <button onclick="resetToDefault()"
+                    style="background:none; border:none; color:#aaa; cursor:pointer;">Redefinir</button>
             </div>
         </div>
     </div>
 
-    <div id="panelModal" class="modal admin-panel-modal">
-    <div class="modal-content" style="max-height: 90vh; display: flex; flex-direction: column;">
-        <span class="close-button" onclick="closePanelModal()">×</span>
-
-        <div class="admin-panel-header">
-            <h3><i class="fas fa-user-shield"></i> Painel Admin - FlowLink</h3>
+    <div id="usersModal" class="modal" style="display: none; align-items: center; justify-content: center; z-index: 10000;">
+    <div class="modal-content" style="max-width: 400px; padding: 25px; background: #1a1a2e;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 1.3rem; color: white;"><i class="fas fa-users" style="color: var(--accent-color);"></i> Usuários na Sala</h3>
+            <span class="close-button" onclick="closeUsersModal()" style="position: static; margin: 0; padding: 0; background: none;">×</span>
         </div>
-
-        <div class="admin-panel-body" style="flex: 1; overflow-y: auto; padding: 15px;">
-
-            <div id="adminRoomsView">
-                
-                <div class="admin-header-row">
-                    
-                    <h4><i class="fas fa-server"></i> Salas Ativas</h4>
-
-                    <div class="admin-btn-group">
-                        
-                        <button class="btn small secondary" onclick="loadAdminPanelRooms()" title="Atualizar lista">
-                            <i class="fas fa-sync-alt"></i> Atualizar
-                        </button>
-                        
-                        <a href="admin.html" target="_blank" class="btn small secondary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;" title="Abrir Painel Completo">
-                            <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> Abrir Admin
-                        </a>
-                        
-                        <button class="btn small warning" onclick="pruneEmptyRooms()" title="Apagar apenas salas vazias" style="background:#ff9800; color:white;">
-                            <i class="fas fa-broom"></i> Limpar Salas Vazias
-                        </button>
-
-                    </div>
-                </div>
-
-                <div id="adminRoomLoader" class="loading-yt" style="display: none; padding: 40px 0;">
-                    Carregando salas...
-                </div>
-                <div id="adminRoomList" class="admin-room-list"></div>
+        <div id="userListContent" style="max-height: 60vh; overflow-y: auto; text-align: left; padding-right: 5px;">
             </div>
-
-            <div id="adminUsersView" style="display:none; flex-direction: column; height: 100%;">
-                
-                <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
-                    <button class="btn small secondary" onclick="backToRooms()" style="display: inline-flex; align-items: center; gap: 5px;">
-                        <i class="fas fa-arrow-left"></i> Voltar
-                    </button>
-                    <div>
-                        <h4 id="adminUsersRoomTitle" style="margin:0; color: white;">Nome da Sala</h4>
-                        <span id="adminUsersRoomId" style="font-size: 0.8rem; color: #aaa; font-family: monospace;">ID: ...</span>
-                    </div>
-                </div>
-
-                <div id="adminUsersListLoader" style="display:none; text-align:center; padding:20px; color:#aaa;">
-                    <i class="fas fa-spinner fa-spin"></i> Carregando usuários...
-                </div>
-                
-                <div id="adminUsersList" style="flex: 1; overflow-y: auto;"></div>
-            </div>
-
-        </div>
     </div>
 </div>
 
-    <div id="roomPasswordModal" class="modal" style="display: none; background: rgba(0,0,0,0.98); z-index: 9999; align-items: center; justify-content: center;">
-        <div class="modal-content" style="border: 1px solid var(--accent-color); box-shadow: 0 0 50px rgba(0, 210, 255, 0.3); max-width: 400px; text-align: center; position: relative;">
+    <div id="panelModal" class="modal admin-panel-modal">
+        <div class="modal-content" style="max-height: 90vh; display: flex; flex-direction: column;">
+            <span class="close-button" onclick="closePanelModal()">×</span>
+
+            <div class="admin-panel-header">
+                <h3><i class="fas fa-user-shield"></i> Painel Admin - FlowLink</h3>
+            </div>
+
+            <div class="admin-panel-body" style="flex: 1; overflow-y: auto; padding: 15px;">
+
+                <div id="adminRoomsView">
+
+                    <div class="admin-header-row">
+
+                        <h4><i class="fas fa-server"></i> Salas Ativas</h4>
+
+                        <div class="admin-btn-group">
+
+                            <button class="btn small secondary" onclick="loadAdminPanelRooms()" title="Atualizar lista">
+                                <i class="fas fa-sync-alt"></i> Atualizar
+                            </button>
+
+                            <a href="admin.html" target="_blank" class="btn small secondary"
+                                style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;"
+                                title="Abrir Painel Completo">
+                                <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> Abrir Admin
+                            </a>
+
+                            <button class="btn small warning" onclick="pruneEmptyRooms()"
+                                title="Apagar apenas salas vazias" style="background:#ff9800; color:white;">
+                                <i class="fas fa-broom"></i> Limpar Salas Vazias
+                            </button>
+
+                        </div>
+                    </div>
+
+                    <div id="adminRoomLoader" class="loading-yt" style="display: none; padding: 40px 0;">
+                        Carregando salas...
+                    </div>
+                    <div id="adminRoomList" class="admin-room-list"></div>
+                </div>
+
+                <div id="adminUsersView" style="display:none; flex-direction: column; height: 100%;">
+
+                    <div
+                        style="display:flex; align-items:center; gap:15px; margin-bottom:20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                        <button class="btn small secondary" onclick="backToRooms()"
+                            style="display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-arrow-left"></i> Voltar
+                        </button>
+                        <div>
+                            <h4 id="adminUsersRoomTitle" style="margin:0; color: white;">Nome da Sala</h4>
+                            <span id="adminUsersRoomId"
+                                style="font-size: 0.8rem; color: #aaa; font-family: monospace;">ID: ...</span>
+                        </div>
+                    </div>
+
+                    <div id="adminUsersListLoader" style="display:none; text-align:center; padding:20px; color:#aaa;">
+                        <i class="fas fa-spinner fa-spin"></i> Carregando usuários...
+                    </div>
+
+                    <div id="adminUsersList" style="flex: 1; overflow-y: auto;"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="roomPasswordModal" class="modal"
+        style="display: none; background: rgba(0,0,0,0.98); z-index: 9999; align-items: center; justify-content: center;">
+        <div class="modal-content"
+            style="border: 1px solid var(--accent-color); box-shadow: 0 0 50px rgba(0, 210, 255, 0.3); max-width: 400px; text-align: center; position: relative;">
             <div style="margin-bottom: 20px;">
-                <i class="fas fa-lock" style="font-size: 3rem; color: var(--accent-color); margin-bottom: 15px; animation: pulse 2s infinite;"></i>
+                <i class="fas fa-lock"
+                    style="font-size: 3rem; color: var(--accent-color); margin-bottom: 15px; animation: pulse 2s infinite;"></i>
                 <h3 style="margin: 0; color: white;">Sala Privada</h3>
                 <p style="color: var(--text-secondary); font-size: 0.9rem;">Esta sala é protegida por senha.</p>
             </div>
             <form onsubmit="event.preventDefault(); verifyRoomPassword();">
-                <input type="password" id="roomEntryPassword" placeholder="Digite a senha..." autocomplete="current-password" style="text-align: center; letter-spacing: 3px; font-weight: bold; font-size: 1.2rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #444; border-radius: 8px; padding: 12px; width: 100%; margin-bottom: 10px; transition: 0.3s;">
-                <div id="passwordErrorMsg" style="color: var(--error-color); margin-bottom: 10px; display: none; font-size: 0.9rem; font-weight: bold;"><i class="fas fa-times-circle"></i> Senha incorreta!</div>
+                <input type="password" id="roomEntryPassword" placeholder="Digite a senha..."
+                    autocomplete="current-password"
+                    style="text-align: center; letter-spacing: 3px; font-weight: bold; font-size: 1.2rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #444; border-radius: 8px; padding: 12px; width: 100%; margin-bottom: 10px; transition: 0.3s;">
+                <div id="passwordErrorMsg"
+                    style="color: var(--error-color); margin-bottom: 10px; display: none; font-size: 0.9rem; font-weight: bold;">
+                    <i class="fas fa-times-circle"></i> Senha incorreta!</div>
                 <button type="submit" class="btn primary" id="verifyPassBtn" style="width: 100%; margin-bottom: 15px;">
                     <i class="fas fa-unlock"></i> Destravar
                 </button>
@@ -528,7 +586,8 @@
         </div>
     </div>
 
-    <div id="initialLoader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0f1a; z-index: 8888; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s;">
+    <div id="initialLoader"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0f1a; z-index: 8888; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s;">
         <i class="fas fa-circle-notch fa-spin" style="font-size: 3rem; color: var(--accent-color);"></i>
         <p style="margin-top: 15px; color: #aaa;">Conectando à festa...</p>
     </div>
@@ -555,18 +614,19 @@
                 const loader = document.getElementById('initialLoader');
                 if (loader && loader.style.display !== 'none') {
                     console.warn("⚠️ O carregamento demorou demais. Forçando entrada.");
-                    
+
                     if (typeof firebase === 'undefined') {
                         alert("Erro de Conexão: Falha ao comunicar com o servidor. Por favor, verifique sua conexão com a internet.");
                     } else if (typeof checkRoomProtection === 'undefined') {
                         alert("Erro de Sistema: Falha ao carregar os módulos de segurança da sala. Atualize a página e tente novamente.");
                     }
-                    
+
                     loader.style.display = 'none';
                     document.body.style.opacity = '1';
                 }
-            }, 4000); 
+            }, 4000);
         });
     </script>
 </body>
+
 </html>
