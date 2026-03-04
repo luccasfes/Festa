@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -10,7 +11,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-
+    <script src="./js/config.js"></script>
+    <script src="./js/PanelAdmin.js"></script>
     <style>
         :root {
             --primary: #6366f1;
@@ -25,13 +27,19 @@
             --text-muted: #94a3b8;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
 
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
             min-height: 100vh;
-            background-image: 
+            background-image:
                 radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%);
             background-attachment: fixed;
@@ -60,112 +68,218 @@
             gap: 8px;
             font-size: 0.95rem;
         }
-        
-        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4); }
-        
-        .btn-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
-        .btn-danger:hover { background: rgba(239, 68, 68, 0.25); transform: translateY(-2px); }
 
-        .btn-ghost { background: rgba(255,255,255,0.05); color: var(--text-main); }
-        .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
 
-        .btn-success { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
-        .btn-success:hover { background: rgba(16, 185, 129, 0.25); color: #fff; transform: translateY(-2px); }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            background: rgba(16, 185, 129, 0.25);
+            color: #fff;
+            transform: translateY(-2px);
+        }
 
         .btn-icon-sm {
             padding: 4px 8px;
             border-radius: 6px;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             color: var(--text-main);
             border: none;
             cursor: pointer;
             font-size: 0.8rem;
             margin-left: 8px;
         }
-        .btn-icon-sm:hover { background: var(--primary); color: white; }
+
+        .btn-icon-sm:hover {
+            background: var(--primary);
+            color: white;
+        }
 
         /* --- LOGIN --- */
         .login-wrapper {
-            position: fixed; inset: 0; z-index: 50;
-            display: flex; align-items: center; justify-content: center;
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: var(--bg-dark);
             padding: 20px;
         }
-        .login-box { width: 100%; max-width: 380px; padding: 40px 30px; text-align: center; }
+
+        .login-box {
+            width: 100%;
+            max-width: 380px;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
         .login-input {
-            width: 100%; padding: 14px; margin-bottom: 15px;
-            background: rgba(0,0,0,0.2); border: 1px solid var(--border);
-            border-radius: 8px; color: white; outline: none;
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: white;
+            outline: none;
             font-size: 1rem;
         }
-        .login-input:focus { border-color: var(--primary); }
+
+        .login-input:focus {
+            border-color: var(--primary);
+        }
 
         /* --- DASHBOARD --- */
-        .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
 
         .header {
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 30px;
         }
-        .brand h1 { 
-            font-size: 1.8rem; 
+
+        .brand h1 {
+            font-size: 1.8rem;
             background: linear-gradient(to right, #fff, #94a3b8);
             background-clip: text;
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         /* Stats */
         .stats-row {
-            display: grid; 
+            display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px; margin-bottom: 30px;
+            gap: 20px;
+            margin-bottom: 30px;
         }
-        .stat-card { padding: 20px; display: flex; align-items: center; gap: 15px; }
+
+        .stat-card {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
         .stat-icon {
-            width: 50px; height: 50px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; background: rgba(255,255,255,0.03); flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            flex-shrink: 0;
         }
-        .stat-info h3 { font-size: 1.8rem; line-height: 1; margin-bottom: 5px; }
-        .stat-info p { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+
+        .stat-info h3 {
+            font-size: 1.8rem;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .stat-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0;
+        }
 
         /* Search & Filter Toolbar */
-        .toolbar { 
-            margin-bottom: 25px; 
-            display: flex; 
-            gap: 15px; 
-            flex-wrap: wrap; 
+        .toolbar {
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
             align-items: center;
         }
-        
+
         .search-box {
             flex: 2;
             min-width: 200px;
             position: relative;
         }
+
         .search-box input {
-            width: 100%; padding: 12px 12px 12px 45px;
-            background: var(--card-bg); border: 1px solid var(--border);
-            border-radius: 12px; color: white; font-size: 1rem;
+            width: 100%;
+            padding: 12px 12px 12px 45px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
         }
-        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
 
         .sort-box {
             flex: 1;
             min-width: 160px;
             position: relative;
         }
+
         .sort-select {
-            width: 100%; padding: 12px 15px;
-            background: var(--card-bg); border: 1px solid var(--border);
-            border-radius: 12px; color: white; font-size: 1rem;
-            appearance: none; -webkit-appearance: none; cursor: pointer;
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 15px center;
             background-size: 16px;
         }
+
         .sort-select option {
             background-color: #1e293b;
             color: white;
@@ -174,175 +288,459 @@
 
         .btn-clean {
             min-width: 140px;
-            background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
-        .btn-clean:hover { background: rgba(239, 68, 68, 0.2); color: #fff; }
+
+        .btn-clean:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fff;
+        }
 
         /* ROOM CARDS */
         .rooms-grid {
-            display: grid; 
+            display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
         }
 
         .room-card {
-            padding: 20px; position: relative; overflow: hidden;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
             transition: transform 0.3s, box-shadow 0.3s;
             cursor: pointer;
         }
-        .room-card:active { transform: scale(0.98); }
+
+        .room-card:active {
+            transform: scale(0.98);
+        }
+
         .room-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             border-color: rgba(99, 102, 241, 0.3);
         }
 
         .room-header-card {
-            display: flex; justify-content: space-between; align-items: start;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
             margin-bottom: 15px;
         }
-        .room-title { font-size: 1.2rem; font-weight: 600; color: white; margin-bottom: 4px; line-height: 1.3; }
-        .room-id { font-size: 0.8rem; color: var(--primary); font-family: monospace; background: rgba(99, 102, 241, 0.1); padding: 2px 6px; border-radius: 4px; }
-        
+
+        .room-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .room-id {
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-family: monospace;
+            background: rgba(99, 102, 241, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
         .pulse-dot {
-            width: 8px; height: 8px; background: var(--success); flex-shrink: 0; margin-top: 5px; margin-left: 10px;
-            border-radius: 50%; box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            flex-shrink: 0;
+            margin-top: 5px;
+            margin-left: 10px;
+            border-radius: 50%;
+            box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
             animation: pulse 2s infinite;
         }
+
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
         }
 
         .now-playing {
-            background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;
-            margin-bottom: 15px; display: flex; align-items: center; gap: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .music-wave { display: flex; gap: 2px; align-items: flex-end; height: 15px; flex-shrink: 0; }
-        .bar { width: 3px; background: var(--accent); animation: equalizer 1s infinite ease-in-out; }
-        .bar:nth-child(2) { animation-delay: 0.2s; }
-        .bar:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes equalizer { 0%, 100% { height: 5px; } 50% { height: 15px; } }
 
-        .song-info { font-size: 0.9rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .music-wave {
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+            height: 15px;
+            flex-shrink: 0;
+        }
+
+        .bar {
+            width: 3px;
+            background: var(--accent);
+            animation: equalizer 1s infinite ease-in-out;
+        }
+
+        .bar:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .bar:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes equalizer {
+
+            0%,
+            100% {
+                height: 5px;
+            }
+
+            50% {
+                height: 15px;
+            }
+        }
+
+        .song-info {
+            font-size: 0.9rem;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
 
         .room-meta {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            border-top: 1px solid var(--border); padding-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
         }
-        .creator-info { display: flex; flex-direction: column; max-width: 60%; }
-        .creator-name { font-size: 0.9rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .time-ago { font-size: 0.75rem; color: var(--text-muted); }
 
-        .user-stack { display: flex; padding-left: 10px; }
+        .creator-info {
+            display: flex;
+            flex-direction: column;
+            max-width: 60%;
+        }
+
+        .creator-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .time-ago {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .user-stack {
+            display: flex;
+            padding-left: 10px;
+        }
+
         .user-avatar-sm {
-            width: 28px; height: 28px; border-radius: 50%;
-            background: var(--bg-dark); border: 2px solid var(--card-bg);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.7rem; margin-left: -10px; color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--bg-dark);
+            border: 2px solid var(--card-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            margin-left: -10px;
+            color: white;
             font-weight: bold;
         }
 
         /* Modal */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100;
-            display: none; align-items: center; justify-content: center;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
         }
-        .modal-overlay.active { display: flex; animation: fadeIn 0.3s; }
-        
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s;
+        }
+
         .modal-box {
-            width: 100%; max-width: 600px; max-height: 90vh;
-            background: #1e293b; border-radius: 20px;
-            display: flex; flex-direction: column;
-            border: 1px solid var(--border); overflow: hidden;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            background: #1e293b;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+            overflow: hidden;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
         /* Modal Pequeno (Criar Sala) */
-        .modal-box.small { max-width: 400px; max-height: auto; overflow: visible; }
+        .modal-box.small {
+            max-width: 400px;
+            max-height: auto;
+            overflow: visible;
+        }
 
-        .modal-header { padding: 20px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); }
-        .modal-header h3 { margin: 0; font-size: 1.3rem; }
-        
-        .modal-body { padding: 0; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
-        .modal-body.padded { padding: 25px; } 
-        
-        .tabs { display: flex; border-bottom: 1px solid var(--border); background: rgba(30, 41, 59, 0.5); }
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .modal-body {
+            padding: 0;
+            overflow-y: auto;
+            flex: 1;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-body.padded {
+            padding: 25px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            background: rgba(30, 41, 59, 0.5);
+        }
+
         .tab {
-            flex: 1; padding: 15px 5px; text-align: center; cursor: pointer;
-            color: var(--text-muted); transition: 0.2s; font-weight: 500; font-size: 0.95rem;
+            flex: 1;
+            padding: 15px 5px;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: 0.2s;
+            font-weight: 500;
+            font-size: 0.95rem;
             border-bottom: 2px solid transparent;
         }
-        .tab.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(99, 102, 241, 0.05); }
 
-        .tab-content { display: none; padding: 25px; }
-        .tab-content.active { display: block; animation: slideIn 0.3s; }
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
 
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-content {
+            display: none;
+            padding: 25px;
+        }
 
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .info-item { background: rgba(255,255,255,0.02); padding: 12px; border-radius: 10px; }
-        .info-item label { display: block; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .info-item div { font-size: 1rem; font-weight: 600; word-break: break-all; display: flex; align-items: center; justify-content: space-between; }
+        .tab-content.active {
+            display: block;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+        .info-item label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-item div {
+            font-size: 1rem;
+            font-weight: 600;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
 
         .list-item {
-            display: flex; align-items: center; padding: 12px;
-            background: rgba(255,255,255,0.03); border-radius: 12px;
-            margin-bottom: 10px; gap: 15px;
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            gap: 15px;
         }
+
         .list-avatar {
-            width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            flex-shrink: 0;
             background: linear-gradient(45deg, var(--primary), var(--accent));
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
         }
 
         .modal-footer {
-            padding: 20px; border-top: 1px solid var(--border);
-            display: flex; flex-direction: column; gap: 10px; background: rgba(15, 23, 42, 0.5);
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(15, 23, 42, 0.5);
         }
-        
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 5px; }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
 
         /* Desktop footer adjustment */
         @media(min-width: 600px) {
-            .modal-footer { flex-direction: row; }
-            .btn { width: auto; }
+            .modal-footer {
+                flex-direction: row;
+            }
+
+            .btn {
+                width: auto;
+            }
         }
 
         /* --- RESPONSIVIDADE MOBILE --- */
         @media (max-width: 768px) {
-            .container { padding: 20px 15px; }
-            
-            .header { 
-                flex-direction: column; 
-                gap: 15px; 
+            .container {
+                padding: 20px 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
                 align-items: flex-start;
             }
-            .header .btn { width: 100%; background: rgba(255,255,255,0.08); }
 
-            .stats-row { grid-template-columns: 1fr; gap: 15px; }
-            .stat-card { padding: 15px; }
+            .header .btn {
+                width: 100%;
+                background: rgba(255, 255, 255, 0.08);
+            }
 
-            .toolbar { flex-direction: column; gap: 15px; }
-            .search-box, .sort-box, .btn-clean { width: 100%; }
-            .btn-success { width: 100%; }
+            .stats-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
 
-            .rooms-grid { grid-template-columns: 1fr; }
+            .stat-card {
+                padding: 15px;
+            }
 
-            .info-grid { grid-template-columns: 1fr; gap: 10px; }
+            .toolbar {
+                flex-direction: column;
+                gap: 15px;
+            }
 
-            .tab { font-size: 0.9rem; padding: 12px 5px; }
-            .song-info { max-width: 200px; } 
+            .search-box,
+            .sort-box,
+            .btn-clean {
+                width: 100%;
+            }
+
+            .btn-success {
+                width: 100%;
+            }
+
+            .rooms-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .tab {
+                font-size: 0.9rem;
+                padding: 12px 5px;
+            }
+
+            .song-info {
+                max-width: 200px;
+            }
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
     </style>
 </head>
+
 <body>
 
     <div id="loginView" class="login-wrapper">
@@ -350,10 +748,10 @@
             <i class="fas fa-fingerprint" style="font-size: 3rem; color: var(--primary); margin-bottom: 20px;"></i>
             <h2 style="margin-bottom: 10px;">Acesso Admin</h2>
             <p style="color: var(--text-muted); margin-bottom: 30px;">Gerencia do FlowLink</p>
-            
+
             <input type="email" id="adminEmail" class="login-input" placeholder="admin@flowlink.com">
             <input type="password" id="adminPassword" class="login-input" placeholder="••••••••">
-            
+
             <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="adminLogin()">
                 Acessar Dashboard
             </button>
@@ -401,7 +799,7 @@
                     <i class="fas fa-search"></i>
                     <input type="text" id="searchInput" placeholder="Buscar sala, ID ou criador...">
                 </div>
-                
+
                 <div class="sort-box">
                     <select id="sortFilter" class="sort-select">
                         <option value="newest">🕒 Mais Recentes</option>
@@ -421,7 +819,7 @@
             </div>
 
             <div id="roomsGrid" class="rooms-grid">
-                </div>
+            </div>
         </div>
     </div>
 
@@ -429,7 +827,8 @@
         <div class="modal-box small">
             <div class="modal-header">
                 <h3><i class="fas fa-magic" style="color: var(--primary);"></i> Criar Sala de Teste</h3>
-                <button class="btn btn-ghost" style="padding: 5px 10px; border-radius: 50%;" onclick="closeModal('createRoomModal')">✕</button>
+                <button class="btn btn-ghost" style="padding: 5px 10px; border-radius: 50%;"
+                    onclick="closeModal('createRoomModal')">✕</button>
             </div>
             <div class="modal-body padded">
                 <div class="form-group">
@@ -438,11 +837,13 @@
                 </div>
                 <div class="form-group">
                     <label>Nome de Exibição (Opcional)</label>
-                    <input type="text" id="newRoomName" class="login-input" placeholder="Ex: Minha Sala de Teste" style="width:100%;">
+                    <input type="text" id="newRoomName" class="login-input" placeholder="Ex: Minha Sala de Teste"
+                        style="width:100%;">
                 </div>
                 <div class="form-group">
                     <label>Senha (Opcional)</label>
-                    <input type="text" id="newRoomPassword" class="login-input" placeholder="Deixe em branco para pública" style="width:100%;">
+                    <input type="text" id="newRoomPassword" class="login-input"
+                        placeholder="Deixe em branco para pública" style="width:100%;">
                 </div>
                 <p style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">
                     <i class="fas fa-info-circle"></i> O criador será definido automaticamente como "Lucas Silva".
@@ -459,9 +860,10 @@
         <div class="modal-box">
             <div class="modal-header">
                 <h3 id="modalTitle" class="truncate" style="max-width: 80%;">Detalhes da Sala</h3>
-                <button class="btn btn-ghost" style="padding: 5px 10px; border-radius: 50%; width: 35px; height: 35px;" onclick="closeModal('detailsModal')">✕</button>
+                <button class="btn btn-ghost" style="padding: 5px 10px; border-radius: 50%; width: 35px; height: 35px;"
+                    onclick="closeModal('detailsModal')">✕</button>
             </div>
-            
+
             <div class="tabs">
                 <div class="tab active" onclick="switchTab('tabInfo')">Geral</div>
                 <div class="tab" onclick="switchTab('tabUsers')">Pessoas (<span id="countUsersModal">0</span>)</div>
@@ -475,7 +877,8 @@
                             <label>ID da Sala</label>
                             <div>
                                 <span id="detId" style="font-family: monospace; color: var(--primary);">...</span>
-                                <button class="btn-icon-sm" onclick="copyId()" title="Copiar ID"><i class="fas fa-copy"></i></button>
+                                <button class="btn-icon-sm" onclick="copyId()" title="Copiar ID"><i
+                                        class="fas fa-copy"></i></button>
                             </div>
                         </div>
                         <div class="info-item">
@@ -503,453 +906,18 @@
             </div>
 
             <div class="modal-footer">
-                <button id="btnOpenRoom" class="btn btn-primary" style="flex: 1;"><i class="fas fa-external-link-alt"></i> Entrar</button>
-                <button id="btnDeleteRoom" class="btn btn-danger" style="flex: 1;"><i class="fas fa-trash"></i> Apagar</button>
+                <button id="btnOpenRoom" class="btn btn-primary" style="flex: 1;"><i
+                        class="fas fa-external-link-alt"></i> Entrar</button>
+                <button id="btnDeleteRoom" class="btn btn-danger" style="flex: 1;"><i class="fas fa-trash"></i>
+                    Apagar</button>
             </div>
         </div>
     </div>
 
+
     <script>
-        // CONFIGURAÇÃO FIREBASE
-        const firebaseConfig = {
-            apiKey: "AIzaSyCDlr4XHXuwWQ9Zj9dd2yoctLhFz1vbbyM",
-            authDomain: "flowlink-7fd57.firebaseapp.com",
-            databaseURL: "https://flowlink-7fd57-default-rtdb.firebaseio.com",
-            projectId: "flowlink-7fd57",
-            storageBucket: "flowlink-7fd57.firebasestorage.app",
-            messagingSenderId: "1035085936175",
-            appId: "1:1035085936175:web:2732042d77792118b8f8da",
-            measurementId: "G-B0NE1GDVQK"
-        };
 
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const auth = firebase.auth();
-        const roomsRef = database.ref('rooms');
-
-        // ADMIN IDS
-        const ADMIN_UIDS = [
-            'PTkwuSLcpaRvtVWOzJH79NrwReA2',
-            'liOoyPGRKHgYX1Q81irll97kBSD3',
-            'QwUYZ2Ls20fDtlUFDXs5lKjouN12'
-        ];
-
-        let currentRoomId = null;
-        let allRoomsRaw = {}; 
-
-        // --- AUTH ---
-        auth.onAuthStateChanged(user => {
-            if (user && ADMIN_UIDS.includes(user.uid)) {
-                document.getElementById('loginView').style.display = 'none';
-                document.getElementById('dashboardView').style.display = 'block';
-                startRealTimeListener();
-            } else {
-                document.getElementById('loginView').style.display = 'flex';
-                document.getElementById('dashboardView').style.display = 'none';
-                if(user) auth.signOut(); 
-            }
-        });
-
-        function adminLogin() {
-            const email = document.getElementById('adminEmail').value;
-            const pass = document.getElementById('adminPassword').value;
-            auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
-        }
-
-        // --- REALTIME LISTENER ---
-        function startRealTimeListener() {
-            roomsRef.on('value', snapshot => {
-                allRoomsRaw = {}; 
-                if(snapshot.exists()) {
-                    snapshot.forEach(child => {
-                        allRoomsRaw[child.key] = child.val();
-                    });
-                }
-                updateGlobalStats();
-                updateRoomsList();
-                
-                // Atualiza o modal aberto em tempo real
-                if(currentRoomId && allRoomsRaw[currentRoomId]) {
-                    const room = allRoomsRaw[currentRoomId];
-                    renderUserList(room.presence, room.banned, currentRoomId);
-                    renderQueueList(room.videoQueue);
-                }
-            });
-        }
-
-        function updateGlobalStats() {
-            let stats = { rooms: 0, users: 0, videos: 0 };
-            Object.values(allRoomsRaw).forEach(room => {
-                stats.rooms++;
-                stats.users += room.presence ? Object.keys(room.presence).length : 0;
-                stats.videos += room.videoQueue ? Object.keys(room.videoQueue).length : 0;
-            });
-            document.getElementById("totalRooms").innerText = stats.rooms;
-            document.getElementById("totalUsers").innerText = stats.users;
-            document.getElementById("totalVideos").innerText = stats.videos;
-        }
-
-        // --- RENDERIZAÇÃO E FILTRAGEM ---
-        function updateRoomsList() {
-            const grid = document.getElementById('roomsGrid');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const sortType = document.getElementById('sortFilter').value;
-
-            grid.innerHTML = '';
-
-            let roomsArray = Object.entries(allRoomsRaw).map(([key, val]) => ({
-                id: key, ...val,
-                userCount: val.presence ? Object.keys(val.presence).length : 0,
-                queueCount: val.videoQueue ? Object.keys(val.videoQueue).length : 0,
-                createdAt: val.createdAt || 0
-            }));
-
-            // Filtros
-            roomsArray = roomsArray.filter(r => 
-                (r.roomName && r.roomName.toLowerCase().includes(searchTerm)) ||
-                (r.id.toLowerCase().includes(searchTerm)) ||
-                (r.creatorName && r.creatorName.toLowerCase().includes(searchTerm))
-            );
-
-            // Ordenação
-            roomsArray.sort((a, b) => {
-                if (sortType === 'newest') return b.createdAt - a.createdAt;
-                if (sortType === 'oldest') return a.createdAt - b.createdAt;
-                if (sortType === 'mostUsers') return b.userCount - a.userCount;
-                if (sortType === 'mostSongs') return b.queueCount - a.queueCount;
-                return 0;
-            });
-
-            if (roomsArray.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:50px; color:var(--text-muted);">Nenhuma sala encontrada.</div>';
-                return;
-            }
-
-            roomsArray.forEach(room => {
-                const timeAgo = timeSince(room.createdAt || Date.now());
-                
-                // Lógica da Música Tocando
-                let nowPlayingHTML = '';
-                if (room.videoQueue) {
-                    const firstVideo = Object.values(room.videoQueue)[0];
-                    nowPlayingHTML = `
-                        <div class="now-playing">
-                            <div class="music-wave">
-                                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                            </div>
-                            <div class="song-info">${escapeHtml(firstVideo.title)}</div>
-                        </div>`;
-                } else {
-                    nowPlayingHTML = `<div class="now-playing" style="opacity:0.5;"><i class="fas fa-pause" style="font-size:0.8rem;"></i> <span style="font-size:0.9rem; margin-left:10px;">Nada tocando</span></div>`;
-                }
-
-                // Avatares
-                let avatarsHTML = '';
-                if (room.presence) {
-                    const users = Object.values(room.presence);
-                    const displayUsers = users.slice(0, 4);
-                    displayUsers.forEach((u, i) => {
-                        const initial = (u.name || '?').charAt(0).toUpperCase();
-                        const color = ['#6366f1', '#ec4899', '#10b981', '#f59e0b'][i % 4];
-                        avatarsHTML += `<div class="user-avatar-sm" style="background:${color}; z-index:${10-i}">${initial}</div>`;
-                    });
-                    if (users.length > 4) {
-                        avatarsHTML += `<div class="user-avatar-sm" style="background:#334155; z-index:0">+${users.length - 4}</div>`;
-                    }
-                }
-
-                const statusDot = room.userCount > 0 ? '<div class="pulse-dot"></div>' : '<div class="pulse-dot" style="background:#475569; animation:none;"></div>';
-
-                const card = document.createElement('div');
-                card.className = 'glass room-card';
-                card.onclick = (e) => {
-                    if(!e.target.closest('.btn')) openDetails(room.id);
-                };
-
-                card.innerHTML = `
-                    <div class="room-header-card">
-                        <div style="flex:1; min-width:0;">
-                            <div class="room-title truncate">${escapeHtml(room.roomName || 'Sem Nome')}</div>
-                            <span class="room-id">${room.id}</span>
-                        </div>
-                        ${statusDot}
-                    </div>
-                    ${nowPlayingHTML}
-                    <div class="room-meta">
-                        <div class="creator-info">
-                            <span class="creator-name">${escapeHtml(room.creatorName || 'Desconhecido')}</span>
-                            <span class="time-ago">Há ${timeAgo}</span>
-                        </div>
-                        <div class="user-stack">${avatarsHTML}</div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        document.getElementById('searchInput').addEventListener('input', updateRoomsList);
-        document.getElementById('sortFilter').addEventListener('change', updateRoomsList);
-
-        // --- FUNÇÕES DE AÇÃO ---
-
-        function cleanEmptyRooms() {
-            const emptyRoomIds = [];
-            Object.entries(allRoomsRaw).forEach(([id, room]) => {
-                const userCount = room.presence ? Object.keys(room.presence).length : 0;
-                if (userCount === 0) {
-                    emptyRoomIds.push(id);
-                }
-            });
-
-            if (emptyRoomIds.length === 0) {
-                alert("Tudo limpo! Nenhuma sala vazia encontrada.");
-                return;
-            }
-
-            if (!confirm(`Encontradas ${emptyRoomIds.length} salas vazias (sem usuários).\n\nDeseja excluir todas permanentemente?`)) {
-                return;
-            }
-
-            const updates = {};
-            emptyRoomIds.forEach(id => {
-                updates[`rooms/${id}`] = null;
-            });
-
-            database.ref().update(updates)
-                .then(() => alert(`${emptyRoomIds.length} salas foram removidas.`))
-                .catch(e => alert('Erro ao limpar: ' + e.message));
-        }
-
-        function openCreateModal() {
-            document.getElementById('newRoomId').value = '';
-            document.getElementById('newRoomName').value = '';
-            document.getElementById('newRoomPassword').value = '';
-            document.getElementById('createRoomModal').classList.add('active');
-            setTimeout(() => document.getElementById('newRoomId').focus(), 100);
-        }
-
-        function confirmCreateRoom() {
-            let id = document.getElementById('newRoomId').value.trim();
-            let name = document.getElementById('newRoomName').value.trim();
-            const passwordRaw = document.getElementById('newRoomPassword').value.trim(); 
-
-            if(!id) {
-                alert("O ID da sala é obrigatório.");
-                return;
-            }
-            if(!name) name = id;
-            if(allRoomsRaw[id]) {
-                alert("Já existe uma sala com este ID. Escolha outro.");
-                return;
-            }
-
-            let finalPassword = null;
-            let isPrivate = false;
-
-            if (passwordRaw) {
-                isPrivate = true;
-                finalPassword = CryptoJS.SHA256(passwordRaw).toString();
-            }
-
-            database.ref('rooms/' + id).set({
-                roomName: name,
-                creatorName: "Lucas Silva",
-                createdAt: firebase.database.ServerValue.TIMESTAMP,
-                password: finalPassword, 
-                isPrivate: isPrivate,
-                videoQueue: {},
-                presence: {}
-            }).then(() => {
-                closeModal('createRoomModal');
-                alert(`Sala "${name}" criada com sucesso! (ID: ${id})`);
-                document.getElementById('newRoomId').value = '';
-                document.getElementById('newRoomName').value = '';
-                document.getElementById('newRoomPassword').value = '';
-            }).catch(e => alert("Erro ao criar: " + e.message));
-        }
-
-        // --- MODAL DETALHES ---
-        function openDetails(id) {
-            currentRoomId = id;
-            const room = allRoomsRaw[id];
-            if(!room) return;
-
-            document.getElementById('modalTitle').textContent = room.roomName || 'Detalhes da Sala';
-            document.getElementById('detId').textContent = id;
-            document.getElementById('detCreator').textContent = room.creatorName || '-';
-            document.getElementById('detCreated').textContent = new Date(room.createdAt).toLocaleString('pt-BR');
-            document.getElementById('detPassword').innerHTML = room.password ? 
-                '<span style="color:var(--accent)"><i class="fas fa-lock"></i> Protegida</span>' : 
-                '<span style="color:var(--success)"><i class="fas fa-lock-open"></i> Pública</span>';
-
-            // ATUALIZAÇÃO: Passando o ID e a lista de banidos também
-            renderUserList(room.presence, room.banned, id);
-            renderQueueList(room.videoQueue);
-
-            document.getElementById('btnOpenRoom').onclick = () => {
-                sessionStorage.setItem(`bypass_pw_${id}`, 'true');
-                window.open(`index.html?room=${id}`, '_blank');
-            };
-            
-            document.getElementById('btnDeleteRoom').onclick = () => {
-                if(confirm('Tem certeza? Isso vai derrubar a sala para todos.')) {
-                    database.ref('rooms/' + id).remove();
-                    closeModal('detailsModal');
-                }
-            };
-
-            document.getElementById('detailsModal').classList.add('active');
-            switchTab('tabInfo');
-        }
-
-        function copyId() {
-            if(!currentRoomId) return;
-            navigator.clipboard.writeText(currentRoomId).then(() => {
-                const btn = document.querySelector('.btn-icon-sm');
-                const original = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-check" style="color:var(--success)"></i>';
-                setTimeout(() => btn.innerHTML = original, 1500);
-            }).catch(err => alert("Erro ao copiar: " + err));
-        }
-
-        // --- SISTEMA DE BANIMENTO IMPLEMENTADO AQUI ---
-        function renderUserList(presence, banned, roomId) {
-            const container = document.getElementById('usersListContainer');
-            container.innerHTML = '';
-            const users = presence ? Object.values(presence) : [];
-            document.getElementById('countUsersModal').textContent = users.length;
-
-            // 1. ONLINE USERS
-            if(users.length > 0) {
-                const h = document.createElement('h4'); h.innerText = "Online"; h.style.color="#10b981"; h.style.marginTop="10px";
-                container.appendChild(h);
-
-                users.forEach((u, i) => {
-                    const div = document.createElement('div');
-                    div.className = 'list-item';
-                    const initial = (u.name || '?').charAt(0).toUpperCase();
-                    const color = ['#6366f1', '#ec4899', '#10b981', '#f59e0b'][i % 4];
-                    const devId = u.deviceId || 'unknown';
-
-                    div.innerHTML = `
-                        <div class="list-avatar" style="background:${color}">${initial}</div>
-                        <div style="min-width:0; flex:1;">
-                            <div style="font-weight:600" class="truncate">${escapeHtml(u.name)}</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted)">ID: ${escapeHtml(devId.substr(0,10))}...</div>
-                        </div>
-                        <button class="btn-icon-sm" style="color: #ef4444; background: rgba(239, 68, 68, 0.1);" 
-                            onclick="executeBan('${escapeHtml(u.name)}', '${roomId}', '${devId}')" title="Banir">
-                            <i class="fas fa-ban"></i>
-                        </button>
-                    `;
-                    container.appendChild(div);
-                });
-            } else {
-                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px;">Sala vazia.</p>';
-            }
-
-            // 2. BANNED USERS
-            if(banned) {
-                const keys = Object.keys(banned);
-                if(keys.length > 0) {
-                    const h = document.createElement('h4'); h.innerText = `Banidos (${keys.length})`; h.style.color="#ef4444"; h.style.marginTop="20px";
-                    container.appendChild(h);
-                    
-                    keys.forEach(k => {
-                        const div = document.createElement('div');
-                        div.style.cssText = "display:flex; justify-content:space-between; background:rgba(239,68,68,0.1); padding:10px; margin-bottom:5px; border-radius:8px;";
-                        div.innerHTML = `
-                            <span style="color:#fca5a5; font-weight:600;">🚫 ${escapeHtml(k)}</span>
-                            <button onclick="executeUnban('${k}', '${roomId}')" style="background:white; border:none; border-radius:4px; padding:4px 10px; cursor:pointer; color:#333; font-weight:bold;">
-                                Desbanir
-                            </button>
-                        `;
-                        container.appendChild(div);
-                    });
-                }
-            }
-        }
-
-        function executeBan(targetName, roomId, targetDeviceId) {
-            if (!confirm(`Banir "${targetName}"?\nIsso bloqueará o dispositivo e o nome.`)) return;
-
-            const updates = {};
-            updates[`rooms/${roomId}/banned/${targetName}`] = true; // Bloqueio visual/nome
-            
-            if (targetDeviceId && targetDeviceId !== 'unknown') {
-                updates[`rooms/${roomId}/banned/${targetDeviceId}`] = true; // Bloqueio Real de Device
-            }
-
-            database.ref().update(updates).then(() => alert("Usuário Banido!"));
-        }
-
-        function executeUnban(target, roomId) {
-            if(!confirm(`Remover banimento de "${target}"?`)) return;
-            database.ref(`rooms/${roomId}/banned/${target}`).remove();
-        }
-
-        function renderQueueList(queue) {
-            const container = document.getElementById('queueListContainer');
-            container.innerHTML = '';
-            const videos = queue ? Object.values(queue) : [];
-            document.getElementById('countQueueModal').textContent = videos.length;
-
-            if(videos.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px;">Fila vazia.</p>';
-                return;
-            }
-
-            videos.forEach((v, idx) => {
-                const div = document.createElement('div');
-                div.className = 'list-item';
-                div.innerHTML = `
-                    <div style="color:var(--text-muted); font-family:monospace; width:20px;">${idx + 1}</div>
-                    <div style="flex:1; min-width:0;">
-                        <div style="font-weight:500; font-size:0.95rem;" class="truncate">${escapeHtml(v.title || 'Vídeo')}</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted)" class="truncate">Add por: ${escapeHtml(v.phone || '?')}</div>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            if(event && event.target.classList.contains('tab')) {
-                event.target.classList.add('active');
-            } else {
-                const tabs = document.querySelectorAll('.tab');
-                if(tabId === 'tabInfo') tabs[0].classList.add('active');
-                if(tabId === 'tabUsers') tabs[1].classList.add('active');
-                if(tabId === 'tabQueue') tabs[2].classList.add('active');
-            }
-            
-            document.getElementById(tabId).classList.add('active');
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
-
-        // --- CORREÇÃO DO CLIQUE FORA (MODAL FORTE) ---
-        // Removi o window.onclick anterior que fechava ao clicar fora.
-        // O modal agora só fecha via botão 'X' ou 'Cancelar' (função closeModal).
-
-        function timeSince(date) {
-            const seconds = Math.floor((new Date() - date) / 1000);
-            let interval = seconds / 3600;
-            if (interval > 1) return Math.floor(interval) + "h";
-            interval = seconds / 60;
-            if (interval > 1) return Math.floor(interval) + "m";
-            return Math.floor(seconds) + "s";
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
     </script>
 </body>
+
 </html>

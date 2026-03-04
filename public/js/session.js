@@ -1,10 +1,6 @@
 // ====================================================================
 // SESSION.JS — VERSÃO FINAL (ROOM BAN ONLY + ADMIN SECURE)
 // ====================================================================
-
-console.log(">>> session.js carregado com sucesso");
-
-// --------------------
 // ESTADO GLOBAL
 // --------------------
 window.currentSessionUser = null;
@@ -14,22 +10,21 @@ window.currentRoomPasswordHash = null;
 window.myPresenceRef = null;
 
 // --------------------
-// 1. FUNÇÃO ÚNICA PARA ATUALIZAR NOME
+// FUNÇÃO ÚNICA PARA ATUALIZAR NOME
 // --------------------
-window.updateGlobalUserUI = function(name) {
-    console.log("Atualizando nome para:", name);
-    
-    // 1. Guarda nas variáveis globais
+window.updateGlobalUserUI = function (name) {
+
+    // Guarda nas variáveis globais
     window.currentSessionUser = name;
     sessionStorage.setItem('ytSessionUser', name);
-    
-    // 2. Atualiza TODOS os lugares visíveis
+
+    // Atualiza TODOS os lugares visíveis
     const places = [
         { id: 'userNameDisplay', text: name },
         { id: 'currentSessionUser', text: name },
         { id: 'phone', value: name }
     ];
-    
+
     places.forEach(place => {
         const element = document.getElementById(place.id);
         if (element) {
@@ -40,13 +35,13 @@ window.updateGlobalUserUI = function(name) {
             }
         }
     });
-    
-    // 3. Atualiza Firebase Presence
+
+    // Atualiza Firebase Presence
     if (window.myPresenceRef) {
         window.myPresenceRef.update({ name: name });
     }
-    
-    // 4. Dispara evento
+
+    // Dispara evento
     document.dispatchEvent(new CustomEvent('userNameChanged', { detail: { name } }));
 };
 
@@ -54,11 +49,11 @@ window.updateGlobalUserUI = function(name) {
 // 2. INICIALIZAÇÃO
 // --------------------
 document.addEventListener('DOMContentLoaded', function () {
-    
+
     // A. Verifica Sala
     const params = new URLSearchParams(window.location.search);
     window.currentRoomId = params.get("room");
-    
+
     if (window.currentRoomId && typeof firebase !== 'undefined') {
         window.checkRoomProtection(window.currentRoomId);
     } else {
@@ -69,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const savedName = sessionStorage.getItem('ytSessionUser');
     if (savedName && savedName !== 'Visitante') {
         window.updateGlobalUserUI(savedName);
-    } 
+    }
 
     // C. Enter no Input
     const editInput = document.getElementById('editNameInput');
@@ -83,25 +78,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // D. Toggle Senha Admin
-    document.getElementById('toggleAdminUnlockPassword')?.addEventListener('click', function() {
+    document.getElementById('toggleAdminUnlockPassword')?.addEventListener('click', function () {
         const input = document.getElementById('adminUnlockPassword');
         input.type = input.type === 'password' ? 'text' : 'password';
     });
 
     // === DETECTOR AUTOMÁTICO DE ADMIN ===
-    firebase.auth().onAuthStateChanged(function(user) {
+    firebase.auth().onAuthStateChanged(function (user) {
         if (user) {
-            console.log("👑 Sessão Admin ativa.");
+
             window.isAdminLoggedIn = true;
             document.body.classList.remove('non-admin');
-            
+
             // Pega o nome do perfil ou usa fallback do email
-            const adminName = user.displayName || user.email.split('@')[0]; 
-            
+            const adminName = user.displayName || user.email.split('@')[0];
+
             updateAdminDisplay(adminName);
-            
+
             const panelBtn = document.getElementById('panelBtn');
-            if(panelBtn) panelBtn.style.display = 'flex';
+            if (panelBtn) panelBtn.style.display = 'flex';
 
             const currentName = sessionStorage.getItem('ytSessionUser');
             if (!currentName || currentName === 'Visitante') {
@@ -111,21 +106,21 @@ document.addEventListener('DOMContentLoaded', function () {
             if (typeof window.closeEditNameModal === 'function') {
                 window.closeEditNameModal();
             }
-            
+
             if (window.myPresenceRef) {
                 window.myPresenceRef.update({ isAdmin: true });
             }
 
             if (document.body.classList.contains('locked')) {
                 unlockScreen();
-                if(typeof showNotification === 'function') {
+                if (typeof showNotification === 'function') {
                     showNotification('Bem-vindo, ' + adminName + '!', 'success');
                 }
             }
         } else {
             window.isAdminLoggedIn = false;
             document.body.classList.add('non-admin');
-            
+
             if (window.myPresenceRef) {
                 window.myPresenceRef.update({ isAdmin: false });
             }
@@ -136,19 +131,19 @@ document.addEventListener('DOMContentLoaded', function () {
 // --------------------
 // 3. PROTEÇÃO DE SALA
 // --------------------
-window.checkRoomProtection = function(roomId) {
+window.checkRoomProtection = function (roomId) {
     if (!roomId) return hideInitialLoader();
-    
+
     firebase.database().ref('rooms/' + roomId).once('value')
         .then(snapshot => {
             const room = snapshot.val();
-            
+
             if (!room || !room.creatorName) {
                 window.location.replace("create.html");
-                return; 
+                return;
             }
 
-            if (document.getElementById('roomNameDisplay')) 
+            if (document.getElementById('roomNameDisplay'))
                 document.getElementById('roomNameDisplay').textContent = room.roomName || "Sala";
 
             const isPrivate = room.isPrivate === true || room.isPrivate === "true";
@@ -156,9 +151,9 @@ window.checkRoomProtection = function(roomId) {
 
             if (isPrivate && storedHash) {
                 const currentUser = firebase.auth().currentUser;
-                
+
                 if (window.isAdminLoggedIn || currentUser) {
-                    unlockScreen(); 
+                    unlockScreen();
                 } else {
                     window.currentRoomPasswordHash = storedHash;
                     lockScreen();
@@ -166,7 +161,7 @@ window.checkRoomProtection = function(roomId) {
             } else {
                 unlockScreen();
             }
-            
+
             // --- [IMPORTANTE] LIGA O SISTEMA DE BANIMENTO AQUI ---
             if (window.monitorBans) {
                 window.monitorBans(roomId);
@@ -194,7 +189,7 @@ function unlockScreen() {
     const modal = document.getElementById('roomPasswordModal');
     if (modal) modal.style.display = 'none';
     document.body.classList.remove('locked');
-    
+
     if (!window.isAdminLoggedIn) {
         const savedName = sessionStorage.getItem('ytSessionUser');
         if (!savedName || savedName === 'Visitante') {
@@ -261,7 +256,7 @@ window.saveUserName = function () {
 // --------------------
 // 5. MODAL YOUTUBE
 // --------------------
-window.openYTSearchModal = function() {
+window.openYTSearchModal = function () {
     const modal = document.getElementById('ytSearchModal');
     if (modal) {
         modal.style.display = 'flex';
@@ -272,10 +267,10 @@ window.openYTSearchModal = function() {
         setTimeout(() => document.getElementById('ytSearchQuery')?.focus(), 100);
     }
     const results = document.getElementById('ytSearchResults');
-    if(results) results.innerHTML = '';
+    if (results) results.innerHTML = '';
 };
 
-window.closeYTSearchModal = function() {
+window.closeYTSearchModal = function () {
     document.getElementById('ytSearchModal').style.display = 'none';
 };
 
@@ -296,7 +291,7 @@ window.openAdminUnlockModal = function () {
 
 window.closeAdminUnlockModal = function () {
     const modal = document.getElementById('adminUnlockModal');
-    if(modal) modal.style.display = 'none';
+    if (modal) modal.style.display = 'none';
 };
 
 window.loginAdminSession = async function () {
@@ -304,15 +299,15 @@ window.loginAdminSession = async function () {
     const pass = document.getElementById('adminUnlockPassword')?.value;
 
     if (!email || !pass) return alert('Preencha os campos.');
-    if(typeof toggleLoading === 'function') toggleLoading('adminUnlockConfirmBtn', true);
+    if (typeof toggleLoading === 'function') toggleLoading('adminUnlockConfirmBtn', true);
 
     try {
         const userCredential = await firebase.auth().signInWithEmailAndPassword(email, pass);
         const user = userCredential.user;
-        
+
         window.isAdminLoggedIn = true;
         document.body.classList.remove('non-admin');
-        
+
         // Pega nome do perfil
         const adminName = user.displayName || user.email.split('@')[0];
 
@@ -323,53 +318,53 @@ window.loginAdminSession = async function () {
         window.closeEditNameModal();
 
         if (window.myPresenceRef) {
-            window.myPresenceRef.update({ 
+            window.myPresenceRef.update({
                 isAdmin: true,
-                name: adminName 
+                name: adminName
             });
         }
-        
+
         document.getElementById('panelBtn').style.display = 'flex';
         document.getElementById('videoList').classList.add('admin-mode');
         document.getElementById('clearChatBtn').style.display = 'inline-block';
         document.getElementById('bulkRemoveBtn').style.display = 'inline-block';
 
-        if(typeof showNotification === 'function') showNotification('Modo Admin ATIVADO.', 'success');
+        if (typeof showNotification === 'function') showNotification('Modo Admin ATIVADO.', 'success');
         if (document.body.classList.contains('locked')) unlockScreen();
 
     } catch (error) {
         console.error(error);
-        if(typeof showNotification === 'function') showNotification('Erro de autenticação.', 'error');
+        if (typeof showNotification === 'function') showNotification('Erro de autenticação.', 'error');
     } finally {
-        if(typeof toggleLoading === 'function') toggleLoading('adminUnlockConfirmBtn', false);
+        if (typeof toggleLoading === 'function') toggleLoading('adminUnlockConfirmBtn', false);
     }
 };
 
 window.logoutAdminSession = function () {
     window.isAdminLoggedIn = false;
     if (window.myPresenceRef) window.myPresenceRef.update({ isAdmin: false });
-    
+
     document.body.classList.add('non-admin');
     updateAdminDisplay(null);
-    
+
     document.getElementById('panelBtn').style.display = 'none';
     document.getElementById('videoList').classList.remove('admin-mode');
     document.getElementById('clearChatBtn').style.display = 'none';
     document.getElementById('bulkRemoveBtn').style.display = 'none';
-    
+
     firebase.auth().signOut();
-    if(typeof showNotification === 'function') showNotification('Modo Admin DESATIVADO.', 'info');
+    if (typeof showNotification === 'function') showNotification('Modo Admin DESATIVADO.', 'info');
 };
 
 function updateAdminDisplay(name) {
     const btn = document.getElementById('adminUnlockBtn');
     const statusText = document.getElementById('adminStatusText');
     if (window.isAdminLoggedIn) {
-        if(btn) btn.classList.add('admin-logged-in');
-        if(statusText) statusText.textContent = 'Admin';
+        if (btn) btn.classList.add('admin-logged-in');
+        if (statusText) statusText.textContent = 'Admin';
     } else {
-        if(btn) btn.classList.remove('admin-logged-in');
-        if(statusText) statusText.textContent = 'Admin';
+        if (btn) btn.classList.remove('admin-logged-in');
+        if (statusText) statusText.textContent = 'Admin';
     }
 }
 
@@ -389,7 +384,7 @@ function hideInitialLoader() {
 // 1. Gera ID do Navegador (Compatível com Guia Anônima)
 let memoryDeviceId = null; // Guarda o ID na memória RAM caso o armazenamento falhe
 
-window.getDeviceId = function() {
+window.getDeviceId = function () {
     // Se já geramos um ID nessa sessão (aba aberta), usa ele para garantir que não mude
     if (memoryDeviceId) return memoryDeviceId;
 
@@ -402,21 +397,19 @@ window.getDeviceId = function() {
 
     // Se não achou (ou não pôde ler), gera um novo
     if (!memoryDeviceId) {
-        memoryDeviceId = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-        
-        // Tenta salvar para o futuro (se falhar, tudo bem, usamos o da memória)
+        memoryDeviceId = 'dev_' + crypto.randomUUID();
         try {
             localStorage.setItem('flowLinkDeviceId', memoryDeviceId);
         } catch (e) {
-            console.warn("Não foi possível salvar ID persistente. O banimento valerá apenas até a página ser recarregada.");
+            // Se falhar, o ID funcionará apenas nesta sessão
         }
     }
-    
+
     return memoryDeviceId;
 };
 
 // 2. VIGIA (Monitora APENAS a sala atual)
-window.monitorBans = function(roomId) {
+window.monitorBans = function (roomId) {
     if (!roomId) return;
 
     // Escuta a lista de banidos DA SALA
@@ -432,17 +425,16 @@ window.monitorBans = function(roomId) {
         const isDeviceBanned = bannedList[myDeviceId] === true;
 
         if ((isNameBanned || isDeviceBanned) && !window.isAdminLoggedIn) {
-            console.warn("🚫 Banimento detectado.");
-            
+
             sessionStorage.removeItem('ytSessionUser');
             alert("🚫 Você foi banido desta sala.");
-            window.location.href = 'index.html'; 
+            window.location.href = 'index.html';
         }
     });
 };
 
 // 3. COMANDO ADMIN (Banir)
-window.banUser = function(targetName) {
+window.banUser = function (targetName) {
     if (!window.isAdminLoggedIn) return console.error("⛔ Apenas admins.");
     if (!window.currentRoomId) return console.error("⛔ Nenhuma sala.");
     if (!targetName) return console.error("⛔ Informe o nome.");
@@ -457,7 +449,7 @@ window.banUser = function(targetName) {
 
         for (let key in users) {
             if (users[key].name === targetName) {
-                targetDeviceId = users[key].deviceId; 
+                targetDeviceId = users[key].deviceId;
                 break;
             }
         }
@@ -475,19 +467,19 @@ window.banUser = function(targetName) {
         return firebase.database().ref().update(updates);
     }).then(() => {
         console.log(`🔨 Usuário ${targetName} banido com sucesso!`);
-        if(typeof window.sendSystemMessage === 'function') {
+        if (typeof window.sendSystemMessage === 'function') {
             window.sendSystemMessage(`🚫 O usuário ${targetName} foi banido da sala.`);
         }
     });
 };
 
-window.unbanUser = function(target) {
+window.unbanUser = function (target) {
     if (!window.isAdminLoggedIn) return;
     firebase.database().ref(`rooms/${window.currentRoomId}/banned/${target}`).remove()
         .then(() => console.log(`😇 Banimento de '${target}' removido.`));
 };
 
-window.nukeRoom = function() {
+window.nukeRoom = function () {
     if (!window.isAdminLoggedIn) return;
     if (!confirm("☢️ DESTRUIR SALA?")) return;
     firebase.database().ref(`rooms/${window.currentRoomId}`).remove()

@@ -20,7 +20,7 @@ function initChatSystem() {
 
     if (!roomId) return;
 
-    console.log("🔄 Buscando informações do dono da sala...");
+    
 
     firebase.database().ref('rooms/' + roomId).once('value').then(snapshot => {
         const data = snapshot.val();
@@ -30,9 +30,7 @@ function initChatSystem() {
             window.roomCreatorName = data.creatorName;
             window.roomCreatorAvatar = data.creatorAvatar || 'fas fa-user'; 
             
-            console.log("✅ Dono encontrado:", window.roomCreatorName, "Avatar:", window.roomCreatorAvatar);
-            
-            // Atualiza o display do criador no header (opcional)
+            // Atualiza o display do criador no header 
             const creatorDisplay = document.getElementById('roomCreatorDisplay');
             if (creatorDisplay) creatorDisplay.textContent = window.roomCreatorName;
         }

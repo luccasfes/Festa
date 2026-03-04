@@ -54,7 +54,7 @@ function determineAndApplyPlayerMode() {
         document.body.classList.remove("festa-mode");
     }
 
-    console.log(`🔄 Aplicando modo: ${targetMode}`);
+   // Troca de modos
 
     if (targetMode === "ADMIN") {
         forceAdminPlayer();
@@ -302,7 +302,6 @@ function recreatePlayerSafe(controlsValue) {
         if ((!videoQueue || videoQueue.length === 0) && typeof loadVideoQueue === 'function') {
             loadVideoQueue();
         }
-        console.warn("⚠️ Player não recriado: Nenhum vídeo encontrado.");
         return;
     }
 
@@ -317,7 +316,6 @@ function recreatePlayerSafe(controlsValue) {
     setTimeout(() => {
         if (!YT?.Player) return;
 
-        console.log(`🎬 Recriando Player [${controlsValue === 1 ? 'COM' : 'SEM'} Controles]. Video: ${data.videoId}`);
 
         player = new YT.Player("videoPlayer", {
             height: "100%",

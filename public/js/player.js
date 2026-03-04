@@ -11,17 +11,15 @@ window.currentVideoRef = null;
 
 let localResumeAlreadyUsed = false;
 
-/**
- * 1. INICIALIZAÇÃO DINÂMICA
- * Decide se o player nasce com ou sem controles baseado no número de usuários.
- */
+// INICIALIZAÇÃO DINÂMICA
+// Decide se o player nasce com ou sem controles baseado no número de usuários.
+
 function onYouTubeIframeAPIReady() {
     window.currentPlayerMode = 'INICIANDO';
 
     // Se estiver sozinho ou for admin, nasce com controles (1). Caso contrário, bloqueado (0).
     const initialControls = (window.isAdminLoggedIn || typeof onlineUserCount === 'undefined' || onlineUserCount <= 1) ? 1 : 0;
     
-    console.log(`🚀 Inicializando Player. Modo sugerido: ${initialControls === 1 ? 'SOLO' : 'FESTA'}`);
 
     player = new YT.Player('videoPlayer', {
         height: '100%',
@@ -33,7 +31,7 @@ function onYouTubeIframeAPIReady() {
             'rel': 0,
             'disablekb': (initialControls === 0 ? 1 : 0),
             'enablejsapi': 1,
-            'origin': window.location.origin // Resolve erros de postMessage no localhost
+            'origin': window.location.origin
         },
         events: {
             onReady: (event) => {

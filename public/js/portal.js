@@ -214,15 +214,11 @@
                 const snapshot = await firebase.database().ref('rooms/' + roomId).once('value');
 
                 if (snapshot.exists()) {
-                    // Se existir, vai para a sala
                     window.location.href = `index.html?room=${roomId}`;
                 } else {
-                    // SE NÃO EXISTIR: Redireciona para a página visual 404
-                    console.log("Sala não encontrada, redirecionando...");
                     window.location.href = '/404.html';
                 }
             } catch (error) {
-                console.error("Erro técnico:", error);
                 // Se as Regras JSON bloquearem (sala inexistente), também vai para o 404
                 if (error.code === "PERMISSION_DENIED") {
                     window.location.href = '/404.html';

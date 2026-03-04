@@ -358,8 +358,8 @@ function passesRepetitionFilters(candidateItem) {
         return jaccard(candTokens, tokensExist) >= SIMILARITY_THRESHOLD;
     });
 
+    // Recusando pq o DNA está muito parecido com algo recente (mesmo que o ID seja diferente)
     if (isTooSimilar) {
-        console.log(`❌ [AutoDJ] Recusado por DNA/Repetição: "${rawTitle}"`);
         return false;
     }
 
@@ -686,7 +686,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (q.length >= 5) {
                 autoSearchTimeout = setTimeout(() => {
-                    console.log("⏰ Busca automática acionada (3s)");
+                    
                     searchYouTube();
                 }, 3000); // 3 segundos de silêncio
             }
