@@ -64,17 +64,25 @@ function getUserColor(str) {
 // CONTROLE DE MODAIS (GERAL)
 // ====================================================================
 
-// Fechar modais com clique fora
 window.addEventListener('click', (event) => {
     if (event.target.classList.contains('modal')) {
+       
+        if (event.target.id === 'editNameModal' || event.target.id === 'roomPasswordModal') {
+            return; 
+        }
         event.target.style.display = 'none';
     }
 });
 
-// Fechar modais com ESC
+// Função para bloquear todos os modais exceto 2 modais
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
-        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        document.querySelectorAll('.modal').forEach(m => {
+
+            if (m.id !== 'editNameModal' && m.id !== 'roomPasswordModal') {
+                m.style.display = 'none';
+            }
+        });
     }
 });
 

@@ -245,8 +245,12 @@ window.closeEditNameModal = function () {
 
 window.saveUserName = function () {
     const input = document.getElementById('editNameInput');
-    let newName = input ? input.value.trim() : 'Visitante';
-    if (!newName) newName = 'Visitante';
+    const newName = input ? input.value.trim() : '';
+    if (!newName) {
+        alert("⚠️ É obrigatório digitar o seu nome para entrar na sala!");
+        if (input) input.focus(); 
+        return; 
+    }
     window.updateGlobalUserUI(newName);
     setTimeout(() => {
         window.closeEditNameModal();
