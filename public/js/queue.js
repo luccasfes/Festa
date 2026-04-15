@@ -208,7 +208,10 @@ function handleRemoveVideo(id) {
     
     if (window.isAdminLoggedIn || isSolo) {
         videoQueueRef.child(id).remove()
-            .then(() => showNotification('Vídeo removido!', 'success'))
+            .then(() => {
+                showNotification('Vídeo removido!', 'success');
+                if (typeof runAutoDJCycle === 'function') setTimeout(() => runAutoDJCycle(), 2500);
+            })
             .catch((error) => showNotification('Erro ao remover.', 'error'));
     } else {
         openRemoveModalWithId(id);
@@ -228,6 +231,8 @@ function handleSkipOrVote() {
             videoQueueRef.child(idToRemove).remove()
                 .then(() => {
                     showNotification(window.isAdminLoggedIn ? 'Pulado pelo Admin!' : 'Pulado!', 'success');
+                    // NOVO: Chama o DJ para repor a vaga
+                    if (typeof runAutoDJCycle === 'function') setTimeout(() => runAutoDJCycle(), 2500);
                 })
                 .finally(() => {
                     if(typeof toggleLoading === 'function') toggleLoading('skipVoteBtn', false);
@@ -338,6 +343,7 @@ if (typeof roomRef !== 'undefined') {
                 roomRef.child('currentSong/votes').remove();
                 showNotification('Pulado por votação!', 'success');
                 lastVoteCount = 0;
+                if (typeof runAutoDJCycle === 'function') setTimeout(() => runAutoDJCycle(), 2500);
             });
         }
     });

@@ -202,6 +202,12 @@ function createVideoElement(item) {
     return el;
 }
 
+/**
+ * Realiza a busca no YouTube de forma otimizada.
+ * Utiliza AbortController para cancelar requisições anteriores e proteger contra XSS.
+ * @async
+ * @returns {Promise<void>}
+ */
 async function searchYouTube() {
     const queryInput = document.getElementById("ytSearchQuery");
     const resultsDiv = document.getElementById("ytSearchResults");
@@ -214,17 +220,14 @@ async function searchYouTube() {
         return;
     }
 
-    // 1. Abortar requisição anterior
     if (ytSearchAbort) ytSearchAbort.abort();
     ytSearchAbort = new AbortController();
 
-    // 2. Estado de Carregamento
     resultsDiv.innerHTML = `<div class="loading-yt" style="text-align:center; padding:20px;">
         <i class="fas fa-spinner fa-spin"></i> Buscando...
     </div>`;
 
     try {
-        // 3. Busca na API segura
         const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(q)}&maxResults=20`, {
             signal: ytSearchAbort.signal
         });
@@ -234,22 +237,20 @@ async function searchYouTube() {
         const json = await res.json();
         const items = json.items || [];
 
-        resultsDiv.innerHTML = ""; // Limpa carregamento
+        resultsDiv.innerHTML = ""; 
 
         if (items.length === 0) {
             resultsDiv.innerHTML = `<div style="padding:20px; text-align:center;">Nada encontrado.</div>`;
             return;
         }
 
-        // 4. Renderização Segura via DOM
         items.forEach(item => {
             const el = createVideoElement(item);
             if (el) resultsDiv.appendChild(el);
         });
 
     } catch (e) {
-        if (e.name === "AbortError") return; // Ignora abortos intencionais
-        console.error(e);
+        if (e.name === "AbortError") return; 
         resultsDiv.innerHTML = `<div style="color:#ff6b6b; padding:10px;">
             Erro ao buscar. O servidor está rodando?
         </div>`;
@@ -261,16 +262,22 @@ async function searchYouTube() {
 // ====================================================================
 
 let selectedGenre = "pop";
-let selectedType = "genre"; // 'genre' | 'similar' | 'trending'
+let selectedType = "genre"; 
 let isAutoDjActive = false;
 let autoDjCount = 5;
 let autoDjInterval = null;
+
+/**
+ * Variável de controle de concorrência (Mutex) para evitar chamadas simultâneas à API.
+ * @type {boolean}
+ */
+let isAutoDjRunning = false;
 
 // Anti-repetição por artista/termo
 const RECENT_ARTISTS_MAX = 10;
 const recentArtists = [];
 const recentVideoIds = new Set(); 
-const recentVideoTitles = []; // NOVO: Guarda os títulos locais para bater o delay do Firebase
+const recentVideoTitles = []; 
 
 const SIMILARITY_THRESHOLD = 0.40; 
 
@@ -310,23 +317,16 @@ function passesRepetitionFilters(candidateItem) {
 
     if (!vidId) return false;
 
-    // 1) Está a tocar agora?
     if (typeof player !== 'undefined' && player?.getVideoData?.()?.video_id === vidId) return false;
-
-    // 2) Histórico de IDs já tocados (rápido, a nível global)
     if (typeof playedVideoHistory !== 'undefined' && playedVideoHistory?.has(vidId)) return false;
-
-    // 3) IDs recentes (Cache Local contra rajadas de pedidos do AutoDJ)
     if (recentVideoIds.has(vidId)) return false;
 
-    // 4) Que já estão na fila (ignorando parâmetros como &list=)
     const queueIds = window.roomData?.queue
         ? Object.values(window.roomData.queue)
             .map(x => x?.videoUrl?.split("v=")[1]?.split("&")[0]).filter(Boolean)
         : [];
     if (queueIds.includes(vidId)) return false;
 
-    // 5) Comparação Híbrida (INCLUINDO O CACHE LOCAL DE TÍTULOS)
     const compareList = [
         ...Object.values(window.roomData?.history || {}),
         ...Object.values(window.roomData?.queue || {})
@@ -334,9 +334,8 @@ function passesRepetitionFilters(candidateItem) {
 
     const candNorm = normalizeForRepetition(rawTitle);
     const candTokens = tokenizeForDNA(candNorm);
-    const cleanCand = cleanTitle(rawTitle); // Regra Substring Original
+    const cleanCand = cleanTitle(rawTitle); 
 
-    // Se o nome é tão pequeno que não gera tokens e não passa da validação mínima
     if (candTokens.length < 2 && cleanCand.length < 5) return true;
 
     const isTooSimilar = compareList.some(t => {
@@ -344,24 +343,19 @@ function passesRepetitionFilters(candidateItem) {
         const existNorm = normalizeForRepetition(t);
         const cleanExist = cleanTitle(t);
 
-        // REGRA A: Substring Exata (Penalização inteligente de versões)
         if (cleanCand.length > 8 && cleanExist.length > 8) {
             if (cleanCand === cleanExist || cleanCand.includes(cleanExist) || cleanExist.includes(cleanCand)) {
                 return true; 
             }
         }
 
-        // REGRA B: Comparação por Tokens (Jaccard)
         const tokensExist = tokenizeForDNA(existNorm);
         if (tokensExist.length < 2) return false;
         
         return jaccard(candTokens, tokensExist) >= SIMILARITY_THRESHOLD;
     });
 
-    // Recusando pq o DNA está muito parecido com algo recente (mesmo que o ID seja diferente)
-    if (isTooSimilar) {
-        return false;
-    }
+    if (isTooSimilar) return false;
 
     return true;
 }
@@ -452,7 +446,7 @@ function toggleAutoDj(e) {
     const btnModal = document.querySelector(".btn-auto"); 
 
     if (isAutoDjActive) {
-        if(typeof showNotification === 'function') showNotification("Auto DJ Ligado 🤖", "success");
+        if(typeof showNotification === 'function') showNotification("Auto DJ Ligado", "success");
         
         if (autoDjInterval) clearInterval(autoDjInterval);
         runAutoDJCycle(); 
@@ -473,7 +467,7 @@ function toggleAutoDj(e) {
         
         if(btnPrincipal) {
             btnPrincipal.classList.remove("auto-dj-on");
-            btnPrincipal.innerHTML = '<i class="fas fa-magic"></i> Sugerir';
+            btnPrincipal.innerHTML = '<i class="fas fa-magic"></i> Sugerir Música';
         }
         if (btnModal) {
             btnModal.classList.remove("active");
@@ -485,10 +479,8 @@ function toggleAutoDj(e) {
 function detectCurrentGenre() {
     if (typeof player === 'undefined' || typeof player.getVideoData !== "function") return;
     try {
-        // normalizeText já tira os acentos e deixa minúsculo
         const title = normalizeText(player.getVideoData().title || "");
         
-        // Mapeamento turbinado com os principais artistas de cada estilo
         const map = {
             sertanejo: ["sertanejo", "mateus", "jorge", "marilia", "gusttavo", "ze neto", "henrique", "juliano", "maiara"],
             funk: ["funk", "mc", "dj", "kevin", "ryan sp", "cabelinho", "hariel", "ig"],
@@ -520,15 +512,24 @@ function extractBaseArtistFromTitle(currentTitle) {
     return t;
 }
 
-// CICLO PRINCIPAL
+/**
+ * Executa o ciclo principal do Auto DJ, buscando e adicionando recomendações musicais à fila.
+ * Implementa controle de concorrência e preenchimento em cascata para proteção de cota de API.
+ * @async
+ * @param {boolean} [force=false] - Força a execução ignorando o estado de ativação do Auto DJ.
+ * @returns {Promise<void>}
+ */
 async function runAutoDJCycle(force = false) {
     if (!force && !isAutoDjActive) return;
-    
+    if (isAutoDjRunning) return;
+
     const autoCountEl = document.getElementById("autoCount");
-    const limit = autoCountEl ? parseInt(autoCountEl.textContent || "5") : 5;
+    const limit = autoCountEl ? parseInt(autoCountEl.textContent || "5", 10) : 5;
+    
     if (!force && typeof videoQueue !== "undefined" && videoQueue.length >= limit) return;
 
-    console.log("🚀 [AutoDJ] Iniciando ciclo...");
+    isAutoDjRunning = true;
+    detectCurrentGenre();
 
     try {
         let isOfficialContext = false;
@@ -540,13 +541,10 @@ async function runAutoDJCycle(force = false) {
             apiEndpoint = `/api/spotify-recommendations?genre=pop`;
         } else {
             const currentTitle = typeof player !== 'undefined' ? player?.getVideoData?.()?.title || "" : "";
-            if (!currentTitle) {
-                console.warn("[AutoDJ] Sem vídeo para buscar similares.");
-                return;
-            }
+            if (!currentTitle) return;
 
             const titleLower = normalizeText(currentTitle);
-            const cartoonTerms = ["disney","pixar","soundtrack","frozen","encanto"];
+            const cartoonTerms = ["disney", "pixar", "soundtrack", "frozen", "encanto"];
             const isCartoon = cartoonTerms.some(t => titleLower.includes(t));
 
             let base = isCartoon ? "Disney" : extractBaseArtistFromTitle(currentTitle);
@@ -558,47 +556,41 @@ async function runAutoDJCycle(force = false) {
             }
         }
 
-        // 1. Pegar várias sugestões do Spotify em vez de apenas uma
         let possibleQueries = [];
         try {
             const spotifyRes = await fetch(apiEndpoint);
             if (spotifyRes.ok) {
                 const recs = await spotifyRes.json();
                 if (recs?.length) {
-                    // Embaralha as recomendações
                     const shuffledRecs = recs.sort(() => 0.5 - Math.random());
                     
-                    // Pega as 3 primeiras recomendações diferentes para tentar
-                    for(let i = 0; i < Math.min(3, shuffledRecs.length); i++) {
+                    for (let i = 0; i < Math.min(3, shuffledRecs.length); i++) {
                         const term = normalizeText(shuffledRecs[i].full);
                         if (term.includes("disney") || term.includes("soundtrack")) {
                             isOfficialContext = true;
                         }
                         possibleQueries.push(`${shuffledRecs[i].full} official audio`);
                         
-                        // Atualiza os artistas recentes com o primeiro da lista
-                        if(i === 0) pushRecentArtist(extractBaseArtistFromTitle(shuffledRecs[i].full));
+                        if (i === 0) pushRecentArtist(extractBaseArtistFromTitle(shuffledRecs[i].full));
                     }
                 }
             }
-        } catch (err) {}
+        } catch (err) {
+            // Tratamento de falha silenciosa para manter fluxo
+        }
 
-        // Se o Spotify falhar, cria uma busca de fallback genérica
         if (possibleQueries.length === 0) {
             possibleQueries.push(`${selectedGenre || "pop"} hits brasil official audio`);
         }
 
         let winner = null;
 
-        // 2. O LOOP DE TENTATIVAS (A Mágica da Resiliência)
         for (let i = 0; i < possibleQueries.length; i++) {
             const youtubeQuery = possibleQueries[i];
             const queryNorm = normalizeText(youtubeQuery);
             
-            console.log(`🔎 [AutoDJ] Tentativa ${i + 1}/3: Buscando "${youtubeQuery}"`);
-
             const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(youtubeQuery)}&maxResults=15`);
-            if (!res.ok) continue; // Se der erro na API do YouTube, tenta a próxima query
+            if (!res.ok) continue; 
 
             const json = await res.json();
             let items = dedupeItemsById(json.items || []);
@@ -608,22 +600,14 @@ async function runAutoDJCycle(force = false) {
                 .map(item => ({ item, score: scoreCandidate(item, { isOfficialContext, queryNorm }) }))
                 .sort((a, b) => b.score - a.score);
 
-            // Passa pelo nosso filtro Anti-Repetição
             winner = candidates.find(c => c.score > -150 && passesRepetitionFilters(c.item));
 
-            if (winner) {
-                break; // Achou uma música boa que não repete! Para de buscar.
-            } else {
-                console.warn(`⚠️ [AutoDJ] Tentativa ${i + 1} falhou (Tudo repetido). Tentando a próxima sugestão...`);
-            }
+            if (winner) break; 
         }
 
-        // 3. Adiciona a música vencedora à fila
         if (winner) {
             const vid = winner.item;
-            console.log(`✅ [AutoDJ] SUCESSO! Adicionando: ${vid.snippet.title}`);
-
-            // Cache local imediato
+            
             addToRecentIds(vid.id.videoId);
             recentVideoTitles.push(vid.snippet.title); 
             if (recentVideoTitles.length > 30) recentVideoTitles.shift();
@@ -640,13 +624,16 @@ async function runAutoDJCycle(force = false) {
                     playedVideoHistory.add(vid.id.videoId);
                 }
             }
-        } else {
-            
-            console.error("❌ [AutoDJ] Esgotou as 3 tentativas e não achou nada inédito.");
         }
 
     } catch (e) {
-        console.error("❌ Erro AutoDJ:", e);
+        // Exceção tratada no escopo principal
+    } finally {
+        isAutoDjRunning = false;
+
+        if (!force && typeof videoQueue !== "undefined" && videoQueue.length < limit) {
+            setTimeout(() => runAutoDJCycle(), 3000);
+        }
     }
 }
 
@@ -674,11 +661,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchBtn = document.getElementById("btnSearchYoutube");
     const nameInput = document.getElementById("ytSearchName");
 
-    // Controle de Timer
     let autoSearchTimeout = null;
 
     if (searchInput) {
-        // 1. EVENTO DE INPUT (Busca automática com longo atraso)
         searchInput.addEventListener("input", () => {
             if (autoSearchTimeout) clearTimeout(autoSearchTimeout);
 
@@ -686,13 +671,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (q.length >= 5) {
                 autoSearchTimeout = setTimeout(() => {
-                    
                     searchYouTube();
-                }, 3000); // 3 segundos de silêncio
+                }, 3000); 
             }
         });
 
-        // 2. EVENTO DE ENTER (Busca Imediata)
         searchInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
@@ -702,7 +685,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 3. EVENTO DE CLIQUE (Busca Imediata)
     if (searchBtn) {
         searchBtn.addEventListener("click", () => {
             if (autoSearchTimeout) clearTimeout(autoSearchTimeout);
@@ -716,10 +698,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Configuração das Abas do Modal de Sugestão
     window.switchTab = function(tabName) {
         document.querySelectorAll(".suggestion-tab").forEach(t => t.classList.remove("active"));
-        
         document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
         
         const btn = document.querySelector(`.suggestion-tab[onclick*="${tabName}"]`);
@@ -731,11 +711,9 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedType = tabName;
     };
     
-    // Iniciar na aba 'genre'
     if(typeof switchTab === 'function') switchTab('genre'); 
 });
 
-// Exportar Funções Globais
 window.openYTSearchModal = openYTSearchModal;
 window.closeYTSearchModal = closeYTSearchModal;
 window.setSessionUser = setSessionUser;
@@ -748,5 +726,5 @@ window.changeAutoCount = (val) => {
     const el = document.getElementById("autoCount");
     if(!el) return;
     let v = parseInt(el.textContent) + val;
-    if(v >= 1 && v <= 10) el.textContent = v;
+    if(v >= 1 && v <= 5) el.textContent = v;
 };
