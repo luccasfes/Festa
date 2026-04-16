@@ -183,15 +183,22 @@ function createVideoElement(item) {
     
     // Event Listener (Evita string eval/onclick)
     btn.addEventListener("click", () => {
-        if (typeof addVideo === 'function') {
-            addVideo(`https://www.youtube.com/watch?v=${vidId}`, title);
-        }
-        
-        // Feedback Visual
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-check"></i>';
-        setTimeout(() => closeYTSearchModal(), 300);
-    });
+    if (typeof addVideo === 'function') {
+        addVideo(`https://www.youtube.com/watch?v=${vidId}`, title);
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-check"></i> Adicionado!';
+    btn.style.background = "var(--color-background-success)";
+    btn.style.color = "var(--color-text-success)";
+
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = 'Adicionar';
+        btn.style.background = "";
+        btn.style.color = "";
+    }, 1500);
+});
 
     // Montagem
     wrap.appendChild(h4);
