@@ -1,8 +1,9 @@
 // ====================================================================
-// FILA DE VÍDEOS (AJUSTADA - MODO SOLO, AUTO-STOP E VOTAÇÃO CORRIGIDA)
+// FILA DE VÍDEOS (AJUSTADA - PROTEÇÃO CONTRA DOUBLE-SKIP E RACE CONDITIONS)
 // ====================================================================
 
 let lastVoteCount = 0; 
+let isProcessingSkip = false; // TRAVA DE SEGURANÇA: Evita que o YouTube ou cliques duplos pulem 2 vídeos
 
 async function addVideo(urlArg = null, titleArg = null) {
     let phone = document.getElementById('phone')?.value.trim(); 
@@ -120,7 +121,6 @@ function renderQueue() {
 
         let vId = typeof extractVideoId === 'function' ? extractVideoId(video.videoUrl) : video.videoUrl.split('v=')[1]?.substring(0,11);
         
-        // Escape seguro do HTML para evitar bugs com aspas duplas em títulos
         const escapeTxt = typeof escapeHtml === 'function' ? escapeHtml : (t) => {
             const div = document.createElement('div');
             div.innerText = t;
@@ -182,14 +182,19 @@ function checkCurrentVideo() {
                 pState = player.getPlayerState();
             } catch(e){}
             
-            // Força o play se for uma música diferente, OU se a música for a mesma mas o player estiver parado/terminado
-            if ((pid !== queueVideoId || pState === YT.PlayerState.ENDED || pState === YT.PlayerState.UNSTARTED || pState === YT.PlayerState.CUED) && queueVideoId) {
-                player.loadVideoById(queueVideoId);
-                if(typeof playedVideoHistory !== 'undefined') playedVideoHistory.add(queueVideoId);
+            // CORREÇÃO: Só força o recarregamento do player se o ID for realmente diferente.
+            // Se for o mesmo vídeo, apenas manda dar play se estiver parado (UNSTARTED ou CUED).
+            // Isso evita o reload forçado quando o AutoDJ atualiza a fila.
+            if (queueVideoId) {
+                if (pid !== queueVideoId) {
+                    player.loadVideoById(queueVideoId);
+                    if(typeof playedVideoHistory !== 'undefined') playedVideoHistory.add(queueVideoId);
+                } else if (pState === YT.PlayerState.UNSTARTED || pState === YT.PlayerState.CUED) {
+                    if (typeof player.playVideo === 'function') player.playVideo();
+                }
             }
         }
     } else {
-        // === CORREÇÃO 1: PARA O PLAYER SE A FILA ESTIVER VAZIA ===
         const u = document.getElementById('currentUser');
         if(u) u.textContent = 'Nenhum vídeo';
         const urlD = document.getElementById('currentVideoUrl');
@@ -202,46 +207,51 @@ function checkCurrentVideo() {
     }
 }
 
-// === CORREÇÃO 2: VERIFICAÇÃO "ISSOLO" CORRIGIDA (undefined || <= 1) ===
 function handleRemoveVideo(id) {
     const isSolo = (typeof onlineUserCount === 'undefined' || onlineUserCount <= 1);
     
     if (window.isAdminLoggedIn || isSolo) {
+        if (isProcessingSkip) return; // Se já está removendo algo, ignora
+        isProcessingSkip = true;
+
         videoQueueRef.child(id).remove()
             .then(() => {
                 showNotification('Vídeo removido!', 'success');
                 if (typeof runAutoDJCycle === 'function') setTimeout(() => runAutoDJCycle(), 2500);
             })
-            .catch((error) => showNotification('Erro ao remover.', 'error'));
+            .catch((error) => showNotification('Erro ao remover.', 'error'))
+            .finally(() => {
+                setTimeout(() => { isProcessingSkip = false; }, 1000); // Libera o cadeado após 1 seg
+            });
     } else {
         openRemoveModalWithId(id);
     }
 }
 
 function handleSkipOrVote() {
-    // Corrige bug onde onlineUserCount undefined bloqueava o botão
     const isSolo = (typeof onlineUserCount === 'undefined' || onlineUserCount <= 1);
 
     if (window.isAdminLoggedIn || isSolo) {
-        // PULA DIRETO
         if (videoQueue && videoQueue.length > 0) {
+            if (isProcessingSkip) return; // Se o YouTube mandar o evento de ENDED duas vezes, barra aqui
+            isProcessingSkip = true;
+
             if(typeof toggleLoading === 'function') toggleLoading('skipVoteBtn', true);
-            const idToRemove = videoQueue[0].id; // Salva o ID para não dar erro
+            const idToRemove = videoQueue[0].id; 
             
             videoQueueRef.child(idToRemove).remove()
                 .then(() => {
                     showNotification(window.isAdminLoggedIn ? 'Pulado pelo Admin!' : 'Pulado!', 'success');
-                    // NOVO: Chama o DJ para repor a vaga
                     if (typeof runAutoDJCycle === 'function') setTimeout(() => runAutoDJCycle(), 2500);
                 })
                 .finally(() => {
                     if(typeof toggleLoading === 'function') toggleLoading('skipVoteBtn', false);
+                    setTimeout(() => { isProcessingSkip = false; }, 1000); // Libera o cadeado após 1 seg
                 });
         } else {
             showNotification('Fila vazia.', 'info');
         }
     } else {
-        // MODO FESTA: Registra Voto
         castVoteToSkip();
     }
 }
@@ -339,11 +349,16 @@ if (typeof roomRef !== 'undefined') {
         }
         
         if (count >= needed && videoQueue && videoQueue.length > 0) {
+            if (isProcessingSkip) return; 
+            isProcessingSkip = true;
+
             videoQueueRef.child(videoQueue[0].id).remove().then(() => {
                 roomRef.child('currentSong/votes').remove();
                 showNotification('Pulado por votação!', 'success');
                 lastVoteCount = 0;
                 if (typeof runAutoDJCycle === 'function') setTimeout(() => runAutoDJCycle(), 2500);
+            }).finally(() => {
+                setTimeout(() => { isProcessingSkip = false; }, 1000); // Libera a trava após 1 segundo
             });
         }
     });
