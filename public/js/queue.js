@@ -3,7 +3,41 @@
 // ====================================================================
 
 let lastVoteCount = 0; 
-let isProcessingSkip = false; // TRAVA DE SEGURANÇA: Evita que o YouTube ou cliques duplos pulem 2 vídeos
+
+async function skipCurrentVideo(idToRemove = null, customMessage = null, clearVotes = false) {
+    const lockRef = roomRef.child('skipLock');
+    
+    try {
+        const result = await lockRef.transaction((currentLock) => {
+            const now = Date.now();
+            if (currentLock && (now - currentLock) < 3000) {
+                return; 
+            }
+            return now; 
+        });
+        
+        if (!result.committed) return;
+        
+        if (videoQueue && videoQueue.length > 0) {
+            const targetId = idToRemove || videoQueue[0].id;
+            await videoQueueRef.child(targetId).remove();
+            
+            if (clearVotes) {
+                roomRef.child('currentSong/votes').remove();
+                lastVoteCount = 0;
+            }
+
+            showNotification(customMessage || 'Pulado!', 'success');
+            if (typeof runAutoDJCycle === 'function') setTimeout(() => runAutoDJCycle(), 2500);
+        }
+        
+    } catch(error) {
+        console.error("Erro no skipLock:", error);
+    } finally {
+        // Libera o lock após 3s
+        setTimeout(() => lockRef.remove(), 3000);
+    }
+}
 
 async function addVideo(urlArg = null, titleArg = null) {
     let phone = document.getElementById('phone')?.value.trim(); 
@@ -182,9 +216,6 @@ function checkCurrentVideo() {
                 pState = player.getPlayerState();
             } catch(e){}
             
-            // CORREÇÃO: Só força o recarregamento do player se o ID for realmente diferente.
-            // Se for o mesmo vídeo, apenas manda dar play se estiver parado (UNSTARTED ou CUED).
-            // Isso evita o reload forçado quando o AutoDJ atualiza a fila.
             if (queueVideoId) {
                 if (pid !== queueVideoId) {
                     player.loadVideoById(queueVideoId);
@@ -211,18 +242,8 @@ function handleRemoveVideo(id) {
     const isSolo = (typeof onlineUserCount === 'undefined' || onlineUserCount <= 1);
     
     if (window.isAdminLoggedIn || isSolo) {
-        if (isProcessingSkip) return; // Se já está removendo algo, ignora
-        isProcessingSkip = true;
-
-        videoQueueRef.child(id).remove()
-            .then(() => {
-                showNotification('Vídeo removido!', 'success');
-                if (typeof runAutoDJCycle === 'function') setTimeout(() => runAutoDJCycle(), 2500);
-            })
-            .catch((error) => showNotification('Erro ao remover.', 'error'))
-            .finally(() => {
-                setTimeout(() => { isProcessingSkip = false; }, 1000); // Libera o cadeado após 1 seg
-            });
+        // Usa a nova trava para remover vídeo também!
+        skipCurrentVideo(id, 'Vídeo removido!');
     } else {
         openRemoveModalWithId(id);
     }
@@ -233,21 +254,12 @@ function handleSkipOrVote() {
 
     if (window.isAdminLoggedIn || isSolo) {
         if (videoQueue && videoQueue.length > 0) {
-            if (isProcessingSkip) return; // Se o YouTube mandar o evento de ENDED duas vezes, barra aqui
-            isProcessingSkip = true;
-
             if(typeof toggleLoading === 'function') toggleLoading('skipVoteBtn', true);
-            const idToRemove = videoQueue[0].id; 
             
-            videoQueueRef.child(idToRemove).remove()
-                .then(() => {
-                    showNotification(window.isAdminLoggedIn ? 'Pulado pelo Admin!' : 'Pulado!', 'success');
-                    if (typeof runAutoDJCycle === 'function') setTimeout(() => runAutoDJCycle(), 2500);
-                })
-                .finally(() => {
-                    if(typeof toggleLoading === 'function') toggleLoading('skipVoteBtn', false);
-                    setTimeout(() => { isProcessingSkip = false; }, 1000); // Libera o cadeado após 1 seg
-                });
+            // Substitui o `isProcessingSkip` pela chamada travada via Firebase
+            skipCurrentVideo(videoQueue[0].id, window.isAdminLoggedIn ? 'Pulado pelo Admin!' : 'Pulado!').finally(() => {
+                if(typeof toggleLoading === 'function') toggleLoading('skipVoteBtn', false);
+            });
         } else {
             showNotification('Fila vazia.', 'info');
         }
@@ -348,18 +360,9 @@ if (typeof roomRef !== 'undefined') {
             }
         }
         
+        // Substitui o `isProcessingSkip` pela chamada travada via Firebase
         if (count >= needed && videoQueue && videoQueue.length > 0) {
-            if (isProcessingSkip) return; 
-            isProcessingSkip = true;
-
-            videoQueueRef.child(videoQueue[0].id).remove().then(() => {
-                roomRef.child('currentSong/votes').remove();
-                showNotification('Pulado por votação!', 'success');
-                lastVoteCount = 0;
-                if (typeof runAutoDJCycle === 'function') setTimeout(() => runAutoDJCycle(), 2500);
-            }).finally(() => {
-                setTimeout(() => { isProcessingSkip = false; }, 1000); // Libera a trava após 1 segundo
-            });
+            skipCurrentVideo(videoQueue[0].id, 'Pulado por votação!', true);
         }
     });
 }
