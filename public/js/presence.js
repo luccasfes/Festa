@@ -9,9 +9,11 @@ window.myUserId = null;
 window.roomId = null;
 
 window.isBroadcaster = false;
+window.hasAdminOnline = false; // Adicionado apenas a flag no window (seguro)
 window.syncInterval = null;
 
 let lastAppliedMode = null;
+// A variável onlineUserCount foi removida daqui porque ela já vem de outro arquivo!
 
 // ====================================================================
 // 1. DETERMINAÇÃO DE MODO (ADMIN / SOLO / FESTA)
@@ -102,16 +104,34 @@ if (typeof presenceRef !== "undefined") {
 
         renderUserListDropdown(users);
 
-        // Broadcaster
+        // --- CORREÇÃO 1: Broadcaster respeitando a hierarquia do Admin ---
         if (users && onlineUserCount > 0) {
             const ids = Object.keys(users);
-            window.broadcasterId = ids[0];
-
+            
             if (window.myPresenceRef) {
                 window.myUserId = window.myPresenceRef.key;
             }
 
-            window.isBroadcaster = window.myUserId === window.broadcasterId;
+            let adminOnline = false;
+            let firstAdminId = null;
+
+            for (let id of ids) {
+                if (users[id] && users[id].isAdmin === true) {
+                    adminOnline = true;
+                    firstAdminId = id;
+                    break;
+                }
+            }
+
+            window.hasAdminOnline = adminOnline;
+
+            if (window.hasAdminOnline) {
+                window.broadcasterId = firstAdminId;
+                window.isBroadcaster = false; 
+            } else {
+                window.broadcasterId = ids[0];
+                window.isBroadcaster = (window.myUserId === window.broadcasterId);
+            }
         }
 
         if (typeof updateVotesNeeded === "function") updateVotesNeeded();
@@ -242,21 +262,31 @@ function updateAdminButtonsVisibility() {
         if (el) el.style.display = souAdmin || sozinho ? "inline-flex" : "none";
     });
 
-    // Atualiza texto do botão Pular
+    // Atualiza texto do botão Pular (Admins e usuários votam)
     const skipText = document.getElementById("skipVoteBtnText");
     const skipBtn = document.getElementById("skipVoteBtn");
     if (skipText && skipBtn) {
-        if (souAdmin) skipText.textContent = "Pular (Admin)";
-        else if (sozinho) skipText.textContent = "Pular (Solo)";
-        else skipText.textContent = skipBtn.classList.contains("voted") ? "Voto Registrado" : "Votar para Pular";
+        if (sozinho) {
+            skipText.textContent = "Pular (Solo)";
+        } else {
+            skipText.textContent = skipBtn.classList.contains("voted") ? "Voto Registrado" : "Votar para Pular";
+        }
     }
 }
 
+// --- CORREÇÃO 2: Cálculo de tempo puxando o Offset do Servidor ---
 function getCurrentVideoIdAndState() {
     if (window.currentVideoState && window.currentVideoState.videoId) {
+        let calcTime = 0;
+        if (typeof getStateVideoTime === 'function') {
+            calcTime = getStateVideoTime(window.currentVideoState);
+        } else {
+            calcTime = Number(window.currentVideoState.videoTime ?? window.currentVideoState.currentTime ?? 0);
+        }
+        
         return {
             videoId: window.currentVideoState.videoId,
-            currentTime: window.currentVideoState.currentTime || 0,
+            currentTime: calcTime,
         };
     }
     if (typeof player !== "undefined" && player?.getVideoData) {
@@ -326,9 +356,19 @@ function recreatePlayerSafe(controlsValue) {
                 start: Math.floor(data.currentTime),
             },
             events: {
+                // --- CORREÇÃO 3: Aplica o tempo remotamente pro visitante ao recriar player ---
                 onReady: (ev) => {
                     if (typeof loadVideoQueue === 'function') loadVideoQueue();
-                    ev.target.playVideo();
+                    
+                    if (typeof isPlayerReady !== 'undefined') isPlayerReady = true;
+
+                    if (controlsValue === 0 && typeof applyRemoteState === 'function') {
+                        const state = window.latestPlayerState || window.currentVideoState;
+                        applyRemoteState(state, 'recreate-ready');
+                    } else {
+                        ev.target.playVideo();
+                    }
+
                     if (controlsValue === 0) {
                         const iframe = ev.target.getIframe();
                         if (iframe) iframe.style.pointerEvents = "none";

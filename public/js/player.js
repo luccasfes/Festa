@@ -1,5 +1,5 @@
 // ====================================================================
-// PLAYER DO YOUTUBE (VERSÃO FINAL: SINCRONIZADA E SEM CONFLITOS)
+// PLAYER DO YOUTUBE (VERSÃO FINAL: SINCRONIZADA E SEM CONFLITOS - v2)
 // ====================================================================
 
 // Variáveis Globais de Controle
@@ -8,19 +8,133 @@ window.isBroadcaster = false;
 var currentPlayerMode = null; 
 window.isAdminLoggedIn = false; 
 window.currentVideoRef = null; 
+window.hasAdminOnline = false;
 
 let localResumeAlreadyUsed = false;
 
-// INICIALIZAÇÃO DINÂMICA
-// Decide se o player nasce com ou sem controles baseado no número de usuários.
+// ====================================================================
+// NOVOS HELPERS DE TEMPO E SINCRONIZAÇÃO
+// ====================================================================
+var isSeeking = false;
+window.latestPlayerState = null;
+window.firebaseServerOffset = 0;
 
+if (typeof firebase !== 'undefined' && firebase.database) {
+    firebase.database().ref('.info/serverTimeOffset').on('value', (snap) => {
+        window.firebaseServerOffset = snap.val() || 0;
+    });
+}
+
+function serverNow() {
+    return Date.now() + (window.firebaseServerOffset || 0);
+}
+
+function amISyncMaster() {
+    return window.isAdminLoggedIn === true || 
+           (window.isBroadcaster === true && window.hasAdminOnline !== true);
+}
+
+function remoteIsPlaying(state) {
+    return state && (state.status === 'playing' || state.state === 1);
+}
+
+function remoteIsPaused(state) {
+    return state && (state.status === 'paused' || state.state === 2);
+}
+
+function remoteIsEnded(state) {
+    return state && (state.status === 'ended' || state.state === 0);
+}
+
+function getStateVideoTime(state) {
+    if (!state) return 0;
+
+    const base = Number(state.videoTime ?? state.currentTime ?? 0);
+    if (!Number.isFinite(base)) return 0;
+
+    if (remoteIsPlaying(state) && typeof state.timestamp === 'number') {
+        return Math.max(0, base + ((serverNow() - state.timestamp) / 1000));
+    }
+
+    return Math.max(0, base);
+}
+
+function applyRemoteState(state, origin = '') {
+    if (!state) return;
+    if (amISyncMaster()) return;
+    if (typeof player === 'undefined' || !player || typeof player.getVideoData !== 'function') return;
+    if (!state.videoId) return;
+    if (remoteIsEnded(state)) return;
+
+    const wantsPlay = remoteIsPlaying(state);
+    const wantsPause = remoteIsPaused(state);
+
+    let targetTime = getStateVideoTime(state);
+
+    const duration = player.getDuration ? player.getDuration() : 0;
+
+    // Evita seguidor cair no fim e disparar ENDED local
+    if (duration && targetTime > duration - 2) {
+        targetTime = Math.max(0, duration - 2);
+    }
+
+    let currentVideoId = null;
+    try {
+        currentVideoId = player.getVideoData()?.video_id || null;
+    } catch (e) {}
+
+    // Se o visitante ainda não carregou o vídeo certo, carrega já no tempo certo
+    if (currentVideoId !== state.videoId) {
+        isSeeking = true;
+
+        player.loadVideoById({
+            videoId: state.videoId,
+            startSeconds: Math.floor(targetTime)
+        });
+
+        setTimeout(() => {
+            try {
+                player.seekTo(targetTime, true);
+                if (wantsPause) player.pauseVideo();
+                if (wantsPlay) player.playVideo();
+            } catch (e) {}
+
+            isSeeking = false;
+        }, 900);
+
+        return;
+    }
+
+    const myTime = player.getCurrentTime ? player.getCurrentTime() : 0;
+
+    if (Math.abs(myTime - targetTime) > 1.5 && !isSeeking) {
+        isSeeking = true;
+        player.seekTo(targetTime, true);
+
+        setTimeout(() => {
+            isSeeking = false;
+            if (wantsPause) player.pauseVideo();
+            if (wantsPlay) player.playVideo();
+        }, 700);
+    } else {
+        if (wantsPause && player.getPlayerState() !== YT.PlayerState.PAUSED) {
+            player.pauseVideo();
+        }
+
+        if (wantsPlay && player.getPlayerState() !== YT.PlayerState.PLAYING) {
+            player.playVideo();
+        }
+    }
+}
+// ====================================================================
+
+// INICIALIZAÇÃO DINÂMICA
 function onYouTubeIframeAPIReady() {
     window.currentPlayerMode = 'INICIANDO';
 
-    // Se estiver sozinho ou for admin, nasce com controles (1). Caso contrário, bloqueado (0).
-    const initialControls = (window.isAdminLoggedIn || typeof onlineUserCount === 'undefined' || onlineUserCount <= 1) ? 1 : 0;
+    // Evitar que visitante recém-chegado seja tratado como Solo
+    const initialControls = window.isAdminLoggedIn ? 1 : 0;
     
-
     player = new YT.Player('videoPlayer', {
         height: '100%',
         width: '100%',
@@ -35,31 +149,32 @@ function onYouTubeIframeAPIReady() {
         },
         events: {
             onReady: (event) => {
-                loadVideoQueue();
+                if (typeof loadVideoQueue === 'function') loadVideoQueue();
                 player.setVolume(50);
-                isPlayerReady = true;
+                if (typeof isPlayerReady !== 'undefined') isPlayerReady = true;
                 startSyncHeartbeat();
-                // NOTA: O presence.js assumirá o controle daqui em diante.
+
+                // Visitante: pega o último estado logo que nasce
+                if (!amISyncMaster() && typeof playerStateRef !== 'undefined') {
+                    playerStateRef.once('value').then((snap) => {
+                        window.latestPlayerState = snap.val();
+                        applyRemoteState(window.latestPlayerState, 'player-ready');
+                    });
+                }
             },
             onStateChange: onPlayerStateChange
         }
     });
 }
 
-/**
- * 2. MONITORAMENTO DE ESTADO
- * Gerencia o que acontece quando o vídeo dá play, pause ou acaba.
- */
-
 function onPlayerStateChange(event) {
-    // 1. CORREÇÃO PRINCIPAL: Usamos o player do evento, não a variável global
     const playerSeguro = event.target; 
 
-    // --- RESUME LOCAL (SÓ NO MODO SOLO) ---
+    // --- RESUME LOCAL (SÓ NO MODO SOLO REAL E SEM ADMIN) ---
     if (
         event.data === YT.PlayerState.PLAYING &&
         !localResumeAlreadyUsed &&
-        (typeof onlineUserCount === 'undefined' || onlineUserCount <= 1)
+        (typeof onlineUserCount !== 'undefined' && onlineUserCount <= 1 && !window.hasAdminOnline)
     ) {
         const savedVideoId = localStorage.getItem('localPlayerVideoId');
         const savedTime = parseFloat(localStorage.getItem('localPlayerTime'));
@@ -67,7 +182,6 @@ function onPlayerStateChange(event) {
         const now = Date.now();
 
         if (savedVideoId && !isNaN(savedTime) && (now - lastSaveTime < 3600000)) {
-            // Uso seguro do getVideoData
             const currentVideoId = playerSeguro.getVideoData ? playerSeguro.getVideoData()?.video_id : null;
             
             if (currentVideoId === savedVideoId && savedTime > 5) {
@@ -85,49 +199,42 @@ function onPlayerStateChange(event) {
         }
     }
 
-    // --- FIM DO VÍDEO (PRÓXIMO DA FILA + AUTO DJ) ---
+    // --- FIM DO VÍDEO ---
     if (event.data === YT.PlayerState.ENDED) {
         console.log("🎬 Vídeo acabou.");
 
-        // Limpa storage local
         localStorage.removeItem('localPlayerTime');
         localStorage.removeItem('localPlayerVideoId');
         localStorage.removeItem('localPlayerTimestamp');
 
-        // 1. Tenta pegar o título para o DJ Maestro (antes de remover da fila)
-        // Isso é crucial para o DJ saber o que buscar
-        let endedVideoTitle = "";
-        try {
-            if (playerSeguro.getVideoData) {
-                endedVideoTitle = playerSeguro.getVideoData().title;
-            }
-        } catch(e) {}
+        if (!amISyncMaster()) {
+            console.log("ENDED ignorado: este usuário não é mestre de sincronização.");
+            return; 
+        }
 
-        // 2. Remove o vídeo que acabou da fila do Firebase
         if (typeof videoQueue !== 'undefined' && videoQueue.length > 0) {
-            // Removemos o primeiro da fila (que acabou de tocar)
+            const endedId = videoQueue[0].id;
             setTimeout(() => {
                 if (typeof videoQueueRef !== 'undefined') {
-                    videoQueueRef.child(videoQueue[0].id).remove().catch(err => console.error(err));
+                    videoQueueRef.child(endedId).remove().catch(err => console.error(err));
                 }
             }, 500);
         }
 
-        // 3. CHAMA O DJ MAESTRO 
-        // Se a função existir e estiver ativa, ele já prepara a próxima
-        if (typeof runAutoDJCycle === 'function') {
-             // Passamos o título apenas se precisar forçar contexto, 
-             // mas o search.js atualizado já pega do player se não passarmos nada.
-             // O delay garante que o player status já atualizou
+        if (typeof runAutoDJCycle === 'function' && (typeof onlineUserCount === 'undefined' || onlineUserCount <= 1)) {
              setTimeout(() => runAutoDJCycle(), 1000);
         }
+        
+        return; 
     }
 
     // --- SINCRONIA MESTRE (ADMIN OU BROADCASTER ENVIA DADOS) ---
-    if (window.isAdminLoggedIn || window.isBroadcaster) {
+    if (
+        amISyncMaster() && 
+        (event.data === YT.PlayerState.PLAYING || event.data === YT.PlayerState.PAUSED)
+    ) {
         let vidId = null;
         try { 
-            // Proteção contra erro de função inexistente
             if (playerSeguro.getVideoData) {
                 vidId = playerSeguro.getVideoData().video_id; 
             }
@@ -147,15 +254,11 @@ function onPlayerStateChange(event) {
     }
 }
 
-/**
- * 3. HEARTBEAT DE SINCRONIZAÇÃO
- * Envia o tempo atual do vídeo para o Firebase a cada 5 segundos.
- */
 function startSyncHeartbeat() {
     if (typeof syncInterval !== 'undefined' && syncInterval) clearInterval(syncInterval);
     
     syncInterval = setInterval(() => {
-        if (player && typeof player.getPlayerState === 'function' && player.getPlayerState() === YT.PlayerState.PLAYING) {
+        if (typeof player !== 'undefined' && player && typeof player.getPlayerState === 'function' && player.getPlayerState() === YT.PlayerState.PLAYING) {
             
             const currentTime = player.getCurrentTime();
             let currentData = null;
@@ -167,7 +270,7 @@ function startSyncHeartbeat() {
                 localStorage.setItem('localPlayerTimestamp', Date.now());
             }
 
-            if (window.isAdminLoggedIn || window.isBroadcaster) {
+            if (amISyncMaster()) {
                 if (typeof playerStateRef !== 'undefined') {
                     playerStateRef.update({
                         timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -182,52 +285,24 @@ function startSyncHeartbeat() {
     }, 5000);
 }
 
-/**
- * 4. OUVINTE DE SINCRONIA (PARA VISITANTES)
- * Segue o tempo ditado pelo Admin/Broadcaster.
- */
-let isSeeking = false;
+// --- NOVO LISTENER DE SINCRONIZAÇÃO PARA VISITANTES ---
 if (typeof playerStateRef !== 'undefined') {
     playerStateRef.on('value', (snapshot) => {
-        // Admin e Broadcaster nunca são controlados pelo Firebase
-        if (window.isAdminLoggedIn || window.isBroadcaster) return;
-
-        if (!player || typeof player.seekTo !== 'function') return;
-
         const state = snapshot.val();
+        window.latestPlayerState = state;
+
         if (!state) return;
+        if (amISyncMaster()) return;
 
-        const now = Date.now();
-        let targetTime = state.videoTime;
-        
-        if (state.status === 'playing') {
-            targetTime += (now - state.timestamp) / 1000;
-        }
-
-        const myTime = player.getCurrentTime();
-        
-        if (Math.abs(myTime - targetTime) > 2 && !isSeeking) {
-            isSeeking = true;
-            player.seekTo(targetTime, true);
-            setTimeout(() => isSeeking = false, 1000);
-        }
-
-        if (state.status === 'playing' && player.getPlayerState() !== YT.PlayerState.PLAYING) {
-            player.playVideo();
-        } else if (state.status === 'paused' && player.getPlayerState() !== YT.PlayerState.PAUSED) {
-            player.pauseVideo();
-        }
+        applyRemoteState(state, 'firebase-listener');
     });
 }
 
-/**
- * 5. CONTROLES DO OVERLAY E INTERFACE
- */
 document.addEventListener('DOMContentLoaded', () => {
     const playBtn = document.getElementById('overlayPlayBtn');
     if (playBtn) {
         playBtn.addEventListener('click', () => {
-            if (player) {
+            if (typeof player !== 'undefined' && player) {
                 const s = player.getPlayerState();
                 s === YT.PlayerState.PLAYING ? player.pauseVideo() : player.playVideo();
             }
@@ -237,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const volInp = document.getElementById('overlayVolume');
     if (volInp) {
         volInp.addEventListener('input', (e) => {
-            if (player) player.setVolume(e.target.value);
+            if (typeof player !== 'undefined' && player) player.setVolume(e.target.value);
         });
     }
 
@@ -245,7 +320,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fsBtn) {
         fsBtn.addEventListener('click', () => {
             const el = document.getElementById('player-container');
-            document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen();
+            if (el) {
+                document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen();
+            }
         });
     }
 

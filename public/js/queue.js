@@ -195,7 +195,7 @@ function renderQueue() {
 }
 
 function checkCurrentVideo() {
-    if (videoQueue && videoQueue.length > 0) {
+    if (typeof videoQueue !== 'undefined' && videoQueue && videoQueue.length > 0) {
         const currentVideo = videoQueue[0];
         const queueVideoId = typeof extractVideoId === 'function' ? extractVideoId(currentVideo.videoUrl) : currentVideo.videoUrl.split('v=')[1]?.substring(0,11);
         
@@ -208,7 +208,7 @@ function checkCurrentVideo() {
             urlD.style.display = 'block';
         }
 
-        if (player && typeof player.loadVideoById === 'function') {
+        if (typeof player !== 'undefined' && player && typeof player.loadVideoById === 'function') {
             let pid = null;
             let pState = null;
             try { 
@@ -217,9 +217,35 @@ function checkCurrentVideo() {
             } catch(e){}
             
             if (queueVideoId) {
+                // --- CORREÇÃO APLICADA AQUI: CARREGAMENTO DE TEMPO BLINDADO ---
                 if (pid !== queueVideoId) {
-                    player.loadVideoById(queueVideoId);
+                    const isMaster = typeof amISyncMaster === 'function'
+                        ? amISyncMaster()
+                        : (window.isAdminLoggedIn || window.isBroadcaster);
+
+                    const remote = window.latestPlayerState || window.currentVideoState;
+
+                    // Se for visitante, ele não começa do zero. Ele usa a função applyRemoteState 
+                    // para nascer no milissegundo exato que o Admin está ouvindo.
+                    if (!isMaster && remote && remote.videoId === queueVideoId && typeof applyRemoteState === 'function') {
+                        applyRemoteState(remote, 'queue-check');
+                    } 
+                    // Fallback de segurança para startSeconds
+                    else if (!isMaster && remote && remote.videoId === queueVideoId) {
+                        const start = Number(remote.videoTime ?? remote.currentTime ?? 0);
+
+                        player.loadVideoById({
+                            videoId: queueVideoId,
+                            startSeconds: Math.floor(start)
+                        });
+                    } 
+                    // Se for o Admin/Mestre, carrega normal (ele manda no tempo)
+                    else {
+                        player.loadVideoById(queueVideoId);
+                    }
+
                     if(typeof playedVideoHistory !== 'undefined') playedVideoHistory.add(queueVideoId);
+                    
                 } else if (pState === YT.PlayerState.UNSTARTED || pState === YT.PlayerState.CUED) {
                     if (typeof player.playVideo === 'function') player.playVideo();
                 }
@@ -230,9 +256,10 @@ function checkCurrentVideo() {
         if(u) u.textContent = 'Nenhum vídeo';
         const urlD = document.getElementById('currentVideoUrl');
         if(urlD) urlD.style.display = 'none';
-        lastVoteCount = 0; 
+        
+        if (typeof lastVoteCount !== 'undefined') lastVoteCount = 0; 
 
-        if (player && typeof player.stopVideo === 'function') {
+        if (typeof player !== 'undefined' && player && typeof player.stopVideo === 'function') {
             player.stopVideo();
         }
     }
