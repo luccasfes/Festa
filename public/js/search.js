@@ -151,7 +151,7 @@ let ytSearchAbort = null;
 // Função segura para criar elementos (PROTEÇÃO XSS)
 function createVideoElement(item) {
     const vidId = item?.id?.videoId;
-    const title = item?.snippet?.title || "Sem título";
+    const title = decodeHtmlEntities(item?.snippet?.title || "Sem título");
     const thumb = item?.snippet?.thumbnails?.medium?.url || item?.snippet?.thumbnails?.default?.url;
 
     if (!vidId) return null;
@@ -623,7 +623,7 @@ async function runAutoDJCycle(force = false) {
                 await videoQueueRef.push({
                     phone: "🤖 DJ Maestro",
                     videoUrl: `https://www.youtube.com/watch?v=${vid.id.videoId}`,
-                    title: vid.snippet.title,
+                    title: decodeHtmlEntities(vid.snippet.title),
                     addedBy: "DJ Maestro"
                 });
 
