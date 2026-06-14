@@ -1,5 +1,5 @@
 // ====================================================================
-// PLAYER DO YOUTUBE (VERSÃO FINAL: SINCRONIZADA E SEM CONFLITOS - v2)
+// PLAYER DO YOUTUBE (VERSÃO DEFINITIVA: PROTEÇÃO CONTRA RACE CONDITION E BUG DE UI)
 // ====================================================================
 
 // Variáveis Globais de Controle
@@ -11,6 +11,7 @@ window.currentVideoRef = null;
 window.hasAdminOnline = false;
 
 let localResumeAlreadyUsed = false;
+window.isRecoveringState = false; // CADEADO
 
 // ====================================================================
 // NOVOS HELPERS DE TEMPO E SINCRONIZAÇÃO
@@ -59,9 +60,9 @@ function getStateVideoTime(state) {
     return Math.max(0, base);
 }
 
-function applyRemoteState(state, origin = '') {
+function applyRemoteState(state, origin = '', forceSync = false) {
     if (!state) return;
-    if (amISyncMaster()) return;
+    if (amISyncMaster() && !forceSync) return;
     if (typeof player === 'undefined' || !player || typeof player.getVideoData !== 'function') return;
     if (!state.videoId) return;
     if (remoteIsEnded(state)) return;
@@ -73,7 +74,6 @@ function applyRemoteState(state, origin = '') {
 
     const duration = player.getDuration ? player.getDuration() : 0;
 
-    // Evita seguidor cair no fim e disparar ENDED local
     if (duration && targetTime > duration - 2) {
         targetTime = Math.max(0, duration - 2);
     }
@@ -83,7 +83,6 @@ function applyRemoteState(state, origin = '') {
         currentVideoId = player.getVideoData()?.video_id || null;
     } catch (e) {}
 
-    // Se o visitante ainda não carregou o vídeo certo, carrega já no tempo certo
     if (currentVideoId !== state.videoId) {
         isSeeking = true;
 
@@ -132,8 +131,9 @@ function applyRemoteState(state, origin = '') {
 function onYouTubeIframeAPIReady() {
     window.currentPlayerMode = 'INICIANDO';
 
-    // Evitar que visitante recém-chegado seja tratado como Solo
-    const initialControls = window.isAdminLoggedIn ? 1 : 0;
+    // AJUSTE 1: Evita que o Admin perca a barra de progresso se o Firebase demorar a logar
+    const isUrlAdmin = window.location.pathname.includes('admin');
+    const initialControls = (window.isAdminLoggedIn || isUrlAdmin) ? 1 : 0;
     
     player = new YT.Player('videoPlayer', {
         height: '100%',
@@ -149,17 +149,28 @@ function onYouTubeIframeAPIReady() {
         },
         events: {
             onReady: (event) => {
-                if (typeof loadVideoQueue === 'function') loadVideoQueue();
                 player.setVolume(50);
                 if (typeof isPlayerReady !== 'undefined') isPlayerReady = true;
                 startSyncHeartbeat();
 
-                // Visitante: pega o último estado logo que nasce
-                if (!amISyncMaster() && typeof playerStateRef !== 'undefined') {
+                if (typeof playerStateRef !== 'undefined') {
                     playerStateRef.once('value').then((snap) => {
                         window.latestPlayerState = snap.val();
-                        applyRemoteState(window.latestPlayerState, 'player-ready');
+                        
+                        // CADEADO: Trava o Firebase do Admin por 2.5s para blindar os convidados no F5
+                        if (amISyncMaster()) {
+                            window.isRecoveringState = true;
+                            setTimeout(() => { window.isRecoveringState = false; }, 2500);
+                        }
+                        
+                        if (typeof loadVideoQueue === 'function') loadVideoQueue();
+
+                        if (!amISyncMaster()) {
+                            applyRemoteState(window.latestPlayerState, 'player-ready');
+                        }
                     });
+                } else {
+                    if (typeof loadVideoQueue === 'function') loadVideoQueue();
                 }
             },
             onStateChange: onPlayerStateChange
@@ -169,70 +180,138 @@ function onYouTubeIframeAPIReady() {
 
 function onPlayerStateChange(event) {
     const playerSeguro = event.target; 
+    const myTime = playerSeguro.getCurrentTime ? playerSeguro.getCurrentTime() : 0;
+    const duration = playerSeguro.getDuration ? playerSeguro.getDuration() : 0;
 
-    // --- RESUME LOCAL (SÓ NO MODO SOLO REAL E SEM ADMIN) ---
+    // --- 1. RESGATE INFALÍVEL (COM LEITURA DIRETA DO FIREBASE PARA EVITAR RACE CONDITION) ---
     if (
         event.data === YT.PlayerState.PLAYING &&
-        !localResumeAlreadyUsed &&
-        (typeof onlineUserCount !== 'undefined' && onlineUserCount <= 1 && !window.hasAdminOnline)
+        !localResumeAlreadyUsed
     ) {
-        const savedVideoId = localStorage.getItem('localPlayerVideoId');
-        const savedTime = parseFloat(localStorage.getItem('localPlayerTime'));
-        const lastSaveTime = parseInt(localStorage.getItem('localPlayerTimestamp') || '0');
-        const now = Date.now();
+        localResumeAlreadyUsed = true; // Gasta a chance (só roda no recarregamento)
+        
+        const isMaster = amISyncMaster();
+        const isSolo = (typeof onlineUserCount !== 'undefined' && onlineUserCount <= 1 && !window.hasAdminOnline);
 
-        if (savedVideoId && !isNaN(savedTime) && (now - lastSaveTime < 3600000)) {
-            const currentVideoId = playerSeguro.getVideoData ? playerSeguro.getVideoData()?.video_id : null;
-            
-            if (currentVideoId === savedVideoId && savedTime > 5) {
-                console.log(`🔄 RESUMINDO LOCAL EM ${savedTime}s`);
-                localResumeAlreadyUsed = true;
+        if (isMaster || isSolo) {
+            window.isRecoveringState = true; // Trava o Firebase imediatamente
+
+            const finalizeRecovery = (remoteState) => {
+                let currentVideoId = null;
+                try { currentVideoId = playerSeguro.getVideoData()?.video_id; } catch(e){}
                 
-                if (typeof playerSeguro.seekTo === 'function') {
-                    playerSeguro.seekTo(savedTime, true);
+                // Se a API ainda não tiver o ID pronto, usa o do Firebase/Local
+                if (!currentVideoId && remoteState) currentVideoId = remoteState.videoId;
+                if (!currentVideoId) currentVideoId = localStorage.getItem('localPlayerVideoId');
+
+                const savedVideoId = localStorage.getItem('localPlayerVideoId');
+                const savedTime = parseFloat(localStorage.getItem('localPlayerTime'));
+                const lastSaveTime = parseInt(localStorage.getItem('localPlayerTimestamp') || '0');
+                const now = Date.now();
+
+                let targetTime = 0;
+                let shouldRecover = false;
+
+                // PLANO A: Sala (Firebase) - O Admin precisa nascer exatament onde os convidados estão!
+                if (isMaster && remoteState && remoteState.videoId === currentVideoId) {
+                    const fbTime = getStateVideoTime(remoteState);
+                    if (fbTime > 5) {
+                        targetTime = fbTime;
+                        shouldRecover = true;
+                        console.log("🔄 PLANO A: Recuperando da Sala", fbTime);
+                    }
                 }
+
+                // PLANO B: Cache Local - Se estiver Solo ou o Firebase estiver vazio
+                if (!shouldRecover && savedVideoId === currentVideoId && !isNaN(savedTime) && (now - lastSaveTime < 3600000)) {
+                    if (savedTime > 5) {
+                        targetTime = savedTime;
+                        shouldRecover = true;
+                        console.log("🔄 PLANO B: Recuperando do Local", savedTime);
+                    }
+                }
+
+                // Pula o tempo se o Admin estiver perdido no início do vídeo
+                if (shouldRecover && playerSeguro.getCurrentTime() < targetTime - 3) {
+                    console.log(`🔄 PULO DE TEMPO: Indo para ${targetTime}s`);
+                    isSeeking = true;
+                    
+                    // AJUSTE 2: Respiro de 400ms para a interface do YouTube renderizar!
+                    // Sem isso, a barra de progresso do YouTube quebra e só mostra o botão de pause.
+                    setTimeout(() => {
+                        if (typeof playerSeguro.seekTo === 'function') {
+                            playerSeguro.seekTo(targetTime, true);
+                        }
+                    }, 400);
+                    
+                    // Destrava o cadeado 2 segundos após o pulo de tempo
+                    setTimeout(() => { 
+                        window.isRecoveringState = false; 
+                        isSeeking = false; 
+                    }, 2000);
+                }
+            };
+
+            // O GRANDE SEGREDO: O Admin força a leitura do Firebase AQUI!
+            // Isso impede que ele mande "0:00" caso o vídeo carregue mais rápido que o Banco de Dados.
+            if (isMaster && typeof playerStateRef !== 'undefined') {
+                playerStateRef.once('value').then(snap => {
+                    window.latestPlayerState = snap.val();
+                    finalizeRecovery(window.latestPlayerState);
+                }).catch(() => finalizeRecovery(window.latestPlayerState));
                 
-                localStorage.removeItem('localPlayerTime');
-                localStorage.removeItem('localPlayerVideoId');
-                localStorage.removeItem('localPlayerTimestamp');
+                return; // Aborta e não deixa a função continuar e enviar "0" pros convidados
+            } else {
+                finalizeRecovery(window.latestPlayerState);
             }
         }
     }
 
-    // --- FIM DO VÍDEO ---
+    // --- 2. FIM DO VÍDEO BLINDADO ---
     if (event.data === YT.PlayerState.ENDED) {
-        console.log("🎬 Vídeo acabou.");
+        // Proteção: Só processa o fim se realmente estiver no final do vídeo (protege contra Falso ENDED do YouTube no F5)
+        if (duration > 0 && myTime >= duration - 3) {
+            console.log("🎬 Vídeo acabou legitimamente.");
 
-        localStorage.removeItem('localPlayerTime');
-        localStorage.removeItem('localPlayerVideoId');
-        localStorage.removeItem('localPlayerTimestamp');
+            localStorage.removeItem('localPlayerTime');
+            localStorage.removeItem('localPlayerVideoId');
+            localStorage.removeItem('localPlayerTimestamp');
 
-        if (!amISyncMaster()) {
-            console.log("ENDED ignorado: este usuário não é mestre de sincronização.");
-            return; 
-        }
+            if (!amISyncMaster()) {
+                console.log("ENDED ignorado: este usuário não é mestre de sincronização.");
+                return; 
+            }
 
-        if (typeof videoQueue !== 'undefined' && videoQueue.length > 0) {
-            const endedId = videoQueue[0].id;
-            setTimeout(() => {
-                if (typeof videoQueueRef !== 'undefined') {
-                    videoQueueRef.child(endedId).remove().catch(err => console.error(err));
-                }
-            }, 500);
-        }
+            if (typeof videoQueue !== 'undefined' && videoQueue.length > 0) {
+                const endedId = videoQueue[0].id;
+                setTimeout(() => {
+                    if (typeof videoQueueRef !== 'undefined') {
+                        videoQueueRef.child(endedId).remove().catch(err => console.error(err));
+                    }
+                }, 500);
+            }
 
-        if (typeof runAutoDJCycle === 'function' && (typeof onlineUserCount === 'undefined' || onlineUserCount <= 1)) {
-             setTimeout(() => runAutoDJCycle(), 1000);
+            if (typeof runAutoDJCycle === 'function' && (typeof onlineUserCount === 'undefined' || onlineUserCount <= 1)) {
+                 setTimeout(() => runAutoDJCycle(), 1000);
+            }
+        } else {
+            console.log("🚫 Falso ENDED ignorado para proteger a memória do player.");
         }
         
         return; 
     }
 
-    // --- SINCRONIA MESTRE (ADMIN OU BROADCASTER ENVIA DADOS) ---
+    // --- 3. SINCRONIA MESTRE (ADMIN OU BROADCASTER ENVIA DADOS) ---
     if (
         amISyncMaster() && 
         (event.data === YT.PlayerState.PLAYING || event.data === YT.PlayerState.PAUSED)
     ) {
+        // CADEADO: Se o Admin estiver no processo de F5 e resgatando o tempo, não sobrescreve a sala com "0:00"!
+        if (window.isRecoveringState || isSeeking) {
+            console.log("Protegendo Firebase contra reset durante o carregamento inicial...");
+            return;
+        }
+
         let vidId = null;
         try { 
             if (playerSeguro.getVideoData) {
@@ -241,13 +320,11 @@ function onPlayerStateChange(event) {
         } catch (e) {}
 
         if (vidId && typeof playerStateRef !== 'undefined') {
-            const currentTime = playerSeguro.getCurrentTime ? playerSeguro.getCurrentTime() : 0;
-            
             playerStateRef.update({ 
                 state: event.data,
                 videoId: vidId,
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
-                videoTime: currentTime,
+                videoTime: myTime,
                 status: event.data === YT.PlayerState.PLAYING ? 'playing' : 'paused'
             });
         }
@@ -271,6 +348,8 @@ function startSyncHeartbeat() {
             }
 
             if (amISyncMaster()) {
+                if (window.isRecoveringState || isSeeking) return; // Cadeado no heartbeat também!
+
                 if (typeof playerStateRef !== 'undefined') {
                     playerStateRef.update({
                         timestamp: firebase.database.ServerValue.TIMESTAMP,

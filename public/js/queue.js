@@ -1,5 +1,5 @@
 // ====================================================================
-// FILA DE VÍDEOS (AJUSTADA - PROTEÇÃO CONTRA DOUBLE-SKIP E RACE CONDITIONS)
+// FILA DE VÍDEOS (AJUSTADA - CÓPIA DA ESTRATÉGIA DO VISITANTE PARA O ADMIN)
 // ====================================================================
 
 let lastVoteCount = 0; 
@@ -34,7 +34,6 @@ async function skipCurrentVideo(idToRemove = null, customMessage = null, clearVo
     } catch(error) {
         console.error("Erro no skipLock:", error);
     } finally {
-        // Libera o lock após 3s
         setTimeout(() => lockRef.remove(), 3000);
     }
 }
@@ -217,31 +216,56 @@ function checkCurrentVideo() {
             } catch(e){}
             
             if (queueVideoId) {
-                // --- CORREÇÃO APLICADA AQUI: CARREGAMENTO DE TEMPO BLINDADO ---
                 if (pid !== queueVideoId) {
                     const isMaster = typeof amISyncMaster === 'function'
                         ? amISyncMaster()
                         : (window.isAdminLoggedIn || window.isBroadcaster);
 
-                    const remote = window.latestPlayerState || window.currentVideoState;
+                    const remote = window.latestPlayerState;
 
-                    // Se for visitante, ele não começa do zero. Ele usa a função applyRemoteState 
-                    // para nascer no milissegundo exato que o Admin está ouvindo.
+                    let startAt = 0;
+                    if (remote && remote.videoId === queueVideoId) {
+                        if (typeof getStateVideoTime === 'function') {
+                            startAt = getStateVideoTime(remote);
+                        } else {
+                            startAt = Number(remote.videoTime ?? remote.currentTime ?? 0);
+                        }
+                    }
+
+                    if (isMaster) {
+                        try {
+                            const localSavedId = localStorage.getItem('localPlayerVideoId');
+                            const localSavedTime = parseFloat(localStorage.getItem('localPlayerTime'));
+                            const localLastSave = parseInt(localStorage.getItem('localPlayerTimestamp') || '0');
+                            
+                            if (localSavedId === queueVideoId && !isNaN(localSavedTime) && (Date.now() - localLastSave < 3600000)) {
+                                if (localSavedTime > startAt) {
+                                    startAt = localSavedTime;
+                                }
+                            }
+                        } catch(e) {}
+                    }
+
                     if (!isMaster && remote && remote.videoId === queueVideoId && typeof applyRemoteState === 'function') {
                         applyRemoteState(remote, 'queue-check');
-                    } 
-                    // Fallback de segurança para startSeconds
-                    else if (!isMaster && remote && remote.videoId === queueVideoId) {
-                        const start = Number(remote.videoTime ?? remote.currentTime ?? 0);
-
+                    } else {
+                        const finalStart = Math.max(0, startAt || 0);
+                        
+                        // SOLUÇÃO: Carrega imediatamente (sem setTimeout) para o navegador não bloquear o Autoplay
                         player.loadVideoById({
                             videoId: queueVideoId,
-                            startSeconds: Math.floor(start)
+                            startSeconds: Math.floor(finalStart)
                         });
-                    } 
-                    // Se for o Admin/Mestre, carrega normal (ele manda no tempo)
-                    else {
-                        player.loadVideoById(queueVideoId);
+                        
+                        // Cópia exata do Visitante que funciona: 900ms depois dá seekTo e garante o Play
+                        setTimeout(() => {
+                            try {
+                                if (player.seekTo) player.seekTo(finalStart, true);
+                                if (player.playVideo && player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                                    player.playVideo();
+                                }
+                            } catch(err) {}
+                        }, 900);
                     }
 
                     if(typeof playedVideoHistory !== 'undefined') playedVideoHistory.add(queueVideoId);
@@ -269,7 +293,6 @@ function handleRemoveVideo(id) {
     const isSolo = (typeof onlineUserCount === 'undefined' || onlineUserCount <= 1);
     
     if (window.isAdminLoggedIn || isSolo) {
-        // Usa a nova trava para remover vídeo também!
         skipCurrentVideo(id, 'Vídeo removido!');
     } else {
         openRemoveModalWithId(id);
@@ -283,7 +306,6 @@ function handleSkipOrVote() {
         if (videoQueue && videoQueue.length > 0) {
             if(typeof toggleLoading === 'function') toggleLoading('skipVoteBtn', true);
             
-            // Substitui o `isProcessingSkip` pela chamada travada via Firebase
             skipCurrentVideo(videoQueue[0].id, window.isAdminLoggedIn ? 'Pulado pelo Admin!' : 'Pulado!').finally(() => {
                 if(typeof toggleLoading === 'function') toggleLoading('skipVoteBtn', false);
             });
@@ -387,7 +409,6 @@ if (typeof roomRef !== 'undefined') {
             }
         }
         
-        // Substitui o `isProcessingSkip` pela chamada travada via Firebase
         if (count >= needed && videoQueue && videoQueue.length > 0) {
             skipCurrentVideo(videoQueue[0].id, 'Pulado por votação!', true);
         }
