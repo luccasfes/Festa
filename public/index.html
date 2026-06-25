@@ -212,12 +212,16 @@
         <div class="modal-content">
             <span class="close-button" onclick="closeAdminUnlockModal()">×</span>
             <h3>Login Admin</h3>
-            <div class="input-group"><input type="email" id="adminUnlockName" placeholder="E-mail"></div>
-            <div class="input-group password-group">
-                <input type="password" id="adminUnlockPassword" placeholder="Senha">
-                <span id="toggleAdminUnlockPassword"><i class="fas fa-eye"></i></span>
-            </div>
-            <button class="btn primary" onclick="loginAdminSession()" id="adminUnlockConfirmBtn">Login</button>
+            <form onsubmit="event.preventDefault(); loginAdminSession();">
+                <div class="input-group">
+                    <input type="email" id="adminUnlockName" placeholder="E-mail" autocomplete="username">
+                </div>
+                <div class="input-group password-group">
+                    <input type="password" id="adminUnlockPassword" placeholder="Senha" autocomplete="current-password">
+                    <span id="toggleAdminUnlockPassword"><i class="fas fa-eye"></i></span>
+                </div>
+                <button type="submit" class="btn primary" id="adminUnlockConfirmBtn">Login</button>
+            </form>
         </div>
     </div>
 
@@ -312,9 +316,13 @@
             <span class="close-button" onclick="closeModal()">×</span>
             <h3>Limpar Fila</h3>
             <p>Admin e senha necessários.</p>
-            <div class="input-group"><input type="email" id="adminName" placeholder="E-mail"></div>
-            <div class="input-group password-group"><input type="password" id="clearPassword" placeholder="Senha"></div>
-            <button class="btn primary" onclick="clearQueue()" id="clearQueueBtn">Confirmar</button>
+            <form onsubmit="event.preventDefault(); clearQueue();">
+                <div class="input-group"><input type="email" id="adminName" placeholder="E-mail"
+                        autocomplete="username"></div>
+                <div class="input-group password-group"><input type="password" id="clearPassword" placeholder="Senha"
+                        autocomplete="current-password"></div>
+                <button type="submit" class="btn primary" id="clearQueueBtn">Confirmar</button>
+            </form>
         </div>
     </div>
 
@@ -322,10 +330,13 @@
         <div class="modal-content">
             <span class="close-button" onclick="closeRemoveModal()">×</span>
             <h3>Remover Vídeo</h3>
-            <div class="input-group"><input type="email" id="removeAdminName" placeholder="E-mail"></div>
-            <div class="input-group password-group"><input type="password" id="removePassword" placeholder="Senha">
-            </div>
-            <button class="btn primary" onclick="removeVideo()" id="removeVideoBtn">Confirmar</button>
+            <form onsubmit="event.preventDefault(); removeVideo();">
+                <div class="input-group"><input type="email" id="removeAdminName" placeholder="E-mail"
+                        autocomplete="username"></div>
+                <div class="input-group password-group"><input type="password" id="removePassword" placeholder="Senha"
+                        autocomplete="current-password"></div>
+                <button type="submit" class="btn primary" id="removeVideoBtn">Confirmar</button>
+            </form>
         </div>
     </div>
 
@@ -333,9 +344,13 @@
         <div class="modal-content">
             <span class="close-button" onclick="closeNextVideoModal()">×</span>
             <h3>Próximo Vídeo</h3>
-            <div class="input-group"><input type="email" id="nextAdminName" placeholder="E-mail"></div>
-            <div class="input-group password-group"><input type="password" id="nextPassword" placeholder="Senha"></div>
-            <button class="btn primary" onclick="playNextVideo()" id="playNextVideoBtn">Confirmar</button>
+            <form onsubmit="event.preventDefault(); playNextVideo();">
+                <div class="input-group"><input type="email" id="nextAdminName" placeholder="E-mail"
+                        autocomplete="username"></div>
+                <div class="input-group password-group"><input type="password" id="nextPassword" placeholder="Senha"
+                        autocomplete="current-password"></div>
+                <button type="submit" class="btn primary" id="playNextVideoBtn">Confirmar</button>
+            </form>
         </div>
     </div>
 
@@ -483,16 +498,20 @@
         </div>
     </div>
 
-    <div id="usersModal" class="modal" style="display: none; align-items: center; justify-content: center; z-index: 10000;">
-    <div class="modal-content" style="max-width: 400px; padding: 25px; background: #1a1a2e;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
-            <h3 style="margin: 0; font-size: 1.3rem; color: white;"><i class="fas fa-users" style="color: var(--accent-color);"></i> Usuários na Sala</h3>
-            <span class="close-button" onclick="closeUsersModal()" style="position: static; margin: 0; padding: 0; background: none;">×</span>
-        </div>
-        <div id="userListContent" style="max-height: 60vh; overflow-y: auto; text-align: left; padding-right: 5px;">
+    <div id="usersModal" class="modal"
+        style="display: none; align-items: center; justify-content: center; z-index: 10000;">
+        <div class="modal-content" style="max-width: 400px; padding: 25px; background: #1a1a2e;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                <h3 style="margin: 0; font-size: 1.3rem; color: white;"><i class="fas fa-users"
+                        style="color: var(--accent-color);"></i> Usuários na Sala</h3>
+                <span class="close-button" onclick="closeUsersModal()"
+                    style="position: static; margin: 0; padding: 0; background: none;">×</span>
             </div>
+            <div id="userListContent" style="max-height: 60vh; overflow-y: auto; text-align: left; padding-right: 5px;">
+            </div>
+        </div>
     </div>
-</div>
 
     <div id="panelModal" class="modal admin-panel-modal">
         <div class="modal-content" style="max-height: 90vh; display: flex; flex-direction: column;">
@@ -573,12 +592,18 @@
                 <p style="color: var(--text-secondary); font-size: 0.9rem;">Esta sala é protegida por senha.</p>
             </div>
             <form onsubmit="event.preventDefault(); verifyRoomPassword();">
+                <input type="text" name="username" autocomplete="username" value="visitante" style="display:none"
+                    aria-hidden="true" tabindex="-1">
+
                 <input type="password" id="roomEntryPassword" placeholder="Digite a senha..."
                     autocomplete="current-password"
                     style="text-align: center; letter-spacing: 3px; font-weight: bold; font-size: 1.2rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #444; border-radius: 8px; padding: 12px; width: 100%; margin-bottom: 10px; transition: 0.3s;">
+
                 <div id="passwordErrorMsg"
                     style="color: var(--error-color); margin-bottom: 10px; display: none; font-size: 0.9rem; font-weight: bold;">
-                    <i class="fas fa-times-circle"></i> Senha incorreta!</div>
+                    <i class="fas fa-times-circle"></i> Senha incorreta!
+                </div>
+
                 <button type="submit" class="btn primary" id="verifyPassBtn" style="width: 100%; margin-bottom: 15px;">
                     <i class="fas fa-unlock"></i> Destravar
                 </button>
@@ -606,6 +631,7 @@
     <script src="js/theme.js"></script>
     <script src="js/player.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
+
 
     <script>
         // SCRIPT APENAS PARA FORÇAR O CARREGAMENTO 
