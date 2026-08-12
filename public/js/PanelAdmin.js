@@ -396,7 +396,7 @@ function renderQueueList(queue) {
             <div style="color:var(--text-muted); font-family:monospace; width:20px;">${idx + 1}</div>
             <div style="flex:1; min-width:0;">
                 <div style="font-weight:500; font-size:0.95rem;" class="truncate">${escapeHtml(v.title || 'Vídeo')}</div>
-                <div style="font-size:0.8rem; color:var(--text-muted)" class="truncate">Add por: ${escapeHtml(v.phone || '?')}</div>
+                <div style="font-size:0.8rem; color:var(--text-muted)" class="truncate">Add por: ${escapeHtml(v.addedBy || '?')}</div>
             </div>
         `;
         container.appendChild(div);

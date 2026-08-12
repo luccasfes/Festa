@@ -22,7 +22,7 @@ window.updateGlobalUserUI = function (name) {
     const places = [
         { id: 'userNameDisplay', text: name },
         { id: 'currentSessionUser', text: name },
-        { id: 'phone', value: name }
+        { id: 'addedBy', value: name }
     ];
 
     places.forEach(place => {

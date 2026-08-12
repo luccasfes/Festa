@@ -621,7 +621,7 @@ async function runAutoDJCycle(force = false) {
 
             if (typeof videoQueueRef !== 'undefined') {
                 await videoQueueRef.push({
-                    phone: "🤖 DJ Maestro",
+                    addedBy: "🤖 DJ Maestro",
                     videoUrl: `https://www.youtube.com/watch?v=${vid.id.videoId}`,
                     title: decodeHtmlEntities(vid.snippet.title),
                     addedBy: "DJ Maestro"

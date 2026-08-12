@@ -39,20 +39,20 @@ async function skipCurrentVideo(idToRemove = null, customMessage = null, clearVo
 }
 
 async function addVideo(urlArg = null, titleArg = null) {
-    let phone = document.getElementById('phone')?.value.trim(); 
-    if (!phone) phone = sessionStorage.getItem('ytSessionUser') || '';
+    let addedBy = document.getElementById('addedBy')?.value.trim(); 
+    if (!addedBy) addedBy = sessionStorage.getItem('ytSessionUser') || '';
 
     const searchNameInput = document.getElementById('ytSearchName');
-    if (!phone && searchNameInput && searchNameInput.value.trim()) {
-        phone = searchNameInput.value.trim();
-        sessionStorage.setItem('ytSessionUser', phone); 
-        currentSessionUser = phone;
+    if (!addedBy && searchNameInput && searchNameInput.value.trim()) {
+        addedBy = searchNameInput.value.trim();
+        sessionStorage.setItem('ytSessionUser', addedBy); 
+        currentSessionUser = addedBy;
     }
 
     let url = urlArg || document.getElementById('videoUrl')?.value.trim();
     let title = titleArg || null;
 
-    if (!phone) {
+    if (!addedBy) {
         const searchModal = document.getElementById('ytSearchModal');
         if (searchModal && searchModal.style.display === 'flex') {
             showNotification('Digite seu nome no campo acima!', 'error');
@@ -80,16 +80,16 @@ async function addVideo(urlArg = null, titleArg = null) {
         }
         if (!title) title = `Vídeo (ID: ${videoId})`;
 
-        await videoQueueRef.push({ phone, videoUrl: url, title });
+        await videoQueueRef.push({ addedBy, videoUrl: url, title });
         showNotification('Vídeo adicionado!', 'success');
         
         const urlInput = document.getElementById('videoUrl');
         if (!urlArg && urlInput) urlInput.value = '';
         
-        if(phone && !sessionStorage.getItem('ytSessionUser')) {
-            sessionStorage.setItem('ytSessionUser', phone);
+        if(addedBy && !sessionStorage.getItem('ytSessionUser')) {
+            sessionStorage.setItem('ytSessionUser', addedBy);
             const d = document.getElementById('userNameDisplay');
-            if(d) d.textContent = phone;
+            if(d) d.textContent = addedBy;
         }
 
     } catch (e) {
@@ -111,10 +111,10 @@ function loadVideoQueue() {
 
         if (currentStillExists) {
             const waiting = fetchedQueue.filter(v => v.id !== currentPlayingId);
-            waiting.sort((a, b) => (a.phone === BOT_NAME) - (b.phone === BOT_NAME));
+            waiting.sort((a, b) => (a.addedBy === BOT_NAME) - (b.addedBy === BOT_NAME));
             videoQueue = [currentStillExists, ...waiting];
         } else {
-            fetchedQueue.sort((a, b) => (a.phone === BOT_NAME) - (b.phone === BOT_NAME));
+            fetchedQueue.sort((a, b) => (a.addedBy === BOT_NAME) - (b.addedBy === BOT_NAME));
             videoQueue = fetchedQueue;
         }
 
@@ -147,7 +147,7 @@ function renderQueue() {
         li.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(255, 255, 255, 0.05); margin-bottom: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);";
         
         if (index === 0) li.classList.add('playing');
-        if (video.phone === '🤖 DJ Maestro') {
+        if (video.addedBy === '🤖 DJ Maestro') {
             li.style.opacity = '0.8';
             li.style.borderLeft = '3px solid #777';
         }
@@ -181,7 +181,7 @@ function renderQueue() {
                 <div class="video-info">
                     <span class="video-title">${escapeTxt(displayTitle)}</span>
                     <div class="video-meta">
-                        <span class="video-added-by" style="color: #6c5ce7;">Por: ${escapeTxt(video.phone)}</span>
+                        <span class="video-added-by" style="color: #6c5ce7;">Por: ${escapeTxt(video.addedBy)}</span>
                     </div>
                 </div>
             </div>
@@ -199,7 +199,7 @@ function checkCurrentVideo() {
         const queueVideoId = typeof extractVideoId === 'function' ? extractVideoId(currentVideo.videoUrl) : currentVideo.videoUrl.split('v=')[1]?.substring(0,11);
         
         const u = document.getElementById('currentUser');
-        if(u) u.textContent = currentVideo.phone;
+        if(u) u.textContent = currentVideo.addedBy;
         
         const urlD = document.getElementById('currentVideoUrl');
         if(urlD) {
