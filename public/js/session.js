@@ -126,7 +126,32 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
-});
+    let isInitialLoad = true;
+    const statusConexaoRef = firebase.database().ref('.info/connected');
+
+    statusConexaoRef.on('value', (snapshot) => {
+        if (snapshot.val() === true) {
+            isInitialLoad = false; 
+        } else if (snapshot.val() === false && !isInitialLoad) {
+            
+            if (typeof showNotification === 'function') {
+                showNotification("Erro de conexão. Verifique sua internet.", "error"); // MSG009
+            }
+        }
+    });
+
+    // Cobre o cenário da pessoa já abrir o site sem internet
+    setTimeout(() => {
+        if (isInitialLoad && !navigator.onLine) {
+            isInitialLoad = false;
+            if (typeof showNotification === 'function') {
+                showNotification("Erro de conexão. Verifique sua internet.", "error");
+            }
+        }
+    }, 3000); // Dá 3 segundos de tolerância para o Firebase tentar conectar
+    // =======================================================
+
+}); // <-- Fechamento original do DOMContentLoaded
 
 // --------------------
 // 3. PROTEÇÃO DE SALA
@@ -252,6 +277,9 @@ window.saveUserName = function () {
         return; 
     }
     window.updateGlobalUserUI(newName);
+    if (typeof showNotification === 'function') {
+        showNotification(`Bem-vindo, ${newName}!`, 'success');
+    }
     setTimeout(() => {
         window.closeEditNameModal();
     }, 300);
@@ -381,6 +409,24 @@ function hideInitialLoader() {
     document.body.style.opacity = '1';
 }
 
+// Dentro do seu session.js
+function salvarNomeEEntrar() {
+    const userName = document.getElementById("nomeInput").value;
+    
+    if (userName.trim() !== "") {
+        
+        localStorage.setItem("flowlink_username", userName);
+        
+        
+        document.getElementById("modalIdentificacao").style.display = "none";
+        
+        
+        mostrarToast(`Bem-vindo, ${userName}!`); 
+        
+    } else {
+        mostrarToast("Diga seu nome primeiro!"); 
+    }
+}
 // ====================================================================
 // 7. SISTEMA DE BANIMENTO (SALA APENAS)
 // ====================================================================
