@@ -194,7 +194,7 @@ function onPlayerStateChange(event) {
         const isSolo = (typeof onlineUserCount !== 'undefined' && onlineUserCount <= 1 && !window.hasAdminOnline);
 
         if (isMaster || isSolo) {
-            window.isRecoveringState = true; // Trava o Firebase imediatamente
+            window.isRecoveringState = true; 
 
             const finalizeRecovery = (remoteState) => {
                 let currentVideoId = null;
@@ -250,9 +250,7 @@ function onPlayerStateChange(event) {
                         isSeeking = false; 
                     }, 2000);
                 } else {
-                    // CORREÇÃO: sem pulo de tempo (shouldRecover=false ou já no tempo certo),
-                    // nada mais ia destravar o cadeado -> ficava travado pra sempre e
-                    // bloqueava TODO play/pause do mestre daí pra frente.
+                    
                     window.isRecoveringState = false;
                     isSeeking = false;
                 }
@@ -266,7 +264,7 @@ function onPlayerStateChange(event) {
                     finalizeRecovery(window.latestPlayerState);
                 }).catch(() => finalizeRecovery(window.latestPlayerState));
                 
-                return; // Aborta e não deixa a função continuar e enviar "0" pros convidados
+                return; 
             } else {
                 finalizeRecovery(window.latestPlayerState);
             }
@@ -354,7 +352,7 @@ function startSyncHeartbeat() {
             }
 
             if (amISyncMaster()) {
-                if (window.isRecoveringState || isSeeking) return; // Cadeado no heartbeat também!
+                if (window.isRecoveringState || isSeeking) return; 
 
                 if (typeof playerStateRef !== 'undefined') {
                     playerStateRef.update({
