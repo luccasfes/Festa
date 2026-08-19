@@ -249,6 +249,12 @@ function onPlayerStateChange(event) {
                         window.isRecoveringState = false; 
                         isSeeking = false; 
                     }, 2000);
+                } else {
+                    // CORREÇÃO: sem pulo de tempo (shouldRecover=false ou já no tempo certo),
+                    // nada mais ia destravar o cadeado -> ficava travado pra sempre e
+                    // bloqueava TODO play/pause do mestre daí pra frente.
+                    window.isRecoveringState = false;
+                    isSeeking = false;
                 }
             };
 
