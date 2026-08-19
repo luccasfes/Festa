@@ -228,7 +228,14 @@ window.verifyRoomPassword = function () {
     const btn = document.getElementById('verifyPassBtn');
     const errorMsg = document.getElementById('passwordErrorMsg');
 
-    if (!input || typeof CryptoJS === 'undefined') return;
+    if (typeof CryptoJS === 'undefined') {
+        if (typeof showNotification === 'function') {
+            showNotification("Erro de Sistema: Falha ao carregar os módulos de segurança. Atualize a página e tente novamente.", "error");
+        }
+        return; 
+    }
+
+    if (!input) return;
 
     btn.innerText = "Verificando...";
     btn.disabled = true;
