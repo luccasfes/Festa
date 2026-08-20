@@ -3892,6 +3892,10 @@ input:checked + .slider:before {
     .app-header {
         padding: 15px 10px 25px 10px;
     }
+    
+    body.non-admin #panelBtn {
+        display: none !important;
+    }
 }
 
 /* ======================================================= */
