@@ -37,18 +37,18 @@ function getConfig(pathStr, fallbackEnvKey) {
     return process.env[fallbackEnvKey];
   }
 
-  // Prioridade 2: Transformar "email.user" em "EMAIL_USER"
+  
   if (pathStr) {
     const envKey = pathStr.toUpperCase().replace(/\./g, "_");
     if (process.env[envKey]) return process.env[envKey];
 
-    // Prioridade 3: functions.config() (Produção Firebase)
+    
     try {
       const [a, b] = pathStr.split(".");
       const v = functions.config()?.[a]?.[b];
       if (v) return v;
     } catch (e) {
-      // ignora erro
+      
     }
   }
 
@@ -117,7 +117,7 @@ app.post("/api/report", async (req, res) => {
     });
 
     const baseUrl = getConfig("site.url", "SITE_URL") || "http://localhost:3000";
-    // Variável em Inglês (TCC), Valor em Português (Link)
+    
     const adminPanelLink = `${baseUrl}/admin.html`;
 
     const mailOptions = {
@@ -223,7 +223,6 @@ if (YOUTUBE_KEYS.length === 0) {
   functions.logger.info(`✅ ${YOUTUBE_KEYS.length} chave(s) do YouTube configuradas`);
 }
 
-// Cache em Memória (60 segundos) - Aqui estava o erro antes!
 const YT_CACHE_TTL_MS = 60_000;
 const ytCache = new Map();
 
@@ -240,12 +239,11 @@ function cacheGet(key) {
 }
 
 function cacheSet(key, data) {
-  // Remove a chave antiga se existir
+ 
   if (ytCache.has(key)) ytCache.delete(key);
   
   ytCache.set(key, { t: Date.now(), data });
   
-  // Limita tamanho do cache
   if (ytCache.size > 250) {
     const firstKey = ytCache.keys().next().value;
     ytCache.delete(firstKey);
@@ -312,7 +310,7 @@ async function getSpotifyToken() {
     const params = new URLSearchParams();
     params.append("grant_type", "client_credentials");
 
-    // URL ESPECÍFICA DO SEU PROJETO/PROXY (MANTIDA ORIGINAL)
+    
     const response = await axios.post("https://accounts.spotify.com/api/token", params, {
       headers: {
         Authorization: "Basic " + Buffer.from(clientId + ":" + clientSecret).toString("base64"),
@@ -342,7 +340,6 @@ async function axiosRetry(config, maxRetries = 2) {
     } catch (error) {
       if (i === maxRetries) throw error;
       
-      // Tenta novamente apenas em erros 5xx (servidor)
       if (error.response && error.response.status >= 500) {
         const delay = Math.min(1000 * Math.pow(2, i), 5000); // 1s, 2s, max 5s
         functions.logger.warn(`Tentativa ${i + 1}/${maxRetries} após ${delay}ms`);
@@ -524,7 +521,7 @@ app.get("/api/spotify-recommendations", async (req, res) => {
       return res.json([]); 
     }
 
-    // URL ESPECÍFICA DO SEU PROJETO (MANTIDA ORIGINAL)
+  
     const SEARCH_URL = "https://api.spotify.com/v1/search";
     let recommendations = [];
 
