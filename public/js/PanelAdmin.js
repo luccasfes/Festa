@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- FUNÇÕES DE AÇÃO ---
-
+//--- Limpar Salas Vazias ---
 function cleanEmptyRooms() {
     const emptyRoomIds = [];
     Object.entries(allRoomsRaw).forEach(([id, room]) => {
@@ -271,7 +271,7 @@ function openDetails(id) {
         '<span style="color:var(--accent)"><i class="fas fa-lock"></i> Protegida</span>' :
         '<span style="color:var(--success)"><i class="fas fa-lock-open"></i> Pública</span>';
 
-    // Passando o ID e a lista de banidos também
+    // Banimentos
     renderUserList(room.presence, room.banned, id);
     renderQueueList(room.videoQueue);
 
@@ -293,7 +293,7 @@ function openDetails(id) {
 
 function copyId() {
     if (!selectedRoomId) return;
-    // CORRIGIDO: era "currentRoomId" (variável inexistente) -> agora "selectedRoomId"
+    
     navigator.clipboard.writeText(selectedRoomId).then(() => {
         const btn = document.querySelector('.btn-icon-sm');
         const original = btn.innerHTML;
@@ -309,7 +309,7 @@ function renderUserList(presence, banned, roomId) {
     const users = presence ? Object.values(presence) : [];
     document.getElementById('countUsersModal').textContent = users.length;
 
-    // 1. ONLINE USERS
+    // 1. Usuários Online
     if (users.length > 0) {
         const h = document.createElement('h4'); h.innerText = "Online"; h.style.color = "#10b981"; h.style.marginTop = "10px";
         container.appendChild(h);
@@ -338,7 +338,7 @@ function renderUserList(presence, banned, roomId) {
         container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px;">Sala vazia.</p>';
     }
 
-    // 2. BANNED USERS
+    // 2. usuários Banidos
     if (banned) {
         const keys = Object.keys(banned);
         if (keys.length > 0) {
@@ -364,7 +364,7 @@ function executeBan(targetName, roomId, targetDeviceId) {
     if (!confirm(`Banir "${targetName}"?\nIsso bloqueará o dispositivo e o nome.`)) return;
 
     const updates = {};
-    updates[`rooms/${roomId}/banned/${targetName}`] = true; // Bloqueio visual/nome
+    updates[`rooms/${roomId}/banned/${targetName}`] = true; 
 
     if (targetDeviceId && targetDeviceId !== 'unknown') {
         updates[`rooms/${roomId}/banned/${targetDeviceId}`] = true; // Bloqueio Real de Device

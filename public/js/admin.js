@@ -42,13 +42,13 @@ function openRoomManager(roomId, roomName) {
     // 2. Atualiza cabeçalho
     document.getElementById('adminUsersRoomTitle').innerText = roomName || 'Sala sem Nome';
     document.getElementById('adminUsersRoomId').innerText = 'ID: ' + roomId;
-    document.getElementById('adminUsersList').innerHTML = ''; // Limpa anterior
+    document.getElementById('adminUsersList').innerHTML = ''; 
 
     // 3. Carrega dados da sala específica
     loadRoomUsersData(roomId);
 }
 
-// --- Carregamento: Lista de Salas (VIEW 1) ---
+// --- Carregamento: Lista de Salas ---
 
 function loadAdminPanelRooms() {
     var list = document.getElementById('adminRoomList');
